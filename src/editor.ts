@@ -3,8 +3,12 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 import * as coc from 'coc.nvim'
 
 export async function activeFile(): Promise<string | undefined> {
-  const file = await coc.workspace.nvim.eval('expand("%:p")')
-  return typeof file === 'string' && file ? file : undefined
+  const { document } = await coc.workspace.getCurrentState()
+  try {
+    return fileURLToPath(document.uri)
+  } catch {
+    return undefined
+  }
 }
 
 export async function activeDirectory(): Promise<string> {
@@ -26,16 +30,20 @@ export function workspaceDirectories(): string[] {
 }
 
 export async function currentBufferLines(): Promise<string[]> {
-  const lines = await coc.workspace.nvim.eval('getline(1, "$")')
-  return Array.isArray(lines) ? lines.map(String) : []
+  const document = await coc.workspace.document
+  return [...document.textDocument.lines]
 }
 
-export async function linesToCursor(): Promise<string[] | string> {
-  return await coc.workspace.nvim.eval('getline(1, line("."))') as string[] | string
+export async function linesToCursor(): Promise<string[]> {
+  const { document, position } = await coc.workspace.getCurrentState()
+  return document.lines.slice(0, position.line + 1)
 }
 
 export async function wordAtCursor(): Promise<string> {
-  return await coc.workspace.nvim.eval('expand("<cword>")') as string
+  const { position } = await coc.workspace.getCurrentState()
+  const document = await coc.workspace.document
+  const range = document.getWordRangeAtPosition(position)
+  return range ? document.textDocument.getText(range) : ''
 }
 
 export function counterpartGoFile(file: string): string | undefined {
