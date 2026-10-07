@@ -3,6 +3,7 @@
 <img src="https://raw.githubusercontent.com/xiyaowong/coc-golang/main/assets/logo.svg" alt="coc-golang logo" width="160" height="160" />
 
 <sub>Logo concept by <a href="https://github.com/xiyaowong">@xiyaowong</a>, drawn with AI</sub>
+
 # coc-golang
 
 Go language support for [coc.nvim](https://github.com/neoclide/coc.nvim), powered by the official [gopls](https://go.dev/gopls/) language server and Go tools.
