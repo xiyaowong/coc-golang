@@ -57,26 +57,54 @@ Run commands with `:CocCommand`, for example:
 
 ### Tests and benchmarks
 
-| Task | Commands |
-| --- | --- |
-| Run tests | `go.test.package`, `go.test.workspace`, `go.test.file`, `go.test.cursor`, `go.subtest.cursor` |
-| Choose or repeat tests | `go.test.explorer`, `go.test.cursorOrPrevious`, `go.test.previous` |
-| Coverage and test controls | `go.test.coverage`, `go.test.cancel`, `go.test.showOutput`, `go.toggle.test.file` |
-| Run benchmarks | `go.benchmark.package`, `go.benchmark.file`, `go.benchmark.cursor` |
-| Generate tests | `go.test.generate.file`, `go.test.generate.package`, `go.test.generate.function` |
+- `go.test.package` Run tests in the current package.
+- `go.test.workspace` Run tests across the workspace.
+- `go.test.file` Run tests and examples in the current file.
+- `go.test.cursor` Run the test, benchmark, or example at the cursor.
+- `go.subtest.cursor` Run the subtest at the cursor.
+- `go.test.explorer` Choose tests to run from a quick pick.
+- `go.test.cursorOrPrevious` Run the test at the cursor, or repeat the previous test.
+- `go.test.previous` Repeat the previous test command.
+- `go.test.coverage` Run package tests with coverage.
+- `go.test.cancel` Cancel the current test run.
+- `go.test.showOutput` Show test output.
+- `go.toggle.test.file` Open the corresponding test or source file.
+- `go.benchmark.package` Run benchmarks in the current package.
+- `go.benchmark.file` Run benchmarks in the current file.
+- `go.benchmark.cursor` Run the benchmark at the cursor.
+- `go.test.generate.file` Generate tests for functions in the current file.
+- `go.test.generate.package` Generate tests for functions in the current package.
+- `go.test.generate.function` Generate a test for the function at the cursor.
 
 Test generation requires `gotests`. The test explorer is a coc.nvim quick-pick selector; persistent VS Code test explorer UI is not included.
 
 ### Build, checks, and code
 
-| Task | Commands |
-| --- | --- |
-| Build and run | `go.build.package`, `go.build.workspace`, `go.run`, `go.generate.package` |
-| Vet and lint | `go.vet.package`, `go.vet.workspace`, `go.lint.package`, `go.lint.workspace` |
-| Vulnerability checks | `go.vulncheck.package`, `go.vulncheck.workspace`, `go.vulncheck.toggle` |
-| Format and imports | `go.fmt.package`, `go.import.organize`, `go.import.add` |
-| Modules and dependencies | `go.mod.init`, `go.mod.tidy`, `go.mod.vendor`, `go.work.sync`, `go.get.package`, `go.install.package`, `go.browse.packages` |
-| Struct tags and interfaces | `go.tags.add`, `go.tags.remove`, `go.tags.clear`, `go.impl.cursor` |
+- `go.build.package` Build the current package.
+- `go.build.workspace` Build packages across the workspace.
+- `go.run` Run a Go package or file.
+- `go.generate.package` Run `go generate` in the current package.
+- `go.vet.package` Run `go vet` on the current package.
+- `go.vet.workspace` Run `go vet` across the workspace.
+- `go.lint.package` Lint the current package.
+- `go.lint.workspace` Lint packages across the workspace.
+- `go.vulncheck.package` Scan the current package for known vulnerabilities.
+- `go.vulncheck.workspace` Scan workspace packages for known vulnerabilities.
+- `go.vulncheck.toggle` Toggle `gopls` vulnerability diagnostics.
+- `go.fmt.package` Format the current package with `gofmt`.
+- `go.import.organize` Organize imports in the current file.
+- `go.import.add` Add an import to the current file.
+- `go.mod.init` Initialize a Go module.
+- `go.mod.tidy` Tidy the current module dependencies.
+- `go.mod.vendor` Copy module dependencies into the vendor directory.
+- `go.work.sync` Sync workspace dependencies.
+- `go.get.package` Add or update a module or package dependency.
+- `go.install.package` Install a Go package.
+- `go.browse.packages` Browse Go packages.
+- `go.tags.add` Add struct tags.
+- `go.tags.remove` Remove struct tags.
+- `go.tags.clear` Clear struct tags.
+- `go.impl.cursor` Generate an interface implementation.
 
 `govulncheck` is required for vulnerability scans, `gomodifytags` for struct tags, and `impl` for interface implementation generation.
 
