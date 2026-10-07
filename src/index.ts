@@ -1,85 +1,190 @@
 import { execFile, spawn } from 'node:child_process'
-import { accessSync, constants, existsSync } from 'node:fs'
+import { accessSync, constants, existsSync, readFileSync } from 'node:fs'
 import { delimiter, dirname, isAbsolute, join } from 'node:path'
-import { homedir, platform } from 'node:os'
+import { devNull, homedir, platform } from 'node:os'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import * as coc from 'coc.nvim'
 import type { ChildProcess } from 'node:child_process'
 import type { Disposable, ExtensionContext, LanguageClient } from 'coc.nvim'
+import { lintArguments, parseProblems } from './go-check-utils'
+import {
+  buildFlagsWithTags,
+  goplsConfiguration,
+  inferGopath,
+  parseEnvFile,
+  pathKey,
+  prependPath,
+  testFlagsFor
+} from './go-config-utils'
+import type { GoplsOptions } from './go-config-utils'
 import { testArgumentsAtCursor, testArgumentsForFile, testNameAtCursor } from './go-test-utils'
 
 const restartSettings = [
-  'go.goplsPath',
-  'go.goplsArgs',
-  'go.goplsEnv',
-  'go.goplsOptions',
+  'go.useLanguageServer',
+  'go.languageServerFlags',
   'go.goplsUseDaemon',
-  'go.goPath',
-  'go.goEnv',
+  'go.disable',
+  'go.alternateTools',
   'go.goroot',
   'go.gopath',
-  'go.gobin',
-  'go.toolsEnvVars'
+  'go.inferGopath',
+  'go.toolsGopath',
+  'go.toolsEnvVars',
+  'go.buildFlags',
+  'go.buildTags',
+  'go.inlayHints',
+  'go.diagnostic.vulncheck',
+  'go.enableCodeLens',
+  'gopls'
 ]
 
-const tools = {
-  gopls: 'golang.org/x/tools/gopls@latest',
-  dlv: 'github.com/go-delve/delve/cmd/dlv@latest',
-  goimports: 'golang.org/x/tools/cmd/goimports@latest',
-  staticcheck: 'honnef.co/go/tools/cmd/staticcheck@latest',
-  govulncheck: 'golang.org/x/vuln/cmd/govulncheck@latest',
-  gomodifytags: 'github.com/fatih/gomodifytags@latest',
-  gotests: 'github.com/cweill/gotests/gotests@latest',
-  impl: 'github.com/josharian/impl@latest'
-}
+type ToolDefinition = { module: string; binary?: string; optional?: boolean }
 
-const defaultGoplsOptions = {
-  codelenses: {
-    generate: true,
-    test: true,
-    tidy: true,
-    upgrade_dependency: true,
-    vendor: true
-  }
+const tools: Record<string, ToolDefinition> = {
+  gopls: { module: 'golang.org/x/tools/gopls@latest' },
+  dlv: { module: 'github.com/go-delve/delve/cmd/dlv@latest' },
+  goimports: { module: 'golang.org/x/tools/cmd/goimports@latest' },
+  staticcheck: { module: 'honnef.co/go/tools/cmd/staticcheck@latest' },
+  govulncheck: { module: 'golang.org/x/vuln/cmd/govulncheck@latest' },
+  gomodifytags: { module: 'github.com/fatih/gomodifytags@latest' },
+  gotests: { module: 'github.com/cweill/gotests/gotests@latest' },
+  impl: { module: 'github.com/josharian/impl@latest' },
+  golint: { module: 'golang.org/x/lint/golint@latest', optional: true },
+  'golangci-lint': {
+    module: 'github.com/golangci/golangci-lint/cmd/golangci-lint@latest',
+    binary: 'golangci-lint',
+    optional: true
+  },
+  'golangci-lint-v2': {
+    module: 'github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest',
+    binary: 'golangci-lint',
+    optional: true
+  },
+  revive: { module: 'github.com/mgechev/revive@latest', optional: true },
+  gofumpt: { module: 'mvdan.cc/gofumpt@latest', optional: true },
+  goformat: { module: 'winterdrache.de/goformat/goformat@latest', optional: true }
 }
+type ToolName = string
 
 type ProcessResult = {
   code: number | null
   stdout: string
+  output: string
 }
-type GoplsOptions = Record<string, unknown> & {
-  codelenses?: Record<string, boolean>
-}
+
+type CheckKind = 'build' | 'vet' | 'lint'
+type CheckScope = 'file' | 'package' | 'workspace'
 
 let client: LanguageClient | undefined
 let clientRegistration: Disposable | undefined
+let formatRegistration: Disposable | undefined
 let runningProcesses = new Set<ChildProcess>()
 let runningTests = new Set<ChildProcess>()
 let outputChannel: coc.OutputChannel | undefined
 let previousTest: { args: string[]; cwd: string } | undefined
+const checkCollections = new Map<string, coc.DiagnosticCollection>()
+const terminalEnvironmentBackup = new Map<string, string | undefined>()
 
 function configValue<T>(name: string, fallback: T): T {
-  return coc.workspace.getConfiguration('go').get(name, fallback)
+  const value = coc.workspace.getConfiguration('go').get<T | null>(name)
+  return value === undefined || value === null ? fallback : value
+}
+
+function alternateTool(name: string): string | undefined {
+  const value = configValue<Record<string, string>>('alternateTools', {})[name]
+  return typeof value === 'string' && value.trim() ? value.trim() : undefined
 }
 
 function goCommand(): string {
-  return configValue('goPath', 'go')
+  return alternateTool('go') ?? 'go'
 }
 
-function goEnvironment(): NodeJS.ProcessEnv {
-  const config = coc.workspace.getConfiguration('go')
-  const environment = {
+function toolsDirectories(environment: NodeJS.ProcessEnv): string[] {
+  const directories: (string | undefined)[] = [
+    environment.GOBIN,
+    ...(environment.GOPATH || '').split(delimiter).filter(Boolean).map(item => join(item, 'bin'))
+  ]
+  const toolsGopath = configValue('toolsGopath', '')
+  if (toolsGopath) directories.unshift(join(toolsGopath, 'bin'))
+  return directories.filter((directory): directory is string => !!directory)
+}
+
+function goEnvironment(forToolInstall = false): NodeJS.ProcessEnv {
+  const environment: NodeJS.ProcessEnv = {
     ...process.env,
-    ...config.get<Record<string, string>>('toolsEnvVars', {}),
-    ...config.get<Record<string, string>>('goEnv', {})
+    ...configValue<Record<string, string>>('toolsEnvVars', {})
   }
-  const goroot = config.get<string>('goroot')
-  const gopath = config.get<string>('gopath')
-  const gobin = config.get<string>('gobin')
-  if (goroot) environment.GOROOT = goroot
+  const goroot = configValue('goroot', '')
+  let gopath = configValue('gopath', '')
+  if (configValue('inferGopath', false)) {
+    const folder = workspaceDirectories()[0]
+    if (folder && !existsSync(join(folder, 'go.mod'))) gopath = inferGopath(folder) ?? gopath
+  }
+  if (goroot) {
+    environment.GOROOT = goroot
+    prependPath(environment, join(goroot, 'bin'), delimiter)
+  }
   if (gopath) environment.GOPATH = gopath
-  if (gobin) environment.GOBIN = gobin
+  const toolsGopath = configValue('toolsGopath', '')
+  if (forToolInstall && toolsGopath) environment.GOPATH = toolsGopath
   return environment
+}
+
+function goBuildFlags(): string[] {
+  return buildFlagsWithTags(configValue<string[]>('buildFlags', []), configValue('buildTags', ''))
+}
+
+function goTestFlags(): string[] {
+  return testFlagsFor({
+    testFlags: configValue<string[] | null>('testFlags', null),
+    buildFlags: configValue<string[]>('buildFlags', []),
+    testTags: configValue<string | null>('testTags', null),
+    buildTags: configValue('buildTags', ''),
+    testTimeout: configValue('testTimeout', '')
+  })
+}
+
+function goTestEnvironment(): NodeJS.ProcessEnv {
+  const environment: Record<string, string> = {}
+  const envFile = configValue('testEnvFile', '')
+  if (envFile) {
+    try {
+      Object.assign(environment, parseEnvFile(readFileSync(envFile, 'utf8')))
+    } catch (error) {
+      coc.window.showMessage(`Unable to read go.testEnvFile ${envFile}: ${String(error)}`, 'warning')
+    }
+  }
+  return { ...environment, ...configValue<Record<string, string>>('testEnvVars', {}) }
+}
+
+function goplsOptions(): GoplsOptions {
+  const go = coc.workspace.getConfiguration('go')
+  const hints = go.get<Record<string, boolean>>('inlayHints', {})
+  return goplsConfiguration(coc.workspace.getConfiguration().get<GoplsOptions>('gopls', {}), {
+    buildFlags: configValue<string[]>('buildFlags', []),
+    buildTags: configValue('buildTags', ''),
+    inlayHints: Object.fromEntries(Object.entries(hints).filter(([, value]) => typeof value === 'boolean')),
+    vulncheck: go.get<string>('diagnostic.vulncheck'),
+    runTestCodeLens: go.get<{ runtest?: boolean }>('enableCodeLens', {}).runtest !== false
+  })
+}
+
+// Mirrors the "go.terminal.activateEnvironment" setting by exporting the Go environment to Neovim.
+async function activateTerminalEnvironment(): Promise<void> {
+  for (const [name, value] of terminalEnvironmentBackup) {
+    await coc.workspace.nvim.call('setenv', [name, value ?? null])
+  }
+  terminalEnvironmentBackup.clear()
+  if (!configValue('terminal.activateEnvironment', true)) return
+
+  const environment = goEnvironment()
+  for (const name of Object.keys(environment)) {
+    const value = environment[name]
+    const original = process.env[name]
+    if (value === undefined || value === original) continue
+    terminalEnvironmentBackup.set(name, original)
+    await coc.workspace.nvim.call('setenv', [name, value])
+  }
 }
 
 function resolveExecutable(command: string, env: NodeJS.ProcessEnv = process.env): string | undefined {
@@ -97,7 +202,7 @@ function resolveExecutable(command: string, env: NodeJS.ProcessEnv = process.env
   const extensions = platform() === 'win32'
     ? (process.env.PATHEXT || '.EXE;.CMD;.BAT').split(';')
     : ['']
-  for (const directory of (env.PATH || '').split(delimiter)) {
+  for (const directory of (env[pathKey(env)] || '').split(delimiter)) {
     for (const extension of extensions) {
       const candidate = join(directory, expanded + extension)
       try {
@@ -115,24 +220,31 @@ function runProcess(
   args: string[],
   cwd: string,
   env: NodeJS.ProcessEnv = process.env,
-  processGroup?: Set<ChildProcess>
+  processGroup?: Set<ChildProcess>,
+  input?: string
 ): Promise<ProcessResult> {
   return new Promise((resolvePromise, reject) => {
     const child = spawn(command, args, {
       cwd,
       env,
-      stdio: ['ignore', 'pipe', 'pipe'],
+      stdio: [input === undefined ? 'ignore' : 'pipe', 'pipe', 'pipe'],
       windowsHide: true
     })
     runningProcesses.add(child)
     processGroup?.add(child)
     let stdout = ''
+    let output = ''
     child.stdout?.on('data', (chunk: Buffer) => {
       const value = chunk.toString()
       stdout += value
+      output += value
+      if (input === undefined) outputChannel?.append(value)
+    })
+    child.stderr?.on('data', (chunk: Buffer) => {
+      const value = chunk.toString()
+      output += value
       outputChannel?.append(value)
     })
-    child.stderr?.on('data', (chunk: Buffer) => outputChannel?.append(chunk.toString()))
     child.once('error', error => {
       runningProcesses.delete(child)
       processGroup?.delete(child)
@@ -141,8 +253,12 @@ function runProcess(
     child.once('close', code => {
       runningProcesses.delete(child)
       processGroup?.delete(child)
-      resolvePromise({ code, stdout })
+      resolvePromise({ code, stdout, output })
     })
+    if (input !== undefined) {
+      child.stdin?.on('error', () => undefined)
+      child.stdin?.end(input)
+    }
   })
 }
 
@@ -157,7 +273,7 @@ async function runGo(
   cwd: string,
   testProcess = false,
   extraEnvironment: NodeJS.ProcessEnv = {}
-): Promise<void> {
+): Promise<ProcessResult | undefined> {
   const fullArgs = [subcommand, ...args]
   showCommandOutput(`${goCommand()} ${fullArgs.join(' ')}`)
   try {
@@ -171,6 +287,7 @@ async function runGo(
     if (result.code !== 0) {
       coc.window.showMessage(`go ${subcommand} exited with code ${result.code}`, 'error')
     }
+    return result
   } catch (error) {
     coc.window.showMessage(`Failed to run go ${subcommand}: ${String(error)}`, 'error')
   }
@@ -220,13 +337,11 @@ async function runTests(
   cwd: string
 ): Promise<void> {
   previousTest = { args, cwd }
-  await runGo(
-    'test',
-    [...configValue<string[]>('testFlags', []), ...args],
-    cwd,
-    true,
-    configValue<Record<string, string>>('testEnv', {})
-  )
+  if (configValue('disableConcurrentTests', false)) {
+    for (const process of runningTests) process.kill()
+    runningTests.clear()
+  }
+  await runGo('test', [...goTestFlags(), ...args], cwd, true, goTestEnvironment())
 }
 
 async function showGoEnvironment(name?: string): Promise<void> {
@@ -244,14 +359,15 @@ async function showGoEnvironment(name?: string): Promise<void> {
   }
 }
 
-async function installTool(name: keyof typeof tools): Promise<boolean> {
-  showCommandOutput(`${goCommand()} install ${tools[name]}`)
+async function installTool(name: ToolName): Promise<boolean> {
+  const command = configValue('toolsManagement.go', '') || goCommand()
+  showCommandOutput(`${command} install ${tools[name].module}`)
   try {
     const result = await runProcess(
-      goCommand(),
-      ['install', tools[name]],
+      command,
+      ['install', tools[name].module],
       coc.workspace.cwd,
-      goEnvironment()
+      goEnvironment(true)
     )
     if (result.code !== 0) {
       coc.window.showMessage(`Failed to install ${name} (exit code ${result.code}). See Go output.`, 'error')
@@ -267,27 +383,26 @@ async function installTool(name: keyof typeof tools): Promise<boolean> {
 
 async function toolExecutable(name: string): Promise<string | undefined> {
   const env = goEnvironment()
-  const found = resolveExecutable(name, env)
-  if (found) return found
+  const configured = alternateTool(name) ?? tools[name]?.binary ?? name
+  const found = resolveExecutable(configured, env)
+  if (found || configured.includes('/') || configured.includes('\\')) return found
 
-  const directories = [env.GOBIN]
-  let gopath = env.GOPATH
-  if (!gopath) {
+  const directories = toolsDirectories(env)
+  if (!env.GOPATH && !configValue('toolsGopath', '')) {
     try {
-      gopath = (await execFileText(goCommand(), ['env', 'GOPATH'], env)).trim()
+      const gopath = (await execFileText(goCommand(), ['env', 'GOPATH'], env)).trim()
+      directories.push(...gopath.split(delimiter).filter(Boolean).map(item => join(item, 'bin')))
     } catch {
-      gopath = undefined
+      // The go command is unavailable; only PATH and explicit settings can be used.
     }
   }
-  if (gopath) directories.push(...gopath.split(platform() === 'win32' ? ';' : ':').map(item => join(item, 'bin')))
 
   const extensions = platform() === 'win32'
     ? (process.env.PATHEXT || '.EXE;.CMD;.BAT').split(';')
     : ['']
   for (const directory of directories) {
-    if (!directory) continue
     for (const extension of extensions) {
-      const candidate = join(directory, name + extension)
+      const candidate = join(directory, configured + extension)
       try {
         accessSync(candidate, constants.X_OK)
         return candidate
@@ -307,26 +422,90 @@ function execFileText(command: string, args: string[], env: NodeJS.ProcessEnv): 
   })
 }
 
-async function runTool(name: keyof typeof tools, args: string[], cwd: string): Promise<void> {
+async function runTool(
+  name: ToolName,
+  args: string[],
+  cwd: string,
+  options: { input?: string; quiet?: boolean } = {}
+): Promise<ProcessResult | undefined> {
   let executable = await toolExecutable(name)
   if (!executable && configValue('autoInstallTools', false) && await coc.window.showPrompt(`${name} is missing. Install it now?`)) {
     if (await installTool(name)) executable = await toolExecutable(name)
   }
   if (!executable) {
     coc.window.showMessage(`The ${name} tool is not installed. Run :CocCommand go.tools.install.${name}.`, 'warning')
-    return
+    return undefined
   }
-  showCommandOutput(`${executable} ${args.join(' ')}`)
+  if (!options.quiet) showCommandOutput(`${executable} ${args.join(' ')}`)
   try {
-    const result = await runProcess(executable, args, cwd, goEnvironment())
+    const result = await runProcess(executable, args, cwd, goEnvironment(), undefined, options.input)
+    if (options.quiet) return result
     if (name === 'govulncheck' && result.code === 3) {
       coc.window.showMessage('govulncheck found vulnerabilities. See Go output.', 'warning')
     } else if (result.code !== 0) {
       coc.window.showMessage(`${name} exited with code ${result.code}`, 'error')
     }
+    return result
   } catch (error) {
     coc.window.showMessage(`Failed to run ${name}: ${String(error)}`, 'error')
   }
+}
+
+function checkCollection(kind: CheckKind, tool?: string): coc.DiagnosticCollection {
+  const name = kind === 'lint' ? `go-lint-${tool}` : `go-${kind}`
+  let collection = checkCollections.get(name)
+  if (!collection) {
+    collection = coc.languages.createDiagnosticCollection(name)
+    checkCollections.set(name, collection)
+  }
+  return collection
+}
+
+function lintTool(): string {
+  return configValue('lintTool', '') || 'staticcheck'
+}
+
+async function runCheck(kind: CheckKind, scope: CheckScope, cwd: string, file?: string): Promise<void> {
+  const target = scope === 'workspace' ? './...' : scope === 'file' && file ? file : '.'
+  let result: ProcessResult | undefined
+  let tool: string | undefined
+  if (kind === 'lint') {
+    tool = lintTool()
+    const binary = tool
+    showCommandOutput(`${binary} ${lintArguments(tool, configValue<string[]>('lintFlags', []), target).join(' ')}`)
+    result = await runTool(
+      binary,
+      lintArguments(tool, configValue<string[]>('lintFlags', []), target),
+      cwd,
+      { quiet: true }
+    )
+  } else if (kind === 'vet') {
+    result = await runGo('vet', [...goBuildFlags(), ...configValue<string[]>('vetFlags', []), target], cwd)
+  } else {
+    const flags = [...goBuildFlags()]
+    if (configValue('installDependenciesWhenBuilding', false)) flags.unshift('-i')
+    result = await runGo('build', [...flags, ...(scope === 'workspace' ? [] : ['-o', devNull]), target], cwd)
+  }
+  if (!result) return
+
+  const collection = checkCollection(kind, tool)
+  const problems = parseProblems(result.output, cwd)
+  if (kind === 'lint') {
+    if (result.code !== 0 && !problems.length) {
+      coc.window.showMessage(`${tool} exited with code ${result.code}. See Go output.`, 'error')
+    }
+  }
+  const severity = kind === 'build' ? coc.DiagnosticSeverity.Error : coc.DiagnosticSeverity.Warning
+  const diagnostics = new Map<string, coc.Diagnostic[]>()
+  for (const problem of problems) {
+    const uri = fileUri(problem.file)
+    const range = coc.Range.create(problem.line - 1, problem.column - 1, problem.line - 1, problem.column - 1)
+    const list = diagnostics.get(uri) ?? []
+    list.push(coc.Diagnostic.create(range, problem.message, severity, undefined, tool ?? `go ${kind}`))
+    diagnostics.set(uri, list)
+  }
+  collection.clear()
+  collection.set([...diagnostics.entries()])
 }
 
 function registerCommand(
@@ -447,33 +626,29 @@ function registerCommands(context: ExtensionContext): void {
 
   const packageCommand = (id: string, subcommand: string, args: string[] = ['.']): void => {
     registerCommand(context, id, async () => {
-      const flags = subcommand === 'build' ? configValue<string[]>('buildFlags', []) : []
-      await runGo(subcommand, [...flags, ...args], await cwd())
+      await runGo(subcommand, args, await cwd())
     })
   }
-  packageCommand('go.build.package', 'build')
-  packageCommand('go.vet.package', 'vet')
+  registerCommand(context, 'go.build.package', async () => runCheck('build', 'package', await cwd()))
+  registerCommand(context, 'go.vet.package', async () => runCheck('vet', 'package', await cwd()))
   packageCommand('go.generate.package', 'generate')
   packageCommand('go.mod.tidy', 'mod', ['tidy'])
   packageCommand('go.mod.vendor', 'mod', ['vendor'])
   packageCommand('go.work.sync', 'work', ['sync'])
   registerCommand(context, 'go.run', async (target?: string) =>
-    runGo('run', [target || '.'], await cwd()))
-  for (const [id, subcommand] of [
+    runGo('run', [...goBuildFlags(), target || '.'], await cwd()))
+  for (const [id, kind] of [
     ['go.build.workspace', 'build'],
     ['go.vet.workspace', 'vet']
-  ]) {
+  ] as const) {
     registerCommand(context, id, async () => {
-      for (const directory of workspaceDirectories()) {
-        const flags = subcommand === 'build' ? configValue<string[]>('buildFlags', []) : []
-        await runGo(subcommand, [...flags, './...'], directory)
-      }
+      for (const directory of workspaceDirectories()) await runCheck(kind, 'workspace', directory)
     })
   }
-  registerCommand(context, 'go.lint.package', async () =>
-    runTool('staticcheck', ['.'], await cwd()))
-  registerCommand(context, 'go.lint.workspace', async () =>
-    Promise.all(workspaceDirectories().map(directory => runTool('staticcheck', ['./...'], directory))))
+  registerCommand(context, 'go.lint.package', async () => runCheck('lint', 'package', await cwd()))
+  registerCommand(context, 'go.lint.workspace', async () => {
+    await Promise.all(workspaceDirectories().map(directory => runCheck('lint', 'workspace', directory)))
+  })
 
   registerCommand(context, 'go.vulncheck.package', async () =>
     runTool('govulncheck', ['.'], await cwd()))
@@ -482,9 +657,8 @@ function registerCommands(context: ExtensionContext): void {
   })
   registerCommand(context, 'go.vulncheck.toggle', async () => {
     const config = coc.workspace.getConfiguration('go')
-    const options = config.get<GoplsOptions>('goplsOptions', {})
-    const vulncheck = options.vulncheck === 'Imports' ? 'Off' : 'Imports'
-    await config.update('goplsOptions', { ...options, vulncheck }, true)
+    const vulncheck = config.get<string>('diagnostic.vulncheck', 'Prompt') === 'Imports' ? 'Off' : 'Imports'
+    await config.update('diagnostic.vulncheck', vulncheck, true)
     coc.window.showMessage(`gopls vulncheck: ${vulncheck}`)
   })
 
@@ -547,7 +721,7 @@ function registerCommands(context: ExtensionContext): void {
   registerCommand(context, 'go.install.package', async (packagePath?: string) => {
     packagePath ??= await coc.window.requestInput('Go package path')
     if (!packagePath) return
-    await runGo('install', [packagePath], await cwd())
+    await runGo('install', [...goBuildFlags(), packagePath], await cwd())
   })
   registerCommand(context, 'go.gopath', () => showGoEnvironment('GOPATH'))
   registerCommand(context, 'go.goroot', () => showGoEnvironment('GOROOT'))
@@ -574,11 +748,11 @@ function registerCommands(context: ExtensionContext): void {
     }
   })
   registerCommand(context, 'go.tools.install', async () => {
-    for (const name of Object.keys(tools) as (keyof typeof tools)[]) {
-      await installTool(name)
+    for (const name of Object.keys(tools)) {
+      if (!tools[name].optional) await installTool(name)
     }
   })
-  for (const name of Object.keys(tools) as (keyof typeof tools)[]) {
+  for (const name of Object.keys(tools)) {
     registerCommand(context, `go.tools.install.${name}`, async () => {
       if (await installTool(name) && name === 'gopls') await replaceLanguageClient(context)
     })
@@ -591,23 +765,27 @@ function registerCommands(context: ExtensionContext): void {
   registerCommand(context, 'go.locate.tools', async () => {
     const goBin = resolveExecutable(goCommand())
     const lines = [`go: ${goBin || 'not found'}`]
-    for (const name of Object.keys(tools) as (keyof typeof tools)[]) {
+    for (const name of Object.keys(tools)) {
       const binary = await toolExecutable(name)
       lines.push(`${name}: ${binary || 'not found'}`)
     }
     outputChannel?.appendLine(lines.join('\n'))
     outputChannel?.show()
   })
+  const gotestsArguments = (...args: string[]): string[] => [
+    ...configValue<string[]>('generateTestsFlags', []),
+    ...args
+  ]
   registerCommand(context, 'go.test.generate.file', async () => {
     const file = await activeFile()
     if (!file) {
       coc.window.showMessage('Open a Go file first.', 'warning')
       return
     }
-    await runTool('gotests', ['-w', '-all', file], dirname(file))
+    await runTool('gotests', gotestsArguments('-w', '-all', file), dirname(file))
   })
   registerCommand(context, 'go.test.generate.package', async () =>
-    runTool('gotests', ['-w', '-all', '.'], await cwd()))
+    runTool('gotests', gotestsArguments('-w', '-all', '.'), await cwd()))
   registerCommand(context, 'go.test.generate.function', async () => {
     const lines = await coc.workspace.nvim.eval('getline(1, line("."))')
     const args = testArgumentsAtCursor(lines as string[] | string)
@@ -622,7 +800,7 @@ function registerCommands(context: ExtensionContext): void {
     )
     if (!match) return
     const file = await activeFile()
-    if (file) await runTool('gotests', ['-w', '-only', `^${match[1]}$`, file], dirname(file))
+    if (file) await runTool('gotests', gotestsArguments('-w', '-only', `^${match[1]}$`, file), dirname(file))
   })
   registerCommand(context, 'go.tags.add', async (tags?: string[] | string) => runModifyTags('add', tags))
   registerCommand(context, 'go.tags.remove', async (tags?: string[] | string) => runModifyTags('remove', tags))
@@ -696,14 +874,10 @@ async function restartClient(): Promise<void> {
 }
 
 async function makeLanguageClient(): Promise<LanguageClient | undefined> {
-  const command = configValue('goplsPath', 'gopls')
-  const resolved = resolveExecutable(command, goEnvironment()) || (
-    command === 'gopls' ? await toolExecutable('gopls') : undefined
-  )
+  const resolved = await toolExecutable('gopls')
   if (!resolved) return undefined
 
-  const configuredArgs = configValue<string[]>('goplsArgs', [])
-  const args = [...configuredArgs]
+  const args = [...configValue<string[]>('languageServerFlags', [])]
   if (configValue('goplsUseDaemon', true) && !args.some(value => value.startsWith('-remote'))) {
     args.push('-remote=auto')
   }
@@ -713,10 +887,9 @@ async function makeLanguageClient(): Promise<LanguageClient | undefined> {
   const tmpdir = await coc.workspace.nvim.eval('$TMPDIR')
   const serverEnvironment = {
     ...goEnvironment(),
-    ...(typeof tmpdir === 'string' && tmpdir ? { TMPDIR: tmpdir } : {}),
-    ...configValue<Record<string, string>>('goplsEnv', {})
+    ...(typeof tmpdir === 'string' && tmpdir ? { TMPDIR: tmpdir } : {})
   }
-  return new coc.LanguageClient('go', 'gopls', {
+  const instance = new coc.LanguageClient('go', 'gopls', {
     command: resolved,
     args,
     options: {
@@ -728,15 +901,94 @@ async function makeLanguageClient(): Promise<LanguageClient | undefined> {
     outputChannelName: 'gopls',
     progressOnInitialization: true,
     disabledFeatures: disabled,
-    initializationOptions: () => {
-      const options = configValue<GoplsOptions>('goplsOptions', {})
-      return {
-        ...defaultGoplsOptions,
-        ...options,
-        codelenses: { ...defaultGoplsOptions.codelenses, ...options.codelenses }
+    initializationOptions: () => goplsOptions(),
+    middleware: {
+      workspace: {
+        configuration: async (params, token, next) => {
+          const result = await next(params, token)
+          if (!Array.isArray(result)) return result
+          return params.items.map((item, index) => item.section === 'gopls' ? goplsOptions() : result[index])
+        }
       }
     }
   })
+  applyTrace(instance)
+  return instance
+}
+
+function applyTrace(instance: LanguageClient | undefined): void {
+  if (instance) instance.trace = coc.Trace.fromString(configValue('trace.server', 'off'))
+}
+
+async function startLanguageClient(context: ExtensionContext): Promise<void> {
+  if (!configValue('useLanguageServer', true)) return
+  let instance = await makeLanguageClient()
+  if (!instance && configValue('autoInstallGopls', false)) {
+    if (await coc.window.showPrompt('gopls is missing. Install it now?')) {
+      if (await installTool('gopls')) instance = await makeLanguageClient()
+    }
+  }
+  if (!instance) {
+    coc.window.showMessage(
+      'gopls was not found. Run :CocCommand go.gopls.install or set go.alternateTools.gopls.',
+      'warning'
+    )
+    return
+  }
+  client = instance
+  clientRegistration = coc.services.registerLanguageClient(instance)
+  context.subscriptions.push(clientRegistration)
+}
+
+function refreshFormatProvider(context: ExtensionContext): void {
+  formatRegistration?.dispose()
+  formatRegistration = undefined
+  const languageServer = configValue('useLanguageServer', true)
+  const tool = configValue<string>('formatTool', 'default')
+  if (languageServer && tool === 'default') return
+
+  const provider = {
+    provideDocumentFormattingEdits: async (document: coc.TextDocument): Promise<coc.TextEdit[]> => {
+      if (!document.uri.startsWith('file:')) return []
+      const file = fileURLToPath(document.uri)
+      const flags = configValue<string[]>('formatFlags', [])
+      const resolved = tool === 'default' ? 'goimports' : tool
+      const name = resolved === 'custom' ? 'customFormatter' : resolved
+      const args = resolved === 'goimports' ? ['-srcdir', dirname(file), ...flags] : flags
+      const text = document.getText()
+      const result = await runTool(name, args, dirname(file), { input: text, quiet: true })
+      if (!result || result.code !== 0) {
+        if (result) coc.window.showMessage(`${name} failed: ${result.output.trim().split(/\r?\n/)[0] ?? ''}`, 'error')
+        return []
+      }
+      if (result.stdout === text) return []
+      const end = document.positionAt(text.length)
+      return [coc.TextEdit.replace(coc.Range.create(0, 0, end.line, end.character), result.stdout)]
+    }
+  }
+  formatRegistration = coc.languages.registerDocumentFormatProvider(['go'], provider, 100)
+  context.subscriptions.push(formatRegistration)
+}
+
+async function checkGoplsUpdate(context: ExtensionContext): Promise<void> {
+  if (configValue('toolsManagement.checkForUpdates', 'proxy') !== 'proxy') return
+  const executable = await toolExecutable('gopls')
+  if (!executable) return
+  const env = goEnvironment()
+  try {
+    const info = await execFileText(goCommand(), ['version', '-m', executable], env)
+    const match = /^\s*mod\s+(\S+)\s+(v\S+)/m.exec(info)
+    if (!match) return
+    const [, module, installed] = match
+    const latestInfo = await execFileText(goCommand(), ['list', '-m', '-json', `${module}@latest`], env)
+    const latest = (JSON.parse(latestInfo) as { Version?: string }).Version
+    if (!latest || latest === installed || installed.includes('-0.')) return
+    const autoUpdate = configValue('toolsManagement.autoUpdate', false)
+    if (!autoUpdate && !await coc.window.showPrompt(`gopls ${latest} is available (installed: ${installed}). Update now?`)) return
+    if (await installTool('gopls')) await replaceLanguageClient(context)
+  } catch {
+    // Offline or no module proxy access; skip the update check silently.
+  }
 }
 
 export async function activate(context: ExtensionContext): Promise<void> {
@@ -750,33 +1002,44 @@ export async function activate(context: ExtensionContext): Promise<void> {
   })
   registerCommands(context)
 
-  let clientInstance = await makeLanguageClient()
-  if (!clientInstance && configValue('autoInstallGopls', false)) {
-    if (await coc.window.showPrompt('gopls is missing. Install it now?')) {
-      if (await installTool('gopls')) clientInstance = await makeLanguageClient()
-    }
-  }
-  if (!clientInstance) {
-    coc.window.showMessage('gopls was not found. Run :CocCommand go.gopls.install or set go.goplsPath.', 'warning')
-  }
-  if (clientInstance) {
-    client = clientInstance
-    clientRegistration = coc.services.registerLanguageClient(clientInstance)
-    context.subscriptions.push(clientRegistration)
-  }
+  await startLanguageClient(context)
+  refreshFormatProvider(context)
+  await activateTerminalEnvironment()
+  void checkGoplsUpdate(context)
 
   context.subscriptions.push(coc.workspace.onDidChangeConfiguration(async event => {
+    if (event.affectsConfiguration('go.trace.server')) applyTrace(client)
+    if (
+      event.affectsConfiguration('go.formatTool') ||
+      event.affectsConfiguration('go.useLanguageServer') ||
+      event.affectsConfiguration('go.alternateTools')
+    ) refreshFormatProvider(context)
+    if (
+      event.affectsConfiguration('go.terminal') ||
+      event.affectsConfiguration('go.goroot') ||
+      event.affectsConfiguration('go.gopath') ||
+      event.affectsConfiguration('go.inferGopath') ||
+      event.affectsConfiguration('go.toolsEnvVars') ||
+      event.affectsConfiguration('go.alternateTools')
+    ) await activateTerminalEnvironment()
     if (restartSettings.some(name => event.affectsConfiguration(name))) {
       await replaceLanguageClient(context)
     }
   }))
 
   context.subscriptions.push(coc.workspace.onDidSaveTextDocument(async document => {
-    if (document.languageId !== 'go' || !configValue('buildOnSave', false)) return
-    const file = document.uri.startsWith('file:') ? document.uri : undefined
-    if (file) {
-      await runGo('build', [...configValue<string[]>('buildFlags', []), '.'], dirname(fileURLToPath(file)))
+    if (document.languageId !== 'go' || !document.uri.startsWith('file:')) return
+    const file = fileURLToPath(document.uri)
+    const directory = dirname(file)
+    if (!configValue('useLanguageServer', true)) {
+      const build = configValue<string>('buildOnSave', 'package')
+      if (build !== 'off') await runCheck('build', build as CheckScope, directory, file)
+      const vet = configValue<string>('vetOnSave', 'package')
+      if (vet !== 'off') await runCheck('vet', vet as CheckScope, directory, file)
     }
+    const lint = configValue<string>('lintOnSave', 'package')
+    if (lint !== 'off' && configValue('lintTool', '')) await runCheck('lint', lint as CheckScope, directory, file)
+    if (configValue('testOnSave', false)) await runTests([], directory)
   }))
 }
 
@@ -786,28 +1049,7 @@ async function replaceLanguageClient(context: ExtensionContext): Promise<void> {
   clientRegistration?.dispose()
   clientRegistration = undefined
   if (current?.needsStop()) await current.stop().catch(() => undefined)
-
-  const next = await makeLanguageClient()
-  if (!next) {
-    if (configValue('autoInstallGopls', false) && await coc.window.showPrompt('gopls is missing. Install it now?')) {
-      if (await installTool('gopls')) {
-        const installed = await makeLanguageClient()
-        if (installed) {
-          client = installed
-          clientRegistration = coc.services.registerLanguageClient(installed)
-          context.subscriptions.push(clientRegistration)
-        } else {
-          coc.window.showMessage('gopls was not found after installation. Check go.goplsPath and GOBIN.', 'error')
-        }
-      }
-      return
-    }
-    coc.window.showMessage('gopls was not found. Run :CocCommand go.gopls.install or set go.goplsPath.', 'warning')
-    return
-  }
-  client = next
-  clientRegistration = coc.services.registerLanguageClient(next)
-  context.subscriptions.push(clientRegistration)
+  await startLanguageClient(context)
 }
 
 export async function deactivate(): Promise<void> {
@@ -816,6 +1058,8 @@ export async function deactivate(): Promise<void> {
   client = undefined
   clientRegistration = undefined
   registration?.dispose()
+  formatRegistration?.dispose()
+  formatRegistration = undefined
   if (current?.needsStop()) await current.stop().catch(() => undefined)
   for (const process of runningProcesses) process.kill()
   runningProcesses.clear()
