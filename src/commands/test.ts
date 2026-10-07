@@ -8,6 +8,7 @@ import {
   currentBufferLines,
   fileUri,
   linesToCursor,
+  wordAtCursor,
   workspaceDirectories,
 } from '../editor'
 import { goEnvironment } from '../environment'
@@ -81,7 +82,7 @@ export function registerTestCommands(context: ExtensionContext): void {
   })
   registerCommand(context, 'go.subtest.cursor', async () => {
     const testName = testNameAtCursor(await linesToCursor())
-    const subtestName = await coc.workspace.nvim.eval('expand("<cword>")') as string
+    const subtestName = await wordAtCursor()
     if (!testName || !subtestName) {
       coc.window.showMessage('Place the cursor on a subtest inside a Go test function.', 'warning')
       return
