@@ -39,6 +39,7 @@ async function showVersions(): Promise<void> {
 }
 
 async function locateTools(): Promise<void> {
+  showCommandOutput('go locate tools')
   const goBin = resolveExecutable(goCommand())
   const lines = [`go: ${goBin || 'not found'}`]
   for (const name of Object.keys(tools)) {

@@ -146,6 +146,7 @@ export function vulncheckMiddleware(
       if (command === 'gopls.vulncheck' && typeof uri === 'string') {
         const value = record(result)?.Result
         if (value && typeof value === 'object') {
+          showCommandOutput(`gopls vulncheck ${directoryForUri(uri)}`)
           void displayReport(gopls, value as VulncheckReport, uri).catch((error: unknown) => {
             coc.window.showMessage(`Failed to format vulncheck results: ${String(error)}`, 'error')
           })
