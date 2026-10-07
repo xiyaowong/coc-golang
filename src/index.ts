@@ -2,7 +2,7 @@ import { execFile, spawn } from 'node:child_process'
 import { accessSync, constants, existsSync } from 'node:fs'
 import { delimiter, dirname, isAbsolute, join } from 'node:path'
 import { homedir, platform } from 'node:os'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import * as coc from 'coc.nvim'
 import type { ChildProcess } from 'node:child_process'
 import type { Disposable, ExtensionContext, LanguageClient } from 'coc.nvim'
@@ -203,6 +203,17 @@ async function currentBufferLines(): Promise<string[]> {
   return Array.isArray(lines) ? lines.map(String) : []
 }
 
+function counterpartGoFile(file: string): string | undefined {
+  if (!file.endsWith('.go')) return undefined
+  return file.endsWith('_test.go')
+    ? `${file.slice(0, -'_test.go'.length)}.go`
+    : `${file.slice(0, -'.go'.length)}_test.go`
+}
+
+function fileUri(file: string): string {
+  return pathToFileURL(file).href
+}
+
 async function runTests(
   args: string[],
   cwd: string
@@ -400,6 +411,15 @@ function registerCommands(context: ExtensionContext): void {
     await runTests(previousTest.args, previousTest.cwd)
   })
   registerCommand(context, 'go.test.coverage', async () => runTests(['-cover'], await cwd()))
+  registerCommand(context, 'go.toggle.test.file', async () => {
+    const file = await activeFile()
+    const target = file ? counterpartGoFile(file) : undefined
+    if (!target) {
+      coc.window.showMessage('Open a Go file first.', 'warning')
+      return
+    }
+    await coc.workspace.openResource(fileUri(target))
+  })
   registerCommand(context, 'go.benchmark.package', async () =>
     runTests(['-run', '^$', '-bench', '.', ...configValue<string[]>('benchmarkFlags', [])], await cwd()))
   registerCommand(context, 'go.benchmark.cursor', async () => {
@@ -454,6 +474,47 @@ function registerCommands(context: ExtensionContext): void {
     runGo('fmt', ['.'], await cwd()))
   registerCommand(context, 'go.import.organize', async () => {
     await coc.commands.executeCommand('editor.action.organizeImport')
+  })
+  registerCommand(context, 'go.import.add', async (importPath?: string) => {
+    const file = await activeFile()
+    if (!file?.endsWith('.go')) {
+      coc.window.showMessage('Open a Go file first.', 'warning')
+      return
+    }
+    if (!client) {
+      coc.window.showMessage('gopls is not running.', 'warning')
+      return
+    }
+    const uri = fileUri(file)
+    let pkg = typeof importPath === 'string' ? importPath.trim() : ''
+    if (!pkg) {
+      let packages: string[] = []
+      try {
+        const result = await client.sendRequest<{ Packages?: string[] }>('workspace/executeCommand', {
+          command: 'gopls.list_known_packages',
+          arguments: [{ URI: uri }]
+        })
+        packages = result?.Packages?.filter(Boolean) ?? []
+      } catch {
+        packages = []
+      }
+      if (packages.length) {
+        const selected = await coc.window.showQuickpick(packages, 'Select a package to import')
+        if (selected < 0 || selected >= packages.length) return
+        pkg = packages[selected]
+      } else {
+        pkg = (await coc.window.requestInput('Import path'))?.trim() ?? ''
+      }
+    }
+    if (!pkg) return
+    try {
+      await client.sendRequest('workspace/executeCommand', {
+        command: 'gopls.add_import',
+        arguments: [{ ImportPath: pkg, URI: uri }]
+      })
+    } catch (error) {
+      coc.window.showMessage(`Failed to add import: ${String(error)}`, 'error')
+    }
   })
   registerCommand(context, 'go.mod.init', async (modulePath?: string) => {
     modulePath ??= await coc.window.requestInput('Module path (e.g. example.com/project)')

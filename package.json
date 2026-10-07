@@ -32,6 +32,7 @@
     "onCommand:go.benchmark.cursor",
     "onCommand:go.benchmark.file",
     "onCommand:go.test.coverage",
+    "onCommand:go.toggle.test.file",
     "onCommand:go.test.previous",
     "onCommand:go.build.package",
     "onCommand:go.vet.package",
@@ -47,6 +48,7 @@
     "onCommand:go.lint.workspace",
     "onCommand:go.fmt.package",
     "onCommand:go.import.organize",
+    "onCommand:go.import.add",
     "onCommand:go.generate.package",
     "onCommand:go.mod.tidy",
     "onCommand:go.mod.vendor",
@@ -79,8 +81,7 @@
   "scripts": {
     "build": "tsdown",
     "typecheck": "tsc --noEmit",
-    "prepare": "tsdown",
-    "test": "npm run build && node --test"
+    "prepare": "tsdown"
   },
   "contributes": {
     "commands": [
@@ -137,6 +138,11 @@
       {
         "command": "go.test.coverage",
         "title": "Test Go Package with Coverage",
+        "category": "Go"
+      },
+      {
+        "command": "go.toggle.test.file",
+        "title": "Toggle Go Test File",
         "category": "Go"
       },
       {
@@ -227,6 +233,11 @@
       {
         "command": "go.import.organize",
         "title": "Organize Go Imports",
+        "category": "Go"
+      },
+      {
+        "command": "go.import.add",
+        "title": "Add Go Import",
         "category": "Go"
       },
       {

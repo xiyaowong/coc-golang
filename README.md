@@ -33,6 +33,7 @@ organize-imports behavior can be enabled in coc.nvim's Go filetype settings.
 - `go.benchmark.package`, `go.benchmark.file`, `go.benchmark.cursor`
 - `go.test.generate.file`, `go.test.generate.package`,
   `go.test.generate.function` (requires `gotests`)
+- `go.toggle.test.file`
 
 Test output is collected in the `Go` output channel. Test and benchmark flags
 are passed as arrays in `go.testFlags` and `go.benchmarkFlags`, while
@@ -42,7 +43,7 @@ are passed as arrays in `go.testFlags` and `go.benchmarkFlags`, while
 
 - `go.build.package`, `go.build.workspace`, `go.run`, `go.generate.package`
 - `go.vet.package`, `go.vet.workspace`, `go.lint.package`, `go.lint.workspace`
-- `go.fmt.package`, `go.import.organize`
+- `go.fmt.package`, `go.import.organize`, `go.import.add`
 - `go.mod.init`, `go.mod.tidy`, `go.mod.vendor`, `go.work.sync`
 - `go.get.package`, `go.install.package`, `go.browse.packages`
 - `go.tags.add`, `go.tags.remove`, `go.tags.clear` (requires `gomodifytags`)
