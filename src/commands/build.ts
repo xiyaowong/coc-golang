@@ -1,5 +1,5 @@
-import * as coc from 'coc.nvim'
 import type { ExtensionContext } from 'coc.nvim'
+import * as coc from 'coc.nvim'
 import { runCheck } from '../check'
 import { goBuildFlags, goCommand } from '../config'
 import { activeDirectory, workspaceDirectories } from '../editor'
@@ -43,7 +43,7 @@ export function registerBuildCommands(context: ExtensionContext): void {
     runGo('run', [...goBuildFlags(), target || '.'], await cwd()))
   for (const [id, kind] of [
     ['go.build.workspace', 'build'],
-    ['go.vet.workspace', 'vet']
+    ['go.vet.workspace', 'vet'],
   ] as const) {
     registerCommand(context, id, async () => {
       for (const directory of workspaceDirectories()) await runCheck(kind, 'workspace', directory)

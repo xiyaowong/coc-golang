@@ -1,5 +1,5 @@
-import * as coc from 'coc.nvim'
 import type { ExtensionContext } from 'coc.nvim'
+import * as coc from 'coc.nvim'
 import { configValue, goCommand } from '../config'
 import {
   activeDirectory,
@@ -8,7 +8,7 @@ import {
   currentBufferLines,
   fileUri,
   linesToCursor,
-  workspaceDirectories
+  workspaceDirectories,
 } from '../editor'
 import { goEnvironment } from '../environment'
 import { testArgumentsAtCursor, testArgumentsForFile, testNameAtCursor } from '../go-test-utils'
@@ -25,7 +25,7 @@ async function listAndRunTest(): Promise<void> {
   try {
     const result = await runProcess(goCommand(), ['test', '-list', '.'], directory, goEnvironment())
     const names = result.stdout.split(/\r?\n/).filter(name =>
-      /^(?:Test[A-Z0-9]\w*|Benchmark[A-Z0-9]\w*|Example(?:[A-Z]\w*|_[a-z]\w*)?)$/.test(name)
+      /^(?:Test[A-Z0-9]\w*|Benchmark[A-Z0-9]\w*|Example(?:[A-Z]\w*|_[a-z]\w*)?)$/.test(name),
     )
     if (result.code !== 0) {
       coc.window.showMessage(`go test -list exited with code ${result.code}`, 'error')

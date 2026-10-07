@@ -1,10 +1,11 @@
-import { execFile, spawn } from 'node:child_process'
+import type { Buffer } from 'node:buffer'
 import type { ChildProcess } from 'node:child_process'
+import { execFile, spawn } from 'node:child_process'
 import * as coc from 'coc.nvim'
 import { goCommand } from './config'
 import { goEnvironment } from './environment'
 
-export type ProcessResult = {
+export interface ProcessResult {
   code: number | null
   stdout: string
   output: string
@@ -50,14 +51,14 @@ export function runProcess(
   cwd: string,
   env: NodeJS.ProcessEnv = process.env,
   processGroup?: Set<ChildProcess>,
-  input?: string
+  input?: string,
 ): Promise<ProcessResult> {
   return new Promise((resolvePromise, reject) => {
     const child = spawn(command, args, {
       cwd,
       env,
       stdio: [input === undefined ? 'ignore' : 'pipe', 'pipe', 'pipe'],
-      windowsHide: true
+      windowsHide: true,
     })
     runningProcesses.add(child)
     processGroup?.add(child)
@@ -74,12 +75,12 @@ export function runProcess(
       output += value
       outputChannel?.append(value)
     })
-    child.once('error', error => {
+    child.once('error', (error) => {
       runningProcesses.delete(child)
       processGroup?.delete(child)
       reject(error)
     })
-    child.once('close', code => {
+    child.once('close', (code) => {
       runningProcesses.delete(child)
       processGroup?.delete(child)
       resolvePromise({ code, stdout, output })
@@ -110,7 +111,7 @@ export async function runGo(
   args: string[],
   cwd: string,
   testProcess = false,
-  extraEnvironment: NodeJS.ProcessEnv = {}
+  extraEnvironment: NodeJS.ProcessEnv = {},
 ): Promise<ProcessResult | undefined> {
   const fullArgs = [subcommand, ...args]
   showCommandOutput(`${goCommand()} ${fullArgs.join(' ')}`)
@@ -120,7 +121,7 @@ export async function runGo(
       fullArgs,
       cwd,
       { ...goEnvironment(), ...extraEnvironment },
-      testProcess ? runningTests : undefined
+      testProcess ? runningTests : undefined,
     )
     if (result.code !== 0) {
       coc.window.showMessage(`go ${subcommand} exited with code ${result.code}`, 'error')

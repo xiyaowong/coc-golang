@@ -1,35 +1,35 @@
+import type { ProcessResult } from './process'
 import { delimiter, join } from 'node:path'
 import * as coc from 'coc.nvim'
 import { alternateTool, configValue, goCommand } from './config'
 import { findExecutable, goEnvironment, resolveExecutable, toolsDirectories } from './environment'
 import { execFileText, runProcess, showCommandOutput } from './process'
-import type { ProcessResult } from './process'
 
-type ToolDefinition = { module: string; binary?: string; optional?: boolean }
+interface ToolDefinition { module: string, binary?: string, optional?: boolean }
 
 export const tools: Record<string, ToolDefinition> = {
-  gopls: { module: 'golang.org/x/tools/gopls@latest' },
-  dlv: { module: 'github.com/go-delve/delve/cmd/dlv@latest' },
-  goimports: { module: 'golang.org/x/tools/cmd/goimports@latest' },
-  staticcheck: { module: 'honnef.co/go/tools/cmd/staticcheck@latest' },
-  govulncheck: { module: 'golang.org/x/vuln/cmd/govulncheck@latest' },
-  gomodifytags: { module: 'github.com/fatih/gomodifytags@latest' },
-  gotests: { module: 'github.com/cweill/gotests/gotests@latest' },
-  impl: { module: 'github.com/josharian/impl@latest' },
-  golint: { module: 'golang.org/x/lint/golint@latest', optional: true },
+  'gopls': { module: 'golang.org/x/tools/gopls@latest' },
+  'dlv': { module: 'github.com/go-delve/delve/cmd/dlv@latest' },
+  'goimports': { module: 'golang.org/x/tools/cmd/goimports@latest' },
+  'staticcheck': { module: 'honnef.co/go/tools/cmd/staticcheck@latest' },
+  'govulncheck': { module: 'golang.org/x/vuln/cmd/govulncheck@latest' },
+  'gomodifytags': { module: 'github.com/fatih/gomodifytags@latest' },
+  'gotests': { module: 'github.com/cweill/gotests/gotests@latest' },
+  'impl': { module: 'github.com/josharian/impl@latest' },
+  'golint': { module: 'golang.org/x/lint/golint@latest', optional: true },
   'golangci-lint': {
     module: 'github.com/golangci/golangci-lint/cmd/golangci-lint@latest',
     binary: 'golangci-lint',
-    optional: true
+    optional: true,
   },
   'golangci-lint-v2': {
     module: 'github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest',
     binary: 'golangci-lint',
-    optional: true
+    optional: true,
   },
-  revive: { module: 'github.com/mgechev/revive@latest', optional: true },
-  gofumpt: { module: 'mvdan.cc/gofumpt@latest', optional: true },
-  goformat: { module: 'winterdrache.de/goformat/goformat@latest', optional: true }
+  'revive': { module: 'github.com/mgechev/revive@latest', optional: true },
+  'gofumpt': { module: 'mvdan.cc/gofumpt@latest', optional: true },
+  'goformat': { module: 'winterdrache.de/goformat/goformat@latest', optional: true },
 }
 
 export async function installTool(name: string): Promise<boolean> {
@@ -40,7 +40,7 @@ export async function installTool(name: string): Promise<boolean> {
       command,
       ['install', tools[name].module],
       coc.workspace.cwd,
-      goEnvironment(true)
+      goEnvironment(true),
     )
     if (result.code !== 0) {
       coc.window.showMessage(`Failed to install ${name} (exit code ${result.code}). See Go output.`, 'error')
@@ -76,7 +76,7 @@ export async function runTool(
   name: string,
   args: string[],
   cwd: string,
-  options: { input?: string; quiet?: boolean } = {}
+  options: { input?: string, quiet?: boolean } = {},
 ): Promise<ProcessResult | undefined> {
   let executable = await toolExecutable(name)
   if (!executable && configValue('autoInstallTools', false) && await coc.window.showPrompt(`${name} is missing. Install it now?`)) {

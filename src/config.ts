@@ -18,12 +18,12 @@ export const restartSettings = [
   'go.inlayHints',
   'go.diagnostic.vulncheck',
   'go.enableCodeLens',
-  'gopls'
+  'gopls',
 ]
 
 export function configValue<T>(name: string, fallback: T): T {
   const value = coc.workspace.getConfiguration('go').get<T | null>(name)
-  return value === undefined || value === null ? fallback : value
+  return value ?? fallback
 }
 
 export function alternateTool(name: string): string | undefined {
@@ -45,7 +45,7 @@ export function goTestFlags(): string[] {
     buildFlags: configValue<string[]>('buildFlags', []),
     testTags: configValue<string | null>('testTags', null),
     buildTags: configValue('buildTags', ''),
-    testTimeout: configValue('testTimeout', '')
+    testTimeout: configValue('testTimeout', ''),
   })
 }
 

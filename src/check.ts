@@ -1,10 +1,10 @@
+import type { ProcessResult } from './process'
 import { devNull } from 'node:os'
 import * as coc from 'coc.nvim'
 import { configValue, goBuildFlags } from './config'
 import { fileUri } from './editor'
 import { lintArguments, parseProblems } from './go-check-utils'
 import { runGo, showCommandOutput } from './process'
-import type { ProcessResult } from './process'
 import { runTool } from './tools'
 
 export type CheckKind = 'build' | 'vet' | 'lint'

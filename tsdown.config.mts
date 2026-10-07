@@ -10,7 +10,7 @@ export default defineConfig({
   dts: false,
   deps: {
     neverBundle: ['coc.nvim'],
-    onlyBundle: false
+    onlyBundle: false,
   },
-  outExtensions: () => ({ js: '.js' })
+  outExtensions: () => ({ js: '.js' }),
 })

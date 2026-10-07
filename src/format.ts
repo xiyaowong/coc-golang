@@ -1,7 +1,7 @@
+import type { Disposable, ExtensionContext } from 'coc.nvim'
 import { dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import * as coc from 'coc.nvim'
-import type { Disposable, ExtensionContext } from 'coc.nvim'
 import { configValue } from './config'
 import { runTool } from './tools'
 
@@ -30,7 +30,7 @@ export function refreshFormatProvider(context: ExtensionContext): void {
       if (result.stdout === text) return []
       const end = document.positionAt(text.length)
       return [coc.TextEdit.replace(coc.Range.create(0, 0, end.line, end.character), result.stdout)]
-    }
+    },
   }
   formatRegistration = coc.languages.registerDocumentFormatProvider(['go'], provider, 100)
   context.subscriptions.push(formatRegistration)

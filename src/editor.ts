@@ -14,7 +14,7 @@ export async function activeDirectory(): Promise<string> {
 
 export function workspaceDirectories(): string[] {
   const directories = coc.workspace.workspaceFolders
-    .map(folder => {
+    .map((folder) => {
       try {
         return fileURLToPath(folder.uri)
       } catch {

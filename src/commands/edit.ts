@@ -1,6 +1,6 @@
+import type { ExtensionContext } from 'coc.nvim'
 import { dirname } from 'node:path'
 import * as coc from 'coc.nvim'
-import type { ExtensionContext } from 'coc.nvim'
 import { configValue } from '../config'
 import { activeDirectory, activeFile, fileUri, linesToCursor, wordAtCursor } from '../editor'
 import { testArgumentsAtCursor } from '../go-test-utils'
@@ -10,7 +10,7 @@ import { registerCommand } from './register'
 
 const gotestsArguments = (...args: string[]): string[] => [
   ...configValue<string[]>('generateTestsFlags', []),
-  ...args
+  ...args,
 ]
 
 async function addImport(importPath?: string): Promise<void> {
@@ -31,7 +31,7 @@ async function addImport(importPath?: string): Promise<void> {
     try {
       const result = await client.sendRequest<{ Packages?: string[] }>('workspace/executeCommand', {
         command: 'gopls.list_known_packages',
-        arguments: [{ URI: uri }]
+        arguments: [{ URI: uri }],
       })
       packages = result?.Packages?.filter(Boolean) ?? []
     } catch {
@@ -49,7 +49,7 @@ async function addImport(importPath?: string): Promise<void> {
   try {
     await client.sendRequest('workspace/executeCommand', {
       command: 'gopls.add_import',
-      arguments: [{ ImportPath: pkg, URI: uri }]
+      arguments: [{ ImportPath: pkg, URI: uri }],
     })
   } catch (error) {
     coc.window.showMessage(`Failed to add import: ${String(error)}`, 'error')
@@ -65,8 +65,8 @@ async function generateTestForFunction(): Promise<void> {
   }
   const match = /^\s*func\s+(?:\([^)]*\)\s*)?([A-Za-z_]\w*)\s*\(/.exec(
     (Array.isArray(lines) ? lines : String(lines).split('\n')).slice().reverse().find(
-      line => /^\s*func\s+(?:\([^)]*\)\s*)?[A-Za-z_]\w*\s*\(/.test(line)
-    ) || ''
+      line => /^\s*func\s+(?:\([^)]*\)\s*)?[A-Za-z_]\w*\s*\(/.test(line),
+    ) || '',
   )
   if (!match) return
   const file = await activeFile()
@@ -75,7 +75,7 @@ async function generateTestForFunction(): Promise<void> {
 
 async function runModifyTags(
   operation: 'add' | 'remove' | 'clear',
-  tagInput?: string[] | string
+  tagInput?: string[] | string,
 ): Promise<void> {
   const file = await activeFile()
   if (!file) {
@@ -94,10 +94,13 @@ async function runModifyTags(
     ? tagInput.split(',').map(tag => tag.trim()).filter(Boolean)
     : tagInput ?? []
   const args = ['-file', file, '-struct', structName, '-w']
-  if (operation === 'add' && tags.length) args.push('-add-tags', tags.join(','))
-  else if (operation === 'remove' && tags.length) args.push('-remove-tags', tags.join(','))
-  else if (operation === 'clear') args.push('-clear-tags')
-  else {
+  if (operation === 'add' && tags.length) {
+    args.push('-add-tags', tags.join(','))
+  } else if (operation === 'remove' && tags.length) {
+    args.push('-remove-tags', tags.join(','))
+  } else if (operation === 'clear') {
+    args.push('-clear-tags')
+  } else {
     coc.window.showMessage('Provide one or more tag names.', 'warning')
     return
   }
