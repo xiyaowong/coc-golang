@@ -22,7 +22,7 @@ function goplsOptions(): GoplsOptions {
     buildFlags: configValue<string[]>('buildFlags', []),
     buildTags: configValue('buildTags', ''),
     inlayHints: Object.fromEntries(Object.entries(hints).filter(([, value]) => typeof value === 'boolean')),
-    vulncheck: configValue<string>('diagnostic.vulncheck', 'Prompt'),
+    vulncheck: configValue<string>('diagnostic.vulncheck', 'Imports'),
     runTestCodeLens: go.get<{ runtest?: boolean }>('enableCodeLens', {}).runtest !== false,
   })
 }
