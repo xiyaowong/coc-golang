@@ -17,10 +17,42 @@
     "coc": "^0.0.82",
     "node": ">=16"
   },
+  "activationEvents": [
+    "onLanguage:go",
+    "onLanguage:gomod",
+    "onLanguage:gowork"
+  ],
   "scripts": {
     "test": "node --test"
   },
   "contributes": {
+    "commands": [
+      {
+        "command": "go.test.package",
+        "title": "Test Go Package",
+        "category": "Go"
+      },
+      {
+        "command": "go.test.workspace",
+        "title": "Test Go Workspace",
+        "category": "Go"
+      },
+      {
+        "command": "go.test.cursor",
+        "title": "Test Go Function at Cursor",
+        "category": "Go"
+      },
+      {
+        "command": "go.test.previous",
+        "title": "Repeat Previous Go Test",
+        "category": "Go"
+      },
+      {
+        "command": "go.gopls.install",
+        "title": "Install or Update gopls",
+        "category": "Go"
+      }
+    ],
     "configuration": {
       "type": "object",
       "title": "Go",
