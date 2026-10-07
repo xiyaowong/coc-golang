@@ -18,8 +18,18 @@ test('declares each registered Go command', () => {
     [
       'go.test.package',
       'go.test.workspace',
+      'go.test.file',
       'go.test.cursor',
+      'go.benchmark.package',
+      'go.benchmark.file',
+      'go.test.coverage',
       'go.test.previous',
+      'go.build.package',
+      'go.vet.package',
+      'go.run',
+      'go.env',
+      'go.gopath',
+      'go.goroot',
       'go.gopls.install',
     ]
   )

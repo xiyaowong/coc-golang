@@ -38,13 +38,63 @@
         "category": "Go"
       },
       {
+        "command": "go.test.file",
+        "title": "Test Go File",
+        "category": "Go"
+      },
+      {
         "command": "go.test.cursor",
         "title": "Test Go Function at Cursor",
         "category": "Go"
       },
       {
+        "command": "go.benchmark.package",
+        "title": "Benchmark Go Package",
+        "category": "Go"
+      },
+      {
+        "command": "go.benchmark.file",
+        "title": "Benchmark Go File",
+        "category": "Go"
+      },
+      {
+        "command": "go.test.coverage",
+        "title": "Test Go Package with Coverage",
+        "category": "Go"
+      },
+      {
         "command": "go.test.previous",
         "title": "Repeat Previous Go Test",
+        "category": "Go"
+      },
+      {
+        "command": "go.build.package",
+        "title": "Build Go Package",
+        "category": "Go"
+      },
+      {
+        "command": "go.vet.package",
+        "title": "Vet Go Package",
+        "category": "Go"
+      },
+      {
+        "command": "go.run",
+        "title": "Run Go Package",
+        "category": "Go"
+      },
+      {
+        "command": "go.env",
+        "title": "Show Go Environment",
+        "category": "Go"
+      },
+      {
+        "command": "go.gopath",
+        "title": "Show GOPATH",
+        "category": "Go"
+      },
+      {
+        "command": "go.goroot",
+        "title": "Show GOROOT",
         "category": "Go"
       },
       {
@@ -87,6 +137,16 @@
           },
           "default": [],
           "description": "Additional arguments passed to go test."
+        },
+        "go.goPath": {
+          "type": "string",
+          "default": "go",
+          "description": "Path or executable name of the Go command."
+        },
+        "go.goEnv": {
+          "type": "object",
+          "default": {},
+          "description": "Environment variables added to Go and gopls processes."
         }
       }
     }
