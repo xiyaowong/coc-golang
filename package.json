@@ -2,6 +2,7 @@
   "name": "coc-golang",
   "version": "0.1.0",
   "description": "Go language support for coc.nvim using gopls",
+  "author": "wongxy <xiyao.wong@foxmail.com>",
   "main": "lib/index.js",
   "license": "MIT",
   "repository": {

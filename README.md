@@ -182,3 +182,7 @@ UI, survey and telemetry, coverage overlays, and rich diagnostic visualization
 are not included. Update checks cover `gopls` only (as upstream). A coc.nvim quick-pick test selector and gopls-provided
 run/generate code lenses cover the basic test workflow; Delve can be installed
 for external DAP clients.
+
+## License
+
+[MIT](LICENSE) © [wongxy](https://github.com/xiyaowong)
