@@ -14,6 +14,28 @@ export interface ProcessResult {
 const runningProcesses = new Set<ChildProcess>()
 export const runningTests = new Set<ChildProcess>()
 let outputChannel: coc.OutputChannel | undefined
+let outputVisibilityCheck: Promise<void> | undefined
+
+function showOutputIfNeeded(): void {
+  const channel = outputChannel
+  if (!channel || outputVisibilityCheck) return
+
+  outputVisibilityCheck = (async () => {
+    const buffer = await coc.workspace.nvim.call('bufnr', [`output:///${encodeURI(channel.name)}`])
+    if (typeof buffer !== 'number') throw new Error('Could not find the Go output buffer.')
+    if (buffer < 0) {
+      if (outputChannel === channel) channel.show()
+      return
+    }
+    const windows = await coc.workspace.nvim.call('win_findbuf', [buffer])
+    if (!Array.isArray(windows)) throw new Error('Could not determine whether the Go output is visible.')
+    if (outputChannel === channel && windows.length === 0) channel.show()
+  })().catch((error: unknown) => {
+    coc.window.showMessage(`Failed to show Go output: ${String(error)}`, 'error')
+  }).finally(() => {
+    outputVisibilityCheck = undefined
+  })
+}
 
 export function createOutputChannel(): coc.OutputChannel {
   outputChannel = coc.window.createOutputChannel('Go')
@@ -21,12 +43,12 @@ export function createOutputChannel(): coc.OutputChannel {
 }
 
 export function showOutput(): void {
-  outputChannel?.show()
+  showOutputIfNeeded()
 }
 
 export function appendOutput(text: string): void {
   outputChannel?.appendLine(text)
-  outputChannel?.show()
+  showOutputIfNeeded()
 }
 
 export function killTests(): void {
@@ -103,7 +125,7 @@ export function execFileText(command: string, args: string[], env: NodeJS.Proces
 
 export function showCommandOutput(title: string): void {
   outputChannel?.appendLine(`\n> ${title}`)
-  outputChannel?.show()
+  showOutputIfNeeded()
 }
 
 export async function runGo(
