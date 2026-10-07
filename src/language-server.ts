@@ -6,6 +6,7 @@ import { goEnvironment } from './environment'
 import { goplsConfiguration } from './go-config-utils'
 import { execFileText } from './process'
 import { installTool, toolExecutable } from './tools'
+import { vulncheckMiddleware } from './vulncheck'
 
 let client: LanguageClient | undefined
 let clientRegistration: Disposable | undefined
@@ -21,7 +22,7 @@ function goplsOptions(): GoplsOptions {
     buildFlags: configValue<string[]>('buildFlags', []),
     buildTags: configValue('buildTags', ''),
     inlayHints: Object.fromEntries(Object.entries(hints).filter(([, value]) => typeof value === 'boolean')),
-    vulncheck: go.get<string>('diagnostic.vulncheck'),
+    vulncheck: configValue<string>('diagnostic.vulncheck', 'Prompt'),
     runTestCodeLens: go.get<{ runtest?: boolean }>('enableCodeLens', {}).runtest !== false,
   })
 }
@@ -63,6 +64,7 @@ async function makeLanguageClient(): Promise<LanguageClient | undefined> {
     disabledFeatures: disabled,
     initializationOptions: () => goplsOptions(),
     middleware: {
+      ...vulncheckMiddleware(resolved, () => client),
       workspace: {
         configuration: async (params, token, next) => {
           const result = await next(params, token)

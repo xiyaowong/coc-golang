@@ -88,8 +88,6 @@ Test generation requires `gotests`. The test explorer is a coc.nvim quick-pick s
 - `go.vet.workspace` Run `go vet` across the workspace.
 - `go.lint.package` Lint the current package.
 - `go.lint.workspace` Lint packages across the workspace.
-- `go.vulncheck.package` Scan the current package for known vulnerabilities.
-- `go.vulncheck.workspace` Scan workspace packages for known vulnerabilities.
 - `go.vulncheck.toggle` Toggle `gopls` vulnerability diagnostics.
 - `go.fmt.package` Format the current package with `gofmt`.
 - `go.import.organize` Organize imports in the current file.
@@ -106,13 +104,13 @@ Test generation requires `gotests`. The test explorer is a coc.nvim quick-pick s
 - `go.tags.clear` Clear struct tags.
 - `go.impl.cursor` Generate an interface implementation.
 
-`govulncheck` is required for vulnerability scans, `gomodifytags` for struct tags, and `impl` for interface implementation generation.
+`gomodifytags` is required for struct tags, and `impl` for interface implementation generation. Vulnerability analysis is provided by `gopls`.
 
 ### Go environment and tools
 
 Use `go.env`, `go.gopath`, `go.goroot`, `go.version`, and `go.environment.choose` to inspect or select the Go environment. Use `go.locate.tools` to locate installed tools, `go.tools.install` to choose tools to install, or `go.tools.install.<tool>` to install a specific tool. `go.gopls.install` installs `gopls`, and `go.languageserver.restart` restarts it.
 
-Optional tools include `dlv`, `goimports`, `staticcheck`, `govulncheck`, `gomodifytags`, `gotests`, `impl`, `golint`, `golangci-lint`, `golangci-lint-v2`, `revive`, `gofumpt`, and `goformat`. Delve can be used with external DAP clients; coc-golang does not provide a debug adapter UI.
+Optional tools include `dlv`, `goimports`, `staticcheck`, `gomodifytags`, `gotests`, `impl`, `golint`, `golangci-lint`, `golangci-lint-v2`, `revive`, `gofumpt`, and `goformat`. Delve can be used with external DAP clients; coc-golang does not provide a debug adapter UI.
 
 ## Configuration
 
@@ -134,7 +132,7 @@ Add settings to `coc-settings.json`. For example:
 }
 ```
 
-Setting names, types, and defaults follow [vscode-go](https://github.com/golang/vscode-go). The `gopls` setting accepts gopls options (including dotted keys). Go-specific settings such as build flags, build tags, inlay hints, vulnerability checks, and code lenses are forwarded to gopls unless explicitly set there.
+Setting names, types, and defaults follow [vscode-go](https://github.com/golang/vscode-go). The `gopls` setting accepts gopls options (including dotted keys). Go-specific settings such as build flags, build tags, inlay hints, vulnerability checks, and code lenses are forwarded to gopls unless explicitly set there. Vulnerability analysis uses gopls' import-based diagnostics and built-in `govulncheck` code lens/quick fix; use `go.vulncheck.toggle` to enable or disable import-based diagnostics.
 
 Some settings to know:
 

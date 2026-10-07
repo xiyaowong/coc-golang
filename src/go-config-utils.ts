@@ -18,6 +18,7 @@ export interface TestSettings {
 
 const defaultCodeLenses = {
   generate: true,
+  run_govulncheck: true,
   test: true,
   tidy: true,
   upgrade_dependency: true,

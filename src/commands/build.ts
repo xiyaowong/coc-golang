@@ -5,7 +5,6 @@ import { goBuildFlags, goCommand } from '../config'
 import { activeDirectory, workspaceDirectories } from '../editor'
 import { goEnvironment } from '../environment'
 import { runGo, runProcess, showCommandOutput } from '../process'
-import { runTool } from '../tools'
 import { registerCommand } from './register'
 
 async function browsePackages(): Promise<void> {
@@ -54,15 +53,21 @@ export function registerBuildCommands(context: ExtensionContext): void {
     await Promise.all(workspaceDirectories().map(directory => runCheck('lint', 'workspace', directory)))
   })
 
-  registerCommand(context, 'go.vulncheck.package', async () =>
-    runTool('govulncheck', ['.'], await cwd()))
-  registerCommand(context, 'go.vulncheck.workspace', async () => {
-    for (const directory of workspaceDirectories()) await runTool('govulncheck', ['./...'], directory)
-  })
   registerCommand(context, 'go.vulncheck.toggle', async () => {
-    const config = coc.workspace.getConfiguration('go')
-    const vulncheck = config.get<string>('diagnostic.vulncheck', 'Prompt') === 'Imports' ? 'Off' : 'Imports'
-    await config.update('diagnostic.vulncheck', vulncheck, true)
+    const { document } = await coc.workspace.getCurrentState()
+    const config = coc.workspace.getConfiguration('go', document.uri)
+    const inspect = config.inspect<string>('diagnostic.vulncheck')
+    const configured = inspect?.workspaceFolderValue ?? inspect?.workspaceValue ?? inspect?.globalValue
+    const current = configured ?? config.get<string>('diagnostic.vulncheck', 'Prompt')
+    const vulncheck = current === 'Imports' ? 'Off' : 'Imports'
+    const target = inspect?.workspaceFolderValue !== undefined
+      ? undefined
+      : inspect?.workspaceValue !== undefined
+        ? false
+        : inspect?.globalValue !== undefined
+          ? true
+          : undefined
+    await config.update('diagnostic.vulncheck', vulncheck, target)
     coc.window.showMessage(`gopls vulncheck: ${vulncheck}`)
   })
 
