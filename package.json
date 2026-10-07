@@ -46,6 +46,9 @@
     "onCommand:go.vet.workspace",
     "onCommand:go.lint.package",
     "onCommand:go.lint.workspace",
+    "onCommand:go.vulncheck.package",
+    "onCommand:go.vulncheck.workspace",
+    "onCommand:go.vulncheck.toggle",
     "onCommand:go.fmt.package",
     "onCommand:go.import.organize",
     "onCommand:go.import.add",
@@ -70,6 +73,7 @@
     "onCommand:go.tools.install.dlv",
     "onCommand:go.tools.install.goimports",
     "onCommand:go.tools.install.staticcheck",
+    "onCommand:go.tools.install.govulncheck",
     "onCommand:go.tools.install.gomodifytags",
     "onCommand:go.tools.install.gotests",
     "onCommand:go.tools.install.impl",
@@ -226,6 +230,21 @@
         "category": "Go"
       },
       {
+        "command": "go.vulncheck.package",
+        "title": "Run govulncheck on Go Package",
+        "category": "Go"
+      },
+      {
+        "command": "go.vulncheck.workspace",
+        "title": "Run govulncheck on Go Workspace",
+        "category": "Go"
+      },
+      {
+        "command": "go.vulncheck.toggle",
+        "title": "Toggle Vulncheck",
+        "category": "Go"
+      },
+      {
         "command": "go.fmt.package",
         "title": "Format Go Package",
         "category": "Go"
@@ -343,6 +362,11 @@
       {
         "command": "go.tools.install.staticcheck",
         "title": "Install Staticcheck",
+        "category": "Go"
+      },
+      {
+        "command": "go.tools.install.govulncheck",
+        "title": "Install govulncheck",
         "category": "Go"
       },
       {

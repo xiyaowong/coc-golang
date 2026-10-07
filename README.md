@@ -43,6 +43,9 @@ are passed as arrays in `go.testFlags` and `go.benchmarkFlags`, while
 
 - `go.build.package`, `go.build.workspace`, `go.run`, `go.generate.package`
 - `go.vet.package`, `go.vet.workspace`, `go.lint.package`, `go.lint.workspace`
+- `go.vulncheck.package`, `go.vulncheck.workspace` (requires `govulncheck`)
+- `go.vulncheck.toggle` toggles gopls' `vulncheck` option (`Imports`/`Off`) in
+  `go.goplsOptions` and restarts gopls
 - `go.fmt.package`, `go.import.organize`, `go.import.add`
 - `go.mod.init`, `go.mod.tidy`, `go.mod.vendor`, `go.work.sync`
 - `go.get.package`, `go.install.package`, `go.browse.packages`
@@ -54,7 +57,7 @@ are passed as arrays in `go.testFlags` and `go.benchmarkFlags`, while
 
 Tool installs use the configured Go executable and standard `go install
 module@latest` behavior. Optional tools are `dlv`, `goimports`, `staticcheck`,
-`gomodifytags`, `gotests`, and `impl`. Go build, test, vet, and lint output goes
+`govulncheck`, `gomodifytags`, `gotests`, and `impl`. Go build, test, vet, and lint output goes
 to the `Go` output channel. `go.buildOnSave` optionally runs a package build
 after saving Go source.
 

@@ -27,6 +27,7 @@ const tools = {
   dlv: 'github.com/go-delve/delve/cmd/dlv@latest',
   goimports: 'golang.org/x/tools/cmd/goimports@latest',
   staticcheck: 'honnef.co/go/tools/cmd/staticcheck@latest',
+  govulncheck: 'golang.org/x/vuln/cmd/govulncheck@latest',
   gomodifytags: 'github.com/fatih/gomodifytags@latest',
   gotests: 'github.com/cweill/gotests/gotests@latest',
   impl: 'github.com/josharian/impl@latest'
@@ -318,7 +319,11 @@ async function runTool(name: keyof typeof tools, args: string[], cwd: string): P
   showCommandOutput(`${executable} ${args.join(' ')}`)
   try {
     const result = await runProcess(executable, args, cwd, goEnvironment())
-    if (result.code !== 0) coc.window.showMessage(`${name} exited with code ${result.code}`, 'error')
+    if (name === 'govulncheck' && result.code === 3) {
+      coc.window.showMessage('govulncheck found vulnerabilities. See Go output.', 'warning')
+    } else if (result.code !== 0) {
+      coc.window.showMessage(`${name} exited with code ${result.code}`, 'error')
+    }
   } catch (error) {
     coc.window.showMessage(`Failed to run ${name}: ${String(error)}`, 'error')
   }
@@ -469,6 +474,19 @@ function registerCommands(context: ExtensionContext): void {
     runTool('staticcheck', ['.'], await cwd()))
   registerCommand(context, 'go.lint.workspace', async () =>
     Promise.all(workspaceDirectories().map(directory => runTool('staticcheck', ['./...'], directory))))
+
+  registerCommand(context, 'go.vulncheck.package', async () =>
+    runTool('govulncheck', ['.'], await cwd()))
+  registerCommand(context, 'go.vulncheck.workspace', async () => {
+    for (const directory of workspaceDirectories()) await runTool('govulncheck', ['./...'], directory)
+  })
+  registerCommand(context, 'go.vulncheck.toggle', async () => {
+    const config = coc.workspace.getConfiguration('go')
+    const options = config.get<GoplsOptions>('goplsOptions', {})
+    const vulncheck = options.vulncheck === 'Imports' ? 'Off' : 'Imports'
+    await config.update('goplsOptions', { ...options, vulncheck }, true)
+    coc.window.showMessage(`gopls vulncheck: ${vulncheck}`)
+  })
 
   registerCommand(context, 'go.fmt.package', async () =>
     runGo('fmt', ['.'], await cwd()))
