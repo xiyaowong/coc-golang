@@ -12,7 +12,6 @@ export const tools: Record<string, ToolDefinition> = {
   'dlv': { module: 'github.com/go-delve/delve/cmd/dlv@latest' },
   'goimports': { module: 'golang.org/x/tools/cmd/goimports@latest' },
   'staticcheck': { module: 'honnef.co/go/tools/cmd/staticcheck@latest' },
-  'govulncheck': { module: 'golang.org/x/vuln/cmd/govulncheck@latest' },
   'gomodifytags': { module: 'github.com/fatih/gomodifytags@latest' },
   'gotests': { module: 'github.com/cweill/gotests/gotests@latest' },
   'impl': { module: 'github.com/josharian/impl@latest' },
@@ -90,9 +89,7 @@ export async function runTool(
   try {
     const result = await runProcess(executable, args, cwd, goEnvironment(), undefined, options.input)
     if (options.quiet) return result
-    if (name === 'govulncheck' && result.code === 3) {
-      coc.window.showMessage('govulncheck found vulnerabilities. See Go output.', 'warning')
-    } else if (result.code !== 0) {
+    if (result.code !== 0) {
       coc.window.showMessage(`${name} exited with code ${result.code}`, 'error')
     }
     return result
