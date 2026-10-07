@@ -17,9 +17,9 @@ async function browsePackages(): Promise<void> {
       coc.window.showMessage(`Unable to list Go packages (exit code ${result.code}).`, 'error')
       return
     }
-    const selected = await coc.window.showQuickpick(packages, 'Select a Go package')
-    if (selected < 0 || selected >= packages.length) return
-    await runGo('doc', [packages[selected]], directory)
+    const selected = await coc.window.showQuickPick(packages, { title: 'Select a Go package', placeHolder: 'Type to filter' })
+    if (!selected) return
+    await runGo('doc', [selected], directory)
   } catch (error) {
     coc.window.showMessage(`Failed to list Go packages: ${String(error)}`, 'error')
   }

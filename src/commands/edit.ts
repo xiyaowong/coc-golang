@@ -38,9 +38,9 @@ async function addImport(importPath?: string): Promise<void> {
       packages = []
     }
     if (packages.length) {
-      const selected = await coc.window.showQuickpick(packages, 'Select a package to import')
-      if (selected < 0 || selected >= packages.length) return
-      pkg = packages[selected]
+      const selected = await coc.window.showQuickPick(packages, { title: 'Select a package to import', placeHolder: 'Type to filter' })
+      if (!selected) return
+      pkg = selected
     } else {
       pkg = (await coc.window.requestInput('Import path'))?.trim() ?? ''
     }

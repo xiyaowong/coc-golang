@@ -36,9 +36,8 @@ async function listAndRunTest(): Promise<void> {
       coc.window.showMessage('No Go tests, examples, or benchmarks found in this package.', 'warning')
       return
     }
-    const selected = await coc.window.showQuickpick(names, 'Select a Go test or benchmark')
-    if (selected < 0 || selected >= names.length) return
-    const name = names[selected]
+    const name = await coc.window.showQuickPick(names, { title: 'Select a Go test or benchmark', placeHolder: 'Type to filter' })
+    if (!name) return
     const escaped = escapeRegExp(name)
     const args = name.startsWith('Benchmark')
       ? ['-run', '^$', '-bench', `^${escaped}$`, ...benchmarkFlags()]
