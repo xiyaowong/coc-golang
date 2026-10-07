@@ -20,7 +20,7 @@ If `gopls` is missing, the extension prompts you to install it. You can also run
 | --- | --- |
 | Write Go | Completion, hover, signature help, formatting, and import organization |
 | Navigate and refactor | Diagnostics, navigation, references, rename, code actions, and document symbols |
-| Build and test | Build, run, test, benchmark, and test coverage commands |
+| Build and test | Build, run, test, benchmark, coverage, and vulnerability scans |
 | Manage projects | Go module and workspace commands, tool installation, and Go environment information |
 
 `gopls` provides editor language features. Test and Go command output appears in coc.nvim's `Go` output channel.
@@ -52,6 +52,13 @@ Build, run, generate, and check Go code:
 - `go.build.package`, `go.build.workspace`, `go.run`, `go.generate.package`
 - `go.vet.package`, `go.vet.workspace`, `go.lint.package`, `go.lint.workspace`
 
+Scan Go packages and workspaces for known vulnerabilities:
+
+- `go.vulncheck.package`, `go.vulncheck.workspace` (requires `govulncheck`)
+- `go.vulncheck.toggle` toggles gopls' `vulncheck` option (`Imports`/`Off`) in
+  `go.goplsOptions` and restarts gopls
+
+
 Format code and manage imports:
 
 - `go.fmt.package`, `go.import.organize`, `go.import.add`
@@ -76,7 +83,7 @@ Install `gopls` or optional Go tools:
 
 - `go.gopls.install`, `go.tools.install`, `go.tools.install.<tool>`
 
-Optional tools include `dlv`, `goimports`, `staticcheck`, `gomodifytags`, `gotests`, and `impl`. Go build, test, vet, and lint output appears in the `Go` output channel.
+Optional tools include `dlv`, `goimports`, `staticcheck`, `govulncheck`, `gomodifytags`, `gotests`, and `impl`. Go build, test, vet, lint, and vulnerability scan output appears in the `Go` output channel.
 
 ## Configuration
 
