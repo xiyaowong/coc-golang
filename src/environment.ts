@@ -1,6 +1,6 @@
 import { accessSync, constants, existsSync } from 'node:fs'
-import { delimiter, isAbsolute, join } from 'node:path'
 import { homedir, platform } from 'node:os'
+import { delimiter, isAbsolute, join } from 'node:path'
 import * as coc from 'coc.nvim'
 import { configValue } from './config'
 import { workspaceDirectories } from './editor'
@@ -11,7 +11,7 @@ const terminalEnvironmentBackup = new Map<string, string | undefined>()
 export function toolsDirectories(environment: NodeJS.ProcessEnv): string[] {
   const directories: (string | undefined)[] = [
     environment.GOBIN,
-    ...(environment.GOPATH || '').split(delimiter).filter(Boolean).map(item => join(item, 'bin'))
+    ...(environment.GOPATH || '').split(delimiter).filter(Boolean).map(item => join(item, 'bin')),
   ]
   const toolsGopath = configValue('toolsGopath', '')
   if (toolsGopath) directories.unshift(join(toolsGopath, 'bin'))
@@ -21,7 +21,7 @@ export function toolsDirectories(environment: NodeJS.ProcessEnv): string[] {
 export function goEnvironment(forToolInstall = false): NodeJS.ProcessEnv {
   const environment: NodeJS.ProcessEnv = {
     ...process.env,
-    ...configValue<Record<string, string>>('toolsEnvVars', {})
+    ...configValue<Record<string, string>>('toolsEnvVars', {}),
   }
   const goroot = configValue('goroot', '')
   let gopath = configValue('gopath', '')

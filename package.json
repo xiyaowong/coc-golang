@@ -3,7 +3,6 @@
   "version": "0.1.0",
   "description": "Go language support for coc.nvim using gopls",
   "author": "wongxy <xiyao.wong@foxmail.com>",
-  "main": "lib/index.js",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -14,6 +13,7 @@
     "golang",
     "gopls"
   ],
+  "main": "lib/index.js",
   "engines": {
     "coc": "^0.0.83-next.27",
     "node": ">=22.18.0"
@@ -89,11 +89,6 @@
     "onCommand:go.tools.install.gofumpt",
     "onCommand:go.tools.install.goformat"
   ],
-  "scripts": {
-    "build": "tsdown",
-    "typecheck": "tsc --noEmit",
-    "prepare": "tsdown"
-  },
   "contributes": {
     "commands": [
       {
@@ -885,9 +880,20 @@
       }
     }
   },
+  "scripts": {
+    "build": "tsdown",
+    "lint": "eslint",
+    "lint:fix": "eslint --fix",
+    "release": "bumpp && npm publish",
+    "typecheck": "tsc --noEmit",
+    "prepare": "tsdown"
+  },
   "devDependencies": {
     "@types/node": "^22.20.2",
+    "@wongxy/eslint-config": "^4.0.3",
+    "bumpp": "^12.3.0",
     "coc.nvim": "^0.0.83-next.27",
+    "jiti": "^2.7.0",
     "tsdown": "^0.23.0",
     "typescript": "^5.9.3"
   }

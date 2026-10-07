@@ -1,6 +1,6 @@
 export type GoplsOptions = Record<string, any>
 
-export type GoplsSettings = {
+export interface GoplsSettings {
   buildFlags: string[]
   buildTags: string
   inlayHints: Record<string, boolean>
@@ -8,7 +8,7 @@ export type GoplsSettings = {
   runTestCodeLens: boolean
 }
 
-export type TestSettings = {
+export interface TestSettings {
   testFlags: string[] | null
   buildFlags: string[]
   testTags: string | null
@@ -21,7 +21,7 @@ const defaultCodeLenses = {
   test: true,
   tidy: true,
   upgrade_dependency: true,
-  vendor: true
+  vendor: true,
 }
 
 function hasFlag(flags: string[], ...names: string[]): boolean {
@@ -49,12 +49,12 @@ export function parseEnvFile(text: string): Record<string, string> {
   for (const rawLine of text.split(/\r?\n/)) {
     const line = rawLine.trim()
     if (!line || line.startsWith('#')) continue
-    const match = /^(?:export\s+)?([A-Za-z_][A-Za-z0-9_.]*)\s*=\s*(.*)$/.exec(line)
+    const match = /^(?:export\s+)?([A-Za-z_][\w.]*)\s*=(.*)$/.exec(line)
     if (!match) continue
     let value = match[2].trim()
     if (value.length >= 2 && (
-      (value.startsWith('"') && value.endsWith('"')) ||
-      (value.startsWith("'") && value.endsWith("'"))
+      (value.startsWith('"') && value.endsWith('"'))
+      || (value.startsWith('\'') && value.endsWith('\''))
     )) {
       value = value.slice(1, -1)
     }
@@ -102,7 +102,7 @@ export function goplsConfiguration(user: GoplsOptions, settings: GoplsSettings):
   options[lensKey] = {
     ...defaultCodeLenses,
     test: settings.runTestCodeLens,
-    ...(options[lensKey] as Record<string, boolean> | undefined)
+    ...(options[lensKey] as Record<string, boolean> | undefined),
   }
   return options
 }

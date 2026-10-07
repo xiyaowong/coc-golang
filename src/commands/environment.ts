@@ -1,5 +1,5 @@
-import * as coc from 'coc.nvim'
 import type { ExtensionContext } from 'coc.nvim'
+import * as coc from 'coc.nvim'
 import { configValue, goCommand } from '../config'
 import { goEnvironment, resolveExecutable } from '../environment'
 import { replaceLanguageClient, restartClient } from '../language-server'

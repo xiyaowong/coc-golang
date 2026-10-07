@@ -1,25 +1,28 @@
 import { resolve } from 'node:path'
 
-export type Problem = {
+export interface Problem {
   file: string
   line: number
   column: number
   message: string
 }
 
-const problemPattern = /^(?:vet:\s*)?((?:[A-Za-z]:)?[^:]+?):(\d+)(?::(\d+))?:\s*(.+)$/
+const problemPattern = /^((?:[A-Z]:)?[^:]+):(\d+)(?::(\d+))?:(.*)$/i
 
 export function parseProblems(output: string, cwd: string): Problem[] {
   const problems: Problem[] = []
   for (const line of output.split(/\r?\n/)) {
     if (!line || line.startsWith('#')) continue
-    const match = problemPattern.exec(line)
+    const diagnostic = line.startsWith('vet:') ? line.slice(4).trimStart() : line
+    const match = problemPattern.exec(diagnostic)
     if (!match) continue
+    const message = match[4].trimStart()
+    if (!message) continue
     problems.push({
       file: resolve(cwd, match[1]),
       line: Number(match[2]),
       column: match[3] ? Number(match[3]) : 1,
-      message: match[4]
+      message,
     })
   }
   return problems

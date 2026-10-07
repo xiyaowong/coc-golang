@@ -1,9 +1,9 @@
 import { configValue, goTestEnvironment, goTestFlags } from './config'
 import { killTests, runGo } from './process'
 
-let previousTest: { args: string[]; cwd: string } | undefined
+let previousTest: { args: string[], cwd: string } | undefined
 
-export function getPreviousTest(): { args: string[]; cwd: string } | undefined {
+export function getPreviousTest(): { args: string[], cwd: string } | undefined {
   return previousTest
 }
 

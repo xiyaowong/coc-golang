@@ -1,9 +1,9 @@
-import * as coc from 'coc.nvim'
 import type { Disposable, ExtensionContext, LanguageClient } from 'coc.nvim'
+import type { GoplsOptions } from './go-config-utils'
+import * as coc from 'coc.nvim'
 import { configValue, goCommand } from './config'
 import { goEnvironment } from './environment'
 import { goplsConfiguration } from './go-config-utils'
-import type { GoplsOptions } from './go-config-utils'
 import { execFileText } from './process'
 import { installTool, toolExecutable } from './tools'
 
@@ -22,7 +22,7 @@ function goplsOptions(): GoplsOptions {
     buildTags: configValue('buildTags', ''),
     inlayHints: Object.fromEntries(Object.entries(hints).filter(([, value]) => typeof value === 'boolean')),
     vulncheck: go.get<string>('diagnostic.vulncheck'),
-    runTestCodeLens: go.get<{ runtest?: boolean }>('enableCodeLens', {}).runtest !== false
+    runTestCodeLens: go.get<{ runtest?: boolean }>('enableCodeLens', {}).runtest !== false,
   })
 }
 
@@ -47,15 +47,15 @@ async function makeLanguageClient(): Promise<LanguageClient | undefined> {
   const tmpdir = await coc.workspace.nvim.eval('$TMPDIR')
   const serverEnvironment = {
     ...goEnvironment(),
-    ...(typeof tmpdir === 'string' && tmpdir ? { TMPDIR: tmpdir } : {})
+    ...(typeof tmpdir === 'string' && tmpdir ? { TMPDIR: tmpdir } : {}),
   }
   const instance = new coc.LanguageClient('go', 'gopls', {
     command: resolved,
     args,
     options: {
       cwd: coc.workspace.cwd,
-      env: serverEnvironment
-    }
+      env: serverEnvironment,
+    },
   }, {
     documentSelector: ['go', 'gomod', 'gowork'],
     outputChannelName: 'gopls',
@@ -68,9 +68,9 @@ async function makeLanguageClient(): Promise<LanguageClient | undefined> {
           const result = await next(params, token)
           if (!Array.isArray(result)) return result
           return params.items.map((item, index) => item.section === 'gopls' ? goplsOptions() : result[index])
-        }
-      }
-    }
+        },
+      },
+    },
   })
   applyTrace(instance)
   return instance
@@ -91,7 +91,7 @@ export async function startLanguageClient(context: ExtensionContext): Promise<vo
   if (!instance) {
     coc.window.showMessage(
       'gopls was not found. Run :CocCommand go.gopls.install or set go.alternateTools.gopls.',
-      'warning'
+      'warning',
     )
     return
   }
