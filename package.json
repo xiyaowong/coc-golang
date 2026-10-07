@@ -80,7 +80,13 @@
     "onCommand:go.tools.install.gopls",
     "onCommand:go.version",
     "onCommand:go.env",
-    "onCommand:go.locate.tools"
+    "onCommand:go.locate.tools",
+    "onCommand:go.tools.install.golint",
+    "onCommand:go.tools.install.golangci-lint",
+    "onCommand:go.tools.install.golangci-lint-v2",
+    "onCommand:go.tools.install.revive",
+    "onCommand:go.tools.install.gofumpt",
+    "onCommand:go.tools.install.goformat"
   ],
   "scripts": {
     "build": "tsdown",
@@ -388,47 +394,258 @@
         "command": "go.tools.install.gopls",
         "title": "Install gopls",
         "category": "Go"
+      },
+      {
+        "command": "go.tools.install.golint",
+        "title": "Install golint",
+        "category": "Go"
+      },
+      {
+        "command": "go.tools.install.golangci-lint",
+        "title": "Install golangci-lint",
+        "category": "Go"
+      },
+      {
+        "command": "go.tools.install.golangci-lint-v2",
+        "title": "Install golangci-lint v2",
+        "category": "Go"
+      },
+      {
+        "command": "go.tools.install.revive",
+        "title": "Install revive",
+        "category": "Go"
+      },
+      {
+        "command": "go.tools.install.gofumpt",
+        "title": "Install gofumpt",
+        "category": "Go"
+      },
+      {
+        "command": "go.tools.install.goformat",
+        "title": "Install goformat",
+        "category": "Go"
       }
     ],
     "configuration": {
       "type": "object",
       "title": "Go",
       "properties": {
-        "go.goplsPath": {
+        "go.useLanguageServer": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable intellisense, code navigation, refactoring, formatting & diagnostics for Go. The features are powered by the Go language server \"gopls\"."
+        },
+        "go.languageServerFlags": {
+          "type": "array",
+          "default": [],
+          "description": "Flags like -rpc.trace and -logfile to be used while running the language server."
+        },
+        "go.trace.server": {
           "type": "string",
-          "default": "gopls",
-          "description": "Path or executable name of gopls."
+          "enum": [
+            "off",
+            "messages",
+            "verbose"
+          ],
+          "default": "off",
+          "description": "Trace the communication between VS Code and the Go language server. Also requires setting the 'gopls' output channel log level to 'Trace' ('Developer: Set Log Level...')."
         },
-        "go.goplsArgs": {
-          "type": "array",
-          "items": {
-            "type": "string"
+        "go.diagnostic.vulncheck": {
+          "type": "string",
+          "markdownDescription": "(Experimental) vulncheck enables vulnerability scanning.\n",
+          "enum": [
+            "Imports",
+            "Off",
+            "Prompt"
+          ],
+          "markdownEnumDescriptions": [
+            "`\"Imports\"`: In Imports mode, `gopls` will report vulnerabilities that affect packages\ndirectly and indirectly used by the analyzed main module.\n",
+            "`\"Off\"`: Disable vulnerability analysis.\n",
+            "`\"Prompt\"`: Vulncheck can be triggered via prompt.\n"
+          ],
+          "default": "Prompt"
+        },
+        "go.enableCodeLens": {
+          "type": "object",
+          "properties": {
+            "runtest": {
+              "type": "boolean",
+              "default": true,
+              "description": "If true, enables code lens for running and debugging tests"
+            }
           },
-          "default": [],
-          "description": "Arguments passed to gopls."
-        },
-        "go.goplsEnv": {
-          "type": "object",
-          "default": {},
-          "description": "Environment variables added to the gopls process."
-        },
-        "go.goplsOptions": {
-          "type": "object",
-          "default": {},
-          "description": "Initialization options passed to gopls."
-        },
-        "go.testFlags": {
-          "type": "array",
-          "items": {
-            "type": "string"
+          "additionalProperties": false,
+          "default": {
+            "runtest": true
           },
-          "default": [],
-          "description": "Additional arguments passed to go test."
+          "description": "Feature level setting to enable/disable code lens for references and run/debug tests"
         },
-        "go.testEnv": {
+        "go.gopath": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null,
+          "description": "Specify GOPATH here to override the one that is set as environment variable. The inferred GOPATH from workspace root overrides this, if go.inferGopath is set to true."
+        },
+        "go.goroot": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null,
+          "description": "Specifies the GOROOT to use when no environment variable is set."
+        },
+        "go.inferGopath": {
+          "type": "boolean",
+          "default": false,
+          "description": "Infer GOPATH from the workspace root. This is ignored when using Go Modules."
+        },
+        "go.toolsGopath": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null,
+          "description": "Location to install the Go tools that the extension depends on if you don't want them in your GOPATH."
+        },
+        "go.toolsEnvVars": {
           "type": "object",
           "default": {},
-          "description": "Environment variables added to go test processes."
+          "description": "Environment variables that will be passed to the tools that run the Go tools (e.g. CGO_CFLAGS) and debuggee process launched by Delve. Format as string key:value pairs. When debugging, merged with `envFile` and `env` values with precedence `env` > `envFile` > `go.toolsEnvVars`."
+        },
+        "go.toolsManagement.go": {
+          "type": "string",
+          "default": "",
+          "description": "The path to the `go` binary used to install the Go tools. If it's empty, the same `go` binary chosen for the project will be used for tool installation."
+        },
+        "go.toolsManagement.checkForUpdates": {
+          "type": "string",
+          "default": "proxy",
+          "enum": [
+            "proxy",
+            "local",
+            "off"
+          ],
+          "enumDescriptions": [
+            "keeps notified of new releases by checking the Go module proxy (GOPROXY)",
+            "checks only the minimum tools versions required by the extension",
+            "completely disables version check (not recommended)"
+          ],
+          "markdownDescription": "Specify whether to prompt about new versions of Go and the Go tools (currently, only `gopls`) the extension depends on"
+        },
+        "go.toolsManagement.autoUpdate": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically update the tools used by the extension, without prompting the user."
+        },
+        "go.alternateTools": {
+          "type": "object",
+          "default": {},
+          "description": "Alternate tools or alternate paths for the same tools used by the Go extension. Provide either absolute path or the name of the binary in GOPATH/bin, GOROOT/bin or PATH. Useful when you want to use wrapper script for the Go tools.",
+          "properties": {
+            "go": {
+              "type": "string",
+              "default": "go",
+              "description": "Alternate tool to use instead of the go binary or alternate path to use for the go binary."
+            },
+            "gopls": {
+              "type": "string",
+              "default": "gopls",
+              "description": "Alternate tool to use instead of the gopls binary or alternate path to use for the gopls binary."
+            },
+            "dlv": {
+              "type": "string",
+              "default": "dlv",
+              "description": "Alternate tool to use instead of the dlv binary or alternate path to use for the dlv binary."
+            },
+            "customFormatter": {
+              "type": "string",
+              "default": "",
+              "markdownDescription": "Custom formatter to use instead of the language server. This should be used with the `custom` option in `#go.formatTool#`."
+            },
+            "gotests": {
+              "type": "string",
+              "default": "",
+              "description": "Alternate tool to use instead of the gotests binary or alternate path to use for the gotests binary."
+            },
+            "goimports": {
+              "type": "string",
+              "default": "",
+              "description": "Alternate tool to use instead of the goimports binary or alternate path to use for the goimports binary."
+            },
+            "staticcheck": {
+              "type": "string",
+              "default": "",
+              "description": "Alternate tool to use instead of the staticcheck binary or alternate path to use for the staticcheck binary."
+            },
+            "govulncheck": {
+              "type": "string",
+              "default": "",
+              "description": "Alternate tool to use instead of the govulncheck binary or alternate path to use for the govulncheck binary."
+            },
+            "gomodifytags": {
+              "type": "string",
+              "default": "",
+              "description": "Alternate tool to use instead of the gomodifytags binary or alternate path to use for the gomodifytags binary."
+            },
+            "impl": {
+              "type": "string",
+              "default": "",
+              "description": "Alternate tool to use instead of the impl binary or alternate path to use for the impl binary."
+            },
+            "golint": {
+              "type": "string",
+              "default": "",
+              "description": "Alternate tool to use instead of the golint binary or alternate path to use for the golint binary."
+            },
+            "golangci-lint": {
+              "type": "string",
+              "default": "",
+              "description": "Alternate tool to use instead of the golangci-lint binary or alternate path to use for the golangci-lint binary."
+            },
+            "golangci-lint-v2": {
+              "type": "string",
+              "default": "",
+              "description": "Alternate tool to use instead of the golangci-lint-v2 binary or alternate path to use for the golangci-lint-v2 binary."
+            },
+            "revive": {
+              "type": "string",
+              "default": "",
+              "description": "Alternate tool to use instead of the revive binary or alternate path to use for the revive binary."
+            },
+            "gofumpt": {
+              "type": "string",
+              "default": "",
+              "description": "Alternate tool to use instead of the gofumpt binary or alternate path to use for the gofumpt binary."
+            },
+            "goformat": {
+              "type": "string",
+              "default": "",
+              "description": "Alternate tool to use instead of the goformat binary or alternate path to use for the goformat binary."
+            }
+          },
+          "additionalProperties": true
+        },
+        "go.installDependenciesWhenBuilding": {
+          "type": "boolean",
+          "default": false,
+          "description": "If true, then `-i` flag will be passed to `go build` everytime the code is compiled. Since Go 1.10, setting this may be unnecessary unless you are in GOPATH mode and do not use the language server."
+        },
+        "go.terminal.activateEnvironment": {
+          "default": true,
+          "description": "Apply the Go & PATH environment variables used by the extension to all integrated terminals.",
+          "type": "boolean"
+        },
+        "go.buildOnSave": {
+          "type": "string",
+          "enum": [
+            "package",
+            "workspace",
+            "off"
+          ],
+          "default": "package",
+          "description": "Compiles code on file save using 'go build' or 'go test -c'. Not applicable when using the language server."
         },
         "go.buildFlags": {
           "type": "array",
@@ -436,37 +653,205 @@
             "type": "string"
           },
           "default": [],
-          "description": "Additional arguments passed to go build."
+          "description": "Flags to `go build`/`go test` used during build-on-save or running tests. (e.g. [\"-ldflags='-s'\"]) This is propagated to the language server if `gopls.build.buildFlags` is not specified."
         },
-        "go.goPath": {
+        "go.buildTags": {
           "type": "string",
-          "default": "go",
-          "description": "Path or executable name of the Go command."
+          "default": "",
+          "description": "The Go build tags to use for all commands, that support a `-tags '...'` argument. When running tests, go.testTags will be used instead if it was set. This is propagated to the language server if `gopls.build.buildFlags` is not specified."
         },
-        "go.goEnv": {
+        "go.vetOnSave": {
+          "type": "string",
+          "enum": [
+            "package",
+            "workspace",
+            "off"
+          ],
+          "enumDescriptions": [
+            "vet the current package on file saving",
+            "vet all the packages in the current workspace root folder on file saving",
+            "do not run vet automatically"
+          ],
+          "default": "package",
+          "description": "Vets code on file save using 'go tool vet'. Not applicable when using the language server's diagnostics."
+        },
+        "go.vetFlags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Flags to pass to `go tool vet` (e.g. [\"-all\", \"-shadow\"]). Not applicable when using the language server's diagnostics."
+        },
+        "go.lintOnSave": {
+          "type": "string",
+          "enum": [
+            "file",
+            "package",
+            "workspace",
+            "off"
+          ],
+          "enumDescriptions": [
+            "lint the current file on file saving",
+            "lint the current package on file saving",
+            "lint all the packages in the current workspace root folder on file saving",
+            "do not run lint automatically"
+          ],
+          "default": "package",
+          "description": "Lints code on file save using the configured Lint tool. Options are 'file', 'package', 'workspace' or 'off'."
+        },
+        "go.lintTool": {
+          "type": "string",
+          "description": "Specifies an additional client-side linting tool that should be run by the Go extension. By default (unset), no additional linter is run. This feature is additional to diagnostics reported by the language server, gopls. Since Gopls incorporates the entire staticcheck analyzer suite, it is typically unnecessary to run the staticcheck tool as well. To configure gopls's linting, see the 'gopls.ui.diagnostic' settings.",
+          "enum": [
+            "staticcheck",
+            "golint",
+            "golangci-lint",
+            "golangci-lint-v2",
+            "revive"
+          ],
+          "markdownEnumDescriptions": [
+            "Run `staticcheck`.",
+            "Run `golint`.",
+            "Run `golangci-lint` v1.",
+            "Run `golangci-lint` v2.",
+            "Run `revive`."
+          ]
+        },
+        "go.lintFlags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Flags to pass to Lint tool (e.g. [\"-min_confidence=.8\"])"
+        },
+        "go.formatTool": {
+          "type": "string",
+          "default": "default",
+          "markdownDescription": "Specifies the tool for formatting Go code. The default is `default`, which uses the language server `gopls` as formatting provider. To configure gopls's formatting, see the 'gopls.formatting' settings. When a specific tool (e.g., `gofmt`, `goimports`) is selected, the extension will run it instead.",
+          "enum": [
+            "default",
+            "gofmt",
+            "goimports",
+            "goformat",
+            "gofumpt",
+            "custom"
+          ],
+          "markdownEnumDescriptions": [
+            "Formatting is performed by the language server, gopls. (recommended)",
+            "Formats using `gofmt`, the standard Go formatter. See https://pkg.go.dev/cmd/gofmt.",
+            "Formats using `goimports`, which organizes imports and applies `gofmt`. See https://pkg.go.dev/golang.org/x/tools/cmd/goimports.",
+            "Formats using `goformat`, a configurable version of `gofmt`. See https://github.com/mbenkmann/goformat. (Deprecated due to lack of generics support)",
+            "Formats using `gofumpt`, a stricter version of `gofmt`. See https://github.com/mvdan/gofumpt. Note: `gopls` can also be configured to use `gofumpt` via the `#gopls.formatting.gofumpt#` setting.",
+            "Formats using a custom tool. The tool's path must be specified in the `#go.alternateTools#` setting under the `customFormatter` key."
+          ]
+        },
+        "go.formatFlags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Flags to pass to format tool (e.g. [\"-s\"]). Not applicable when using the language server."
+        },
+        "go.testTags": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null,
+          "description": "The Go build tags to use for when running tests. If null, then buildTags will be used."
+        },
+        "go.disableConcurrentTests": {
+          "type": "boolean",
+          "default": false,
+          "description": "If true, tests will not run concurrently. When a new test run is started, the previous will be cancelled."
+        },
+        "go.testOnSave": {
+          "type": "boolean",
+          "default": false,
+          "description": "Run 'go test' on save for current package. It is not advised to set this to `true` when you have Auto Save enabled."
+        },
+        "go.testTimeout": {
+          "type": "string",
+          "default": "30s",
+          "description": "Specifies the timeout for go test in ParseDuration format."
+        },
+        "go.testEnvVars": {
           "type": "object",
           "default": {},
-          "description": "Environment variables added to Go and gopls processes."
+          "description": "Environment variables that will be passed to the process that runs the Go tests"
         },
-        "go.gopath": {
+        "go.testEnvFile": {
           "type": "string",
-          "default": "",
-          "description": "GOPATH used by Go tools."
+          "default": null,
+          "description": "Absolute path to a file containing environment variables definitions. File contents should be of the form key=value."
         },
-        "go.gobin": {
-          "type": "string",
-          "default": "",
-          "description": "GOBIN directory used when locating installed Go tools."
+        "go.testFlags": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "default": null,
+          "description": "Flags to pass to `go test`. If null, then buildFlags will be used. This is not propagated to the language server."
         },
-        "go.goroot": {
-          "type": "string",
-          "default": "",
-          "description": "GOROOT used by Go tools."
+        "go.generateTestsFlags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Additional command line flags to pass to `gotests` for generating tests."
         },
-        "go.toolsEnvVars": {
+        "go.inlayHints.assignVariableTypes": {
+          "type": "boolean",
+          "markdownDescription": "`\"assignVariableTypes\"` controls inlay hints for variable types in assign statements:\n```go\n\ti« int», j« int» := 0, len(r)-1\n```\n",
+          "default": false
+        },
+        "go.inlayHints.compositeLiteralFields": {
+          "type": "boolean",
+          "markdownDescription": "`\"compositeLiteralFields\"` inlay hints for composite literal field names:\n```go\n\tPoint2D{«X: »1, «Y: »2}\n\n\tOuter{«Embedded.»Field: 0}\n```\n",
+          "default": false
+        },
+        "go.inlayHints.compositeLiteralTypes": {
+          "type": "boolean",
+          "markdownDescription": "`\"compositeLiteralTypes\"` controls inlay hints for composite literal types:\n```go\n\tfor _, c := range []struct {\n\t\tin, want string\n\t}{\n\t\t«struct{ in string; want string }»{\"Hello, world\", \"dlrow ,olleH\"},\n\t}\n```\n",
+          "default": false
+        },
+        "go.inlayHints.constantValues": {
+          "type": "boolean",
+          "markdownDescription": "`\"constantValues\"` controls inlay hints for constant values:\n```go\n\tconst (\n\t\tKindNone   Kind = iota« = 0»\n\t\tKindPrint«  = 1»\n\t\tKindPrintf« = 2»\n\t\tKindErrorf« = 3»\n\t)\n```\n",
+          "default": false
+        },
+        "go.inlayHints.functionTypeParameters": {
+          "type": "boolean",
+          "markdownDescription": "`\"functionTypeParameters\"` inlay hints for implicit type parameters on generic functions:\n```go\n\tmyFoo«[int, string]»(1, \"hello\")\n```\n",
+          "default": false
+        },
+        "go.inlayHints.parameterNames": {
+          "type": "boolean",
+          "markdownDescription": "`\"parameterNames\"` controls inlay hints for parameter names:\n```go\n\tparseInt(« str: » \"123\", « radix: » 8)\n```\n",
+          "default": false
+        },
+        "go.inlayHints.rangeVariableTypes": {
+          "type": "boolean",
+          "markdownDescription": "`\"rangeVariableTypes\"` controls inlay hints for variable types in range statements:\n```go\n\tfor k« int», v« string» := range []string{} {\n\t\tfmt.Println(k, v)\n\t}\n```\n",
+          "default": false
+        },
+        "go.inlayHints.ignoredError": {
+          "type": "boolean",
+          "markdownDescription": "`\"ignoredError\"` inlay hints for implicitly discarded errors:\n```go\n\tf.Close()« // ignore error»\n```\nThis check inserts an `// ignore error` hint following any\nstatement that is a function call whose error result is\nimplicitly ignored.\n\nTo suppress the hint, write an actual comment containing\none of the following strings:\n```\nignore error\ndiscard error\ncan't fail\ncannot fail\n```\nfollowing the call statement, or explicitly assign the\nresult to a blank variable.\n\nA handful of common functions such as `fmt.Println` are\nexcluded from the check.\n",
+          "default": false
+        },
+        "gopls": {
           "type": "object",
           "default": {},
-          "description": "Environment variables shared by Go tools."
+          "markdownDescription": "Configure the default Go language server (`gopls`). Settings are passed to gopls as is; see the [gopls settings documentation](https://github.com/golang/tools/blob/master/gopls/doc/settings.md). Dotted keys such as `\"ui.completion.usePlaceholders\"` are accepted.",
+          "additionalProperties": true
         },
         "go.goplsUseDaemon": {
           "type": "boolean",
@@ -482,11 +867,6 @@
           "type": "boolean",
           "default": false,
           "description": "Offer to install Go tools when a command needs a missing tool."
-        },
-        "go.buildOnSave": {
-          "type": "boolean",
-          "default": false,
-          "description": "Run go build for the current package after saving a Go file."
         },
         "go.benchmarkFlags": {
           "type": "array",
