@@ -1,0 +1,62 @@
+{
+  "name": "coc-golang",
+  "version": "0.1.0",
+  "description": "Go language support for coc.nvim using gopls",
+  "main": "lib/extension.js",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/xiyaowong/coc-golang"
+  },
+  "keywords": [
+    "coc.nvim",
+    "golang",
+    "gopls"
+  ],
+  "engines": {
+    "coc": "^0.0.82",
+    "node": ">=16"
+  },
+  "scripts": {
+    "test": "node --test"
+  },
+  "contributes": {
+    "configuration": {
+      "type": "object",
+      "title": "Go",
+      "properties": {
+        "go.goplsPath": {
+          "type": "string",
+          "default": "gopls",
+          "description": "Path or executable name of gopls."
+        },
+        "go.goplsArgs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Arguments passed to gopls."
+        },
+        "go.goplsEnv": {
+          "type": "object",
+          "default": {},
+          "description": "Environment variables added to the gopls process."
+        },
+        "go.goplsOptions": {
+          "type": "object",
+          "default": {},
+          "description": "Initialization options passed to gopls."
+        },
+        "go.testFlags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Additional arguments passed to go test."
+        }
+      }
+    }
+  }
+}
