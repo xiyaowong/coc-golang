@@ -116,18 +116,6 @@ Some settings to know:
 - **Tests:** `go.testFlags` and `go.testTags` fall back to `go.buildFlags` and `go.buildTags`. `go.testTimeout` supplies the test timeout, and `go.testEnvFile` is loaded before `go.testEnvVars`.
 - **Language server:** set `go.useLanguageServer` to `false` to disable `gopls` and use Go commands and formatters directly.
 
-### Migrating from earlier versions
-
-| Previous setting | Replacement |
-| --- | --- |
-| `go.goPath` | `go.alternateTools.go` |
-| `go.goplsPath` | `go.alternateTools.gopls` |
-| `go.goplsArgs` | `go.languageServerFlags` |
-| `go.goplsOptions` | `gopls` |
-| `go.goplsEnv`, `go.goEnv`, `go.gobin` | `go.toolsEnvVars` |
-| `go.testEnv` | `go.testEnvVars` |
-| Boolean `go.buildOnSave` | `"package"`, `"workspace"`, or `"off"` |
-
 ## Development
 
 Install dependencies, then build and type-check:
