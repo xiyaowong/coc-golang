@@ -12,12 +12,11 @@ import {
   workspaceDirectories,
 } from '../editor'
 import { goEnvironment } from '../environment'
-import { testArgumentsAtCursor, testArgumentsForFile, testNameAtCursor } from '../go-test-utils'
+import { escapeRegExp, testArgumentsAtCursor, testArgumentsForFile, testNameAtCursor } from '../go-test-utils'
 import { killTests, runProcess, showCommandOutput, showOutput } from '../process'
 import { getPreviousTest, runTests } from '../test'
 import { registerCommand } from './register'
 
-const escapeRegExp = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 const benchmarkFlags = (): string[] => configValue<string[]>('benchmarkFlags', [])
 
 async function listAndRunTest(): Promise<void> {

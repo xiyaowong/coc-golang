@@ -1,8 +1,22 @@
 const testFunctionPattern
   = /^\s*func\s+(Test(?:[A-Z]\w*)?|Benchmark(?:[A-Z]\w*)?|Example(?:[A-Z]\w*|_[a-z]\w*)?)\s*\(/
+const functionDeclarationPattern = /^\s*func\s+(?:\([^)]*\)\s*)?([A-Za-z_]\w*)\s*\(/
 
-function escapeRegExp(name: string): string {
+export function escapeRegExp(name: string): string {
   return name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+export function functionLineAtCursor(lines: string[] | string): string | undefined {
+  const currentLines = Array.isArray(lines) ? lines : String(lines || '').split('\n')
+  for (let index = currentLines.length - 1; index >= 0; index--) {
+    if (functionDeclarationPattern.test(currentLines[index])) return currentLines[index]
+  }
+  return undefined
+}
+
+export function functionNameAtCursor(lines: string[] | string): string | undefined {
+  const line = functionLineAtCursor(lines)
+  return line ? functionDeclarationPattern.exec(line)?.[1] : undefined
 }
 
 export function testArgumentsForLine(line: string): string[] | undefined {
@@ -27,21 +41,12 @@ export function testArgumentsForFile(lines: string[], benchmarks = false): strin
 }
 
 export function testArgumentsAtCursor(lines: string[] | string): string[] | undefined {
-  const currentLines = Array.isArray(lines) ? lines : String(lines || '').split('\n')
-  for (let index = currentLines.length - 1; index >= 0; index--) {
-    if (/^\s*func\s+(?:\([^)]*\)\s*)?[A-Za-z_]\w*\s*\(/.test(currentLines[index])) {
-      return testArgumentsForLine(currentLines[index])
-    }
-  }
-  return undefined
+  const line = functionLineAtCursor(lines)
+  return line ? testArgumentsForLine(line) : undefined
 }
 
 export function testNameAtCursor(lines: string[] | string): string | undefined {
-  const currentLines = Array.isArray(lines) ? lines : String(lines || '').split('\n')
-  for (let index = currentLines.length - 1; index >= 0; index--) {
-    const name = testFunctionPattern.exec(currentLines[index])?.[1]
-    if (name?.startsWith('Test')) return name
-    if (/^\s*func\s+(?:\([^)]*\)\s*)?[A-Za-z_]\w*\s*\(/.test(currentLines[index])) return undefined
-  }
-  return undefined
+  const line = functionLineAtCursor(lines)
+  const testName = line && testFunctionPattern.exec(line)?.[1]
+  return testName?.startsWith('Test') ? testName : undefined
 }

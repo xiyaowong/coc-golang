@@ -3,7 +3,7 @@ import { dirname } from 'node:path'
 import * as coc from 'coc.nvim'
 import { configValue } from '../config'
 import { activeDirectory, activeFile, fileUri, linesToCursor, wordAtCursor } from '../editor'
-import { testArgumentsAtCursor } from '../go-test-utils'
+import { functionNameAtCursor, testArgumentsAtCursor } from '../go-test-utils'
 import { getClient } from '../language-server'
 import { runTool } from '../tools'
 import { registerCommand } from './register'
@@ -63,14 +63,10 @@ async function generateTestForFunction(): Promise<void> {
     coc.window.showWarningMessage('Place the cursor inside a Go test or example function.')
     return
   }
-  const match = /^\s*func\s+(?:\([^)]*\)\s*)?([A-Za-z_]\w*)\s*\(/.exec(
-    (Array.isArray(lines) ? lines : String(lines).split('\n')).slice().reverse().find(
-      line => /^\s*func\s+(?:\([^)]*\)\s*)?[A-Za-z_]\w*\s*\(/.test(line),
-    ) || '',
-  )
-  if (!match) return
+  const functionName = functionNameAtCursor(lines)
+  if (!functionName) return
   const file = await activeFile()
-  if (file) await runTool('gotests', gotestsArguments('-w', '-only', `^${match[1]}$`, file), dirname(file))
+  if (file) await runTool('gotests', gotestsArguments('-w', '-only', `^${functionName}$`, file), dirname(file))
 }
 
 async function runModifyTags(
