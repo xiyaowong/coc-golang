@@ -2,7 +2,7 @@
   "name": "coc-golang",
   "version": "0.1.0",
   "description": "Go language support for coc.nvim using gopls",
-  "main": "lib/extension.js",
+  "main": "lib/index.js",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -14,22 +14,84 @@
     "gopls"
   ],
   "engines": {
-    "coc": "^0.0.82",
-    "node": ">=16"
+    "coc": "^0.0.83-next.27",
+    "node": ">=22.18.0"
   },
   "activationEvents": [
     "onLanguage:go",
     "onLanguage:gomod",
-    "onLanguage:gowork"
+    "onLanguage:gowork",
+    "onCommand:go.test.package",
+    "onCommand:go.test.explorer",
+    "onCommand:go.test.workspace",
+    "onCommand:go.test.file",
+    "onCommand:go.test.cursor",
+    "onCommand:go.test.cursorOrPrevious",
+    "onCommand:go.subtest.cursor",
+    "onCommand:go.benchmark.package",
+    "onCommand:go.benchmark.cursor",
+    "onCommand:go.benchmark.file",
+    "onCommand:go.test.coverage",
+    "onCommand:go.test.previous",
+    "onCommand:go.build.package",
+    "onCommand:go.vet.package",
+    "onCommand:go.run",
+    "onCommand:go.gopath",
+    "onCommand:go.goroot",
+    "onCommand:go.environment.choose",
+    "onCommand:go.tools.install",
+    "onCommand:go.languageserver.restart",
+    "onCommand:go.build.workspace",
+    "onCommand:go.vet.workspace",
+    "onCommand:go.lint.package",
+    "onCommand:go.lint.workspace",
+    "onCommand:go.fmt.package",
+    "onCommand:go.import.organize",
+    "onCommand:go.generate.package",
+    "onCommand:go.mod.tidy",
+    "onCommand:go.mod.vendor",
+    "onCommand:go.work.sync",
+    "onCommand:go.mod.init",
+    "onCommand:go.get.package",
+    "onCommand:go.install.package",
+    "onCommand:go.test.generate.file",
+    "onCommand:go.test.generate.package",
+    "onCommand:go.test.generate.function",
+    "onCommand:go.tags.add",
+    "onCommand:go.tags.remove",
+    "onCommand:go.tags.clear",
+    "onCommand:go.impl.cursor",
+    "onCommand:go.test.cancel",
+    "onCommand:go.test.showOutput",
+    "onCommand:go.browse.packages",
+    "onCommand:go.gopls.install",
+    "onCommand:go.tools.install.dlv",
+    "onCommand:go.tools.install.goimports",
+    "onCommand:go.tools.install.staticcheck",
+    "onCommand:go.tools.install.gomodifytags",
+    "onCommand:go.tools.install.gotests",
+    "onCommand:go.tools.install.impl",
+    "onCommand:go.tools.install.gopls",
+    "onCommand:go.version",
+    "onCommand:go.env",
+    "onCommand:go.locate.tools"
   ],
   "scripts": {
-    "test": "node --test"
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit",
+    "prepare": "tsdown",
+    "test": "npm run build && node --test"
   },
   "contributes": {
     "commands": [
       {
         "command": "go.test.package",
         "title": "Test Go Package",
+        "category": "Go"
+      },
+      {
+        "command": "go.test.explorer",
+        "title": "Pick a Go Test",
         "category": "Go"
       },
       {
@@ -48,8 +110,23 @@
         "category": "Go"
       },
       {
+        "command": "go.test.cursorOrPrevious",
+        "title": "Test Go Function at Cursor or Repeat Previous",
+        "category": "Go"
+      },
+      {
+        "command": "go.subtest.cursor",
+        "title": "Test Go Subtest at Cursor",
+        "category": "Go"
+      },
+      {
         "command": "go.benchmark.package",
         "title": "Benchmark Go Package",
+        "category": "Go"
+      },
+      {
+        "command": "go.benchmark.cursor",
+        "title": "Benchmark Go Function at Cursor",
         "category": "Go"
       },
       {
@@ -98,8 +175,183 @@
         "category": "Go"
       },
       {
+        "command": "go.environment.choose",
+        "title": "Choose Go Environment",
+        "category": "Go"
+      },
+      {
+        "command": "go.version",
+        "title": "Show Go Version",
+        "category": "Go"
+      },
+      {
+        "command": "go.tools.install",
+        "title": "Install Go Tools",
+        "category": "Go"
+      },
+      {
+        "command": "go.locate.tools",
+        "title": "Locate Go Tools",
+        "category": "Go"
+      },
+      {
+        "command": "go.languageserver.restart",
+        "title": "Restart gopls",
+        "category": "Go"
+      },
+      {
+        "command": "go.build.workspace",
+        "title": "Build Go Workspace",
+        "category": "Go"
+      },
+      {
+        "command": "go.vet.workspace",
+        "title": "Vet Go Workspace",
+        "category": "Go"
+      },
+      {
+        "command": "go.lint.package",
+        "title": "Lint Go Package",
+        "category": "Go"
+      },
+      {
+        "command": "go.lint.workspace",
+        "title": "Lint Go Workspace",
+        "category": "Go"
+      },
+      {
+        "command": "go.fmt.package",
+        "title": "Format Go Package",
+        "category": "Go"
+      },
+      {
+        "command": "go.import.organize",
+        "title": "Organize Go Imports",
+        "category": "Go"
+      },
+      {
+        "command": "go.generate.package",
+        "title": "Generate Go Package",
+        "category": "Go"
+      },
+      {
+        "command": "go.mod.tidy",
+        "title": "Tidy Go Modules",
+        "category": "Go"
+      },
+      {
+        "command": "go.mod.vendor",
+        "title": "Vendor Go Modules",
+        "category": "Go"
+      },
+      {
+        "command": "go.work.sync",
+        "title": "Sync Go Workspace",
+        "category": "Go"
+      },
+      {
+        "command": "go.mod.init",
+        "title": "Initialize Go Module",
+        "category": "Go"
+      },
+      {
+        "command": "go.get.package",
+        "title": "Get Go Package",
+        "category": "Go"
+      },
+      {
+        "command": "go.install.package",
+        "title": "Install Go Package",
+        "category": "Go"
+      },
+      {
+        "command": "go.test.generate.file",
+        "title": "Generate Tests for Go File",
+        "category": "Go"
+      },
+      {
+        "command": "go.test.generate.package",
+        "title": "Generate Tests for Go Package",
+        "category": "Go"
+      },
+      {
+        "command": "go.test.generate.function",
+        "title": "Generate Test for Go Function",
+        "category": "Go"
+      },
+      {
+        "command": "go.tags.add",
+        "title": "Add Go Struct Tags",
+        "category": "Go"
+      },
+      {
+        "command": "go.tags.remove",
+        "title": "Remove Go Struct Tags",
+        "category": "Go"
+      },
+      {
+        "command": "go.tags.clear",
+        "title": "Clear Go Struct Tags",
+        "category": "Go"
+      },
+      {
+        "command": "go.impl.cursor",
+        "title": "Implement Go Interface",
+        "category": "Go"
+      },
+      {
+        "command": "go.test.cancel",
+        "title": "Cancel Go Tests",
+        "category": "Go"
+      },
+      {
+        "command": "go.test.showOutput",
+        "title": "Show Go Test Output",
+        "category": "Go"
+      },
+      {
+        "command": "go.browse.packages",
+        "title": "Browse Go Packages",
+        "category": "Go"
+      },
+      {
         "command": "go.gopls.install",
         "title": "Install or Update gopls",
+        "category": "Go"
+      },
+      {
+        "command": "go.tools.install.dlv",
+        "title": "Install Delve",
+        "category": "Go"
+      },
+      {
+        "command": "go.tools.install.goimports",
+        "title": "Install goimports",
+        "category": "Go"
+      },
+      {
+        "command": "go.tools.install.staticcheck",
+        "title": "Install Staticcheck",
+        "category": "Go"
+      },
+      {
+        "command": "go.tools.install.gomodifytags",
+        "title": "Install gomodifytags",
+        "category": "Go"
+      },
+      {
+        "command": "go.tools.install.gotests",
+        "title": "Install gotests",
+        "category": "Go"
+      },
+      {
+        "command": "go.tools.install.impl",
+        "title": "Install impl",
+        "category": "Go"
+      },
+      {
+        "command": "go.tools.install.gopls",
+        "title": "Install gopls",
         "category": "Go"
       }
     ],
@@ -138,6 +390,19 @@
           "default": [],
           "description": "Additional arguments passed to go test."
         },
+        "go.testEnv": {
+          "type": "object",
+          "default": {},
+          "description": "Environment variables added to go test processes."
+        },
+        "go.buildFlags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Additional arguments passed to go build."
+        },
         "go.goPath": {
           "type": "string",
           "default": "go",
@@ -147,8 +412,67 @@
           "type": "object",
           "default": {},
           "description": "Environment variables added to Go and gopls processes."
+        },
+        "go.gopath": {
+          "type": "string",
+          "default": "",
+          "description": "GOPATH used by Go tools."
+        },
+        "go.gobin": {
+          "type": "string",
+          "default": "",
+          "description": "GOBIN directory used when locating installed Go tools."
+        },
+        "go.goroot": {
+          "type": "string",
+          "default": "",
+          "description": "GOROOT used by Go tools."
+        },
+        "go.toolsEnvVars": {
+          "type": "object",
+          "default": {},
+          "description": "Environment variables shared by Go tools."
+        },
+        "go.goplsUseDaemon": {
+          "type": "boolean",
+          "default": true,
+          "description": "Use the gopls remote daemon when supported."
+        },
+        "go.autoInstallGopls": {
+          "type": "boolean",
+          "default": true,
+          "description": "Ask to install gopls when it is not found."
+        },
+        "go.autoInstallTools": {
+          "type": "boolean",
+          "default": false,
+          "description": "Offer to install Go tools when a command needs a missing tool."
+        },
+        "go.buildOnSave": {
+          "type": "boolean",
+          "default": false,
+          "description": "Run go build for the current package after saving a Go file."
+        },
+        "go.benchmarkFlags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Additional arguments passed to go test benchmarks."
+        },
+        "go.disable": {
+          "type": "object",
+          "default": {},
+          "description": "Disable selected gopls language-client features."
         }
       }
     }
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.2",
+    "coc.nvim": "^0.0.83-next.27",
+    "tsdown": "^0.23.0",
+    "typescript": "^5.9.3"
   }
 }

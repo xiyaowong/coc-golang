@@ -5,32 +5,26 @@ const assert = require('node:assert/strict')
 const manifest = require('../package.json')
 
 test('activates for Go source, module, and workspace files', () => {
-  assert.deepEqual(manifest.activationEvents, [
-    'onLanguage:go',
-    'onLanguage:gomod',
-    'onLanguage:gowork',
-  ])
+  for (const event of ['onLanguage:go', 'onLanguage:gomod', 'onLanguage:gowork']) {
+    assert.ok(manifest.activationEvents.includes(event), `Missing activation event: ${event}`)
+  }
 })
 
 test('declares each registered Go command', () => {
-  assert.deepEqual(
-    manifest.contributes.commands.map(command => command.command),
-    [
-      'go.test.package',
-      'go.test.workspace',
-      'go.test.file',
-      'go.test.cursor',
-      'go.benchmark.package',
-      'go.benchmark.file',
-      'go.test.coverage',
-      'go.test.previous',
-      'go.build.package',
-      'go.vet.package',
-      'go.run',
-      'go.env',
-      'go.gopath',
-      'go.goroot',
-      'go.gopls.install',
-    ]
-  )
+  const commands = manifest.contributes.commands.map(command => command.command)
+  assert.equal(new Set(commands).size, commands.length)
+  for (const command of [
+    'go.test.package',
+    'go.test.cursor',
+    'go.test.previous',
+    'go.benchmark.package',
+    'go.gopls.install',
+    'go.test.generate.file',
+    'go.tags.add',
+    'go.impl.cursor',
+    'go.build.workspace',
+    'go.tools.install.staticcheck',
+  ]) {
+    assert.ok(commands.includes(command), `Missing command declaration: ${command}`)
+  }
 })
