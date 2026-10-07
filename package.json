@@ -15,8 +15,8 @@
   ],
   "main": "lib/index.js",
   "engines": {
-    "coc": "^0.0.83-next.27",
-    "node": ">=22.18.0"
+    "coc": "^0.0.80",
+    "node": ">=22.0.0"
   },
   "activationEvents": [
     "onLanguage:go",
