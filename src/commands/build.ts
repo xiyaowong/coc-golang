@@ -19,7 +19,7 @@ async function browsePackages(): Promise<void> {
     }
     const selected = await coc.window.showQuickPick(packages, { title: 'Select a Go package', placeHolder: 'Type to filter' })
     if (!selected) return
-    await runGo('doc', [selected], directory)
+    await runGo('doc', [selected], directory, false, {}, true)
   } catch (error) {
     coc.window.showErrorMessage(`Failed to list Go packages: ${String(error)}`)
   }
@@ -39,7 +39,7 @@ export function registerBuildCommands(context: ExtensionContext): void {
   packageCommand('go.mod.vendor', 'mod', ['vendor'])
   packageCommand('go.work.sync', 'work', ['sync'])
   registerCommand(context, 'go.run', async (target?: string) =>
-    runGo('run', [...goBuildFlags(), target || '.'], await cwd()))
+    runGo('run', [...goBuildFlags(), target || '.'], await cwd(), false, {}, true))
   for (const [id, kind] of [
     ['go.build.workspace', 'build'],
     ['go.vet.workspace', 'vet'],

@@ -3,7 +3,7 @@ import { dirname, extname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import * as coc from 'coc.nvim'
 import { goEnvironment } from './environment'
-import { appendOutput, runProcess, showCommandOutput } from './process'
+import { appendOutput, runProcess, showCommandOutput, showOutput } from './process'
 
 interface VulncheckReport {
   Entries?: Record<string, unknown>
@@ -44,6 +44,7 @@ async function displayReport(gopls: string, report: VulncheckReport, uri: string
     reportInput(report),
   )
   if (result.output) appendOutput(result.output)
+  showOutput()
   if (result.code !== 0 && result.code !== 3) {
     coc.window.showErrorMessage(`gopls vulncheck report conversion exited with code ${result.code}.`)
   }
