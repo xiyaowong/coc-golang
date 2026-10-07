@@ -91,9 +91,8 @@ export async function startLanguageClient(context: ExtensionContext): Promise<vo
     }
   }
   if (!instance) {
-    coc.window.showMessage(
+    coc.window.showWarningMessage(
       'gopls was not found. Run :CocCommand go.gopls.install or set go.alternateTools.gopls.',
-      'warning',
     )
     return
   }

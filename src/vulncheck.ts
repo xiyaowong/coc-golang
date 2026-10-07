@@ -45,7 +45,7 @@ async function displayReport(gopls: string, report: VulncheckReport, uri: string
   )
   if (result.output) appendOutput(result.output)
   if (result.code !== 0 && result.code !== 3) {
-    coc.window.showMessage(`gopls vulncheck report conversion exited with code ${result.code}.`, 'error')
+    coc.window.showErrorMessage(`gopls vulncheck report conversion exited with code ${result.code}.`)
   }
 }
 
@@ -99,7 +99,7 @@ export function vulncheckMiddleware(
       earlyProgress.clear()
       if (progress.message === 'completed') {
         void fetchReport(uri).catch((error: unknown) => {
-          coc.window.showMessage(`Failed to retrieve govulncheck results: ${String(error)}`, 'error')
+          coc.window.showErrorMessage(`Failed to retrieve govulncheck results: ${String(error)}`)
         }).finally(() => {
           activeUri = undefined
         })
@@ -116,7 +116,7 @@ export function vulncheckMiddleware(
       const uri = input?.URI
       if (command === 'gopls.run_govulncheck' && typeof uri === 'string') {
         if (activeUri) {
-          coc.window.showMessage('Cannot start vulncheck while another vulncheck is in progress.', 'warning')
+          coc.window.showWarningMessage('Cannot start vulncheck while another vulncheck is in progress.')
           return undefined
         }
         activeUri = uri
@@ -127,7 +127,7 @@ export function vulncheckMiddleware(
           if (token === undefined) {
             activeUri = undefined
             earlyProgress.clear()
-            coc.window.showMessage('gopls did not return a progress token for govulncheck.', 'error')
+            coc.window.showErrorMessage('gopls did not return a progress token for govulncheck.')
             return result
           }
           runs.set(token, uri)
@@ -137,7 +137,7 @@ export function vulncheckMiddleware(
         } catch (error) {
           activeUri = undefined
           earlyProgress.clear()
-          coc.window.showMessage(`Failed to run govulncheck: ${String(error)}`, 'error')
+          coc.window.showErrorMessage(`Failed to run govulncheck: ${String(error)}`)
           throw error
         }
       }
@@ -147,7 +147,7 @@ export function vulncheckMiddleware(
         const value = record(result)?.Result
         if (value && typeof value === 'object') {
           void displayReport(gopls, value as VulncheckReport, uri).catch((error: unknown) => {
-            coc.window.showMessage(`Failed to format vulncheck results: ${String(error)}`, 'error')
+            coc.window.showErrorMessage(`Failed to format vulncheck results: ${String(error)}`)
           })
         }
       }

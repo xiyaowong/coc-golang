@@ -47,7 +47,7 @@ export async function runCheck(kind: CheckKind, scope: CheckScope, cwd: string, 
   const collection = checkCollection(kind, tool)
   const problems = parseProblems(result.output, cwd)
   if (kind === 'lint' && result.code !== 0 && !problems.length) {
-    coc.window.showMessage(`${tool} exited with code ${result.code}. See Go output.`, 'error')
+    coc.window.showErrorMessage(`${tool} exited with code ${result.code}. See Go output.`)
   }
   const severity = kind === 'build' ? coc.DiagnosticSeverity.Error : coc.DiagnosticSeverity.Warning
   const diagnostics = new Map<string, coc.Diagnostic[]>()
