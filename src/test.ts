@@ -10,5 +10,5 @@ export function getPreviousTest(): { args: string[], cwd: string } | undefined {
 export async function runTests(args: string[], cwd: string): Promise<void> {
   previousTest = { args, cwd }
   if (configValue('disableConcurrentTests', false)) killTests()
-  await runGo('test', [...goTestFlags(), ...args], cwd, true, goTestEnvironment())
+  await runGo('test', [...goTestFlags(), ...args], cwd, true, goTestEnvironment(), true)
 }

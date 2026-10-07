@@ -3,7 +3,7 @@ import * as coc from 'coc.nvim'
 import { configValue, goCommand } from '../config'
 import { goEnvironment, resolveExecutable } from '../environment'
 import { replaceLanguageClient, restartClient } from '../language-server'
-import { appendOutput, runProcess, showCommandOutput } from '../process'
+import { appendOutput, runProcess, showCommandOutput, showOutput } from '../process'
 import { installTool, toolExecutable, tools } from '../tools'
 import { registerCommand } from './register'
 
@@ -16,6 +16,8 @@ async function showGoEnvironment(name?: string): Promise<void> {
       coc.window.showErrorMessage(`go env exited with code ${result.code}`)
     } else if (name) {
       coc.window.showInformationMessage(`${name}: ${result.stdout.trim()}`)
+    } else {
+      showOutput()
     }
   } catch (error) {
     coc.window.showErrorMessage(`Failed to run go env: ${String(error)}`)
@@ -49,6 +51,7 @@ async function locateTools(): Promise<void> {
     lines.push(`${name}: ${binary || 'not found'}`)
   }
   appendOutput(lines.join('\n'))
+  showOutput()
 }
 
 export function registerEnvironmentCommands(context: ExtensionContext): void {

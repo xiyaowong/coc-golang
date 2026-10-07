@@ -48,7 +48,6 @@ export function showOutput(): void {
 
 export function appendOutput(text: string): void {
   outputChannel?.appendLine(text)
-  showOutputIfNeeded()
 }
 
 export function killTests(): void {
@@ -125,7 +124,6 @@ export function execFileText(command: string, args: string[], env: NodeJS.Proces
 
 export function showCommandOutput(title: string): void {
   outputChannel?.appendLine(`\n> ${title}`)
-  showOutputIfNeeded()
 }
 
 export async function runGo(
@@ -134,6 +132,7 @@ export async function runGo(
   cwd: string,
   testProcess = false,
   extraEnvironment: NodeJS.ProcessEnv = {},
+  revealOutput = false,
 ): Promise<ProcessResult | undefined> {
   const fullArgs = [subcommand, ...args]
   showCommandOutput(`${goCommand()} ${fullArgs.join(' ')}`)
@@ -148,6 +147,7 @@ export async function runGo(
     if (result.code !== 0) {
       coc.window.showErrorMessage(`go ${subcommand} exited with code ${result.code}`)
     }
+    if (revealOutput) showOutputIfNeeded()
     return result
   } catch (error) {
     coc.window.showErrorMessage(`Failed to run go ${subcommand}: ${String(error)}`)
