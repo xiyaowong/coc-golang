@@ -146,10 +146,10 @@ export async function runGo(
       testProcess ? runningTests : undefined,
     )
     if (result.code !== 0) {
-      coc.window.showMessage(`go ${subcommand} exited with code ${result.code}`, 'error')
+      coc.window.showErrorMessage(`go ${subcommand} exited with code ${result.code}`)
     }
     return result
   } catch (error) {
-    coc.window.showMessage(`Failed to run go ${subcommand}: ${String(error)}`, 'error')
+    coc.window.showErrorMessage(`Failed to run go ${subcommand}: ${String(error)}`)
   }
 }

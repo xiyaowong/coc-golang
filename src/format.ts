@@ -24,7 +24,7 @@ export function refreshFormatProvider(context: ExtensionContext): void {
       const text = document.getText()
       const result = await runTool(name, args, dirname(file), { input: text, quiet: true })
       if (!result || result.code !== 0) {
-        if (result) coc.window.showMessage(`${name} failed: ${result.output.trim().split(/\r?\n/)[0] ?? ''}`, 'error')
+        if (result) coc.window.showErrorMessage(`${name} failed: ${result.output.trim().split(/\r?\n/)[0] ?? ''}`)
         return []
       }
       if (result.stdout === text) return []

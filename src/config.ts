@@ -56,7 +56,7 @@ export function goTestEnvironment(): NodeJS.ProcessEnv {
     try {
       Object.assign(environment, parseEnvFile(readFileSync(envFile, 'utf8')))
     } catch (error) {
-      coc.window.showMessage(`Unable to read go.testEnvFile ${envFile}: ${String(error)}`, 'warning')
+      coc.window.showWarningMessage(`Unable to read go.testEnvFile ${envFile}: ${String(error)}`)
     }
   }
   return { ...environment, ...configValue<Record<string, string>>('testEnvVars', {}) }

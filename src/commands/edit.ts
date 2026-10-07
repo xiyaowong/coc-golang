@@ -16,12 +16,12 @@ const gotestsArguments = (...args: string[]): string[] => [
 async function addImport(importPath?: string): Promise<void> {
   const file = await activeFile()
   if (!file?.endsWith('.go')) {
-    coc.window.showMessage('Open a Go file first.', 'warning')
+    coc.window.showWarningMessage('Open a Go file first.')
     return
   }
   const client = getClient()
   if (!client) {
-    coc.window.showMessage('gopls is not running.', 'warning')
+    coc.window.showWarningMessage('gopls is not running.')
     return
   }
   const uri = fileUri(file)
@@ -52,7 +52,7 @@ async function addImport(importPath?: string): Promise<void> {
       arguments: [{ ImportPath: pkg, URI: uri }],
     })
   } catch (error) {
-    coc.window.showMessage(`Failed to add import: ${String(error)}`, 'error')
+    coc.window.showErrorMessage(`Failed to add import: ${String(error)}`)
   }
 }
 
@@ -60,7 +60,7 @@ async function generateTestForFunction(): Promise<void> {
   const lines = await linesToCursor()
   const args = testArgumentsAtCursor(lines)
   if (!args || args.includes('-bench')) {
-    coc.window.showMessage('Place the cursor inside a Go test or example function.', 'warning')
+    coc.window.showWarningMessage('Place the cursor inside a Go test or example function.')
     return
   }
   const match = /^\s*func\s+(?:\([^)]*\)\s*)?([A-Za-z_]\w*)\s*\(/.exec(
@@ -79,12 +79,12 @@ async function runModifyTags(
 ): Promise<void> {
   const file = await activeFile()
   if (!file) {
-    coc.window.showMessage('Open a Go file first.', 'warning')
+    coc.window.showWarningMessage('Open a Go file first.')
     return
   }
   const structName = await wordAtCursor()
   if (!structName) {
-    coc.window.showMessage('Place the cursor on a Go struct name.', 'warning')
+    coc.window.showWarningMessage('Place the cursor on a Go struct name.')
     return
   }
   if (operation !== 'clear' && tagInput === undefined) {
@@ -101,7 +101,7 @@ async function runModifyTags(
   } else if (operation === 'clear') {
     args.push('-clear-tags')
   } else {
-    coc.window.showMessage('Provide one or more tag names.', 'warning')
+    coc.window.showWarningMessage('Provide one or more tag names.')
     return
   }
   await runTool('gomodifytags', args, dirname(file))
@@ -116,7 +116,7 @@ export function registerEditCommands(context: ExtensionContext): void {
   registerCommand(context, 'go.test.generate.file', async () => {
     const file = await activeFile()
     if (!file) {
-      coc.window.showMessage('Open a Go file first.', 'warning')
+      coc.window.showWarningMessage('Open a Go file first.')
       return
     }
     await runTool('gotests', gotestsArguments('-w', '-all', file), dirname(file))

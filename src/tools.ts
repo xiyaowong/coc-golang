@@ -42,13 +42,13 @@ export async function installTool(name: string): Promise<boolean> {
       goEnvironment(true),
     )
     if (result.code !== 0) {
-      coc.window.showMessage(`Failed to install ${name} (exit code ${result.code}). See Go output.`, 'error')
+      coc.window.showErrorMessage(`Failed to install ${name} (exit code ${result.code}). See Go output.`)
       return false
     }
-    coc.window.showMessage(`${name} installed successfully.`)
+    coc.window.showInformationMessage(`${name} installed successfully.`)
     return true
   } catch (error) {
-    coc.window.showMessage(`Failed to install ${name}: ${String(error)}`, 'error')
+    coc.window.showErrorMessage(`Failed to install ${name}: ${String(error)}`)
     return false
   }
 }
@@ -82,7 +82,7 @@ export async function runTool(
     if (await installTool(name)) executable = await toolExecutable(name)
   }
   if (!executable) {
-    coc.window.showMessage(`The ${name} tool is not installed. Run :CocCommand go.tools.install.${name}.`, 'warning')
+    coc.window.showWarningMessage(`The ${name} tool is not installed. Run :CocCommand go.tools.install.${name}.`)
     return undefined
   }
   if (!options.quiet) showCommandOutput(`${executable} ${args.join(' ')}`)
@@ -90,10 +90,10 @@ export async function runTool(
     const result = await runProcess(executable, args, cwd, goEnvironment(), undefined, options.input)
     if (options.quiet) return result
     if (result.code !== 0) {
-      coc.window.showMessage(`${name} exited with code ${result.code}`, 'error')
+      coc.window.showErrorMessage(`${name} exited with code ${result.code}`)
     }
     return result
   } catch (error) {
-    coc.window.showMessage(`Failed to run ${name}: ${String(error)}`, 'error')
+    coc.window.showErrorMessage(`Failed to run ${name}: ${String(error)}`)
   }
 }

@@ -14,14 +14,14 @@ async function browsePackages(): Promise<void> {
     const result = await runProcess(goCommand(), ['list', 'all'], directory, goEnvironment())
     const packages = [...new Set(result.stdout.split(/\r?\n/).filter(Boolean))]
     if (result.code !== 0 || !packages.length) {
-      coc.window.showMessage(`Unable to list Go packages (exit code ${result.code}).`, 'error')
+      coc.window.showErrorMessage(`Unable to list Go packages (exit code ${result.code}).`)
       return
     }
     const selected = await coc.window.showQuickPick(packages, { title: 'Select a Go package', placeHolder: 'Type to filter' })
     if (!selected) return
     await runGo('doc', [selected], directory)
   } catch (error) {
-    coc.window.showMessage(`Failed to list Go packages: ${String(error)}`, 'error')
+    coc.window.showErrorMessage(`Failed to list Go packages: ${String(error)}`)
   }
 }
 
@@ -68,7 +68,7 @@ export function registerBuildCommands(context: ExtensionContext): void {
           ? true
           : undefined
     await config.update('diagnostic.vulncheck', vulncheck, target)
-    coc.window.showMessage(`gopls vulncheck: ${vulncheck}`)
+    coc.window.showInformationMessage(`gopls vulncheck: ${vulncheck}`)
   })
 
   registerCommand(context, 'go.fmt.package', async () =>

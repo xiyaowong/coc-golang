@@ -29,11 +29,11 @@ async function listAndRunTest(): Promise<void> {
       /^(?:Test[A-Z0-9]\w*|Benchmark[A-Z0-9]\w*|Example(?:[A-Z]\w*|_[a-z]\w*)?)$/.test(name),
     )
     if (result.code !== 0) {
-      coc.window.showMessage(`go test -list exited with code ${result.code}`, 'error')
+      coc.window.showErrorMessage(`go test -list exited with code ${result.code}`)
       return
     }
     if (!names.length) {
-      coc.window.showMessage('No Go tests, examples, or benchmarks found in this package.', 'warning')
+      coc.window.showWarningMessage('No Go tests, examples, or benchmarks found in this package.')
       return
     }
     const name = await coc.window.showQuickPick(names, { title: 'Select a Go test or benchmark', placeHolder: 'Type to filter' })
@@ -44,7 +44,7 @@ async function listAndRunTest(): Promise<void> {
       : ['-run', `^${escaped}$`]
     await runTests(args, directory)
   } catch (error) {
-    coc.window.showMessage(`Failed to list Go tests: ${String(error)}`, 'error')
+    coc.window.showErrorMessage(`Failed to list Go tests: ${String(error)}`)
   }
 }
 
@@ -58,7 +58,7 @@ export function registerTestCommands(context: ExtensionContext): void {
   registerCommand(context, 'go.test.file', async () => {
     const args = testArgumentsForFile(await currentBufferLines())
     if (!args) {
-      coc.window.showMessage('No Go tests or examples found in the current file.', 'warning')
+      coc.window.showWarningMessage('No Go tests or examples found in the current file.')
       return
     }
     await runTests(args, await cwd())
@@ -66,7 +66,7 @@ export function registerTestCommands(context: ExtensionContext): void {
   registerCommand(context, 'go.test.cursor', async () => {
     const args = testArgumentsAtCursor(await linesToCursor())
     if (!args) {
-      coc.window.showMessage('No Go test, benchmark, or example found at the cursor.', 'warning')
+      coc.window.showWarningMessage('No Go test, benchmark, or example found at the cursor.')
       return
     }
     await runTests(args, await cwd())
@@ -83,7 +83,7 @@ export function registerTestCommands(context: ExtensionContext): void {
     const testName = testNameAtCursor(await linesToCursor())
     const subtestName = await wordAtCursor()
     if (!testName || !subtestName) {
-      coc.window.showMessage('Place the cursor on a subtest inside a Go test function.', 'warning')
+      coc.window.showWarningMessage('Place the cursor on a subtest inside a Go test function.')
       return
     }
     await runTests(['-run', `^${escapeRegExp(testName)}$/${escapeRegExp(subtestName)}$`], await cwd())
@@ -91,7 +91,7 @@ export function registerTestCommands(context: ExtensionContext): void {
   registerCommand(context, 'go.test.previous', async () => {
     const previous = getPreviousTest()
     if (!previous) {
-      coc.window.showMessage('No previous Go test command.', 'warning')
+      coc.window.showWarningMessage('No previous Go test command.')
       return
     }
     await runTests(previous.args, previous.cwd)
@@ -101,7 +101,7 @@ export function registerTestCommands(context: ExtensionContext): void {
     const file = await activeFile()
     const target = file ? counterpartGoFile(file) : undefined
     if (!target) {
-      coc.window.showMessage('Open a Go file first.', 'warning')
+      coc.window.showWarningMessage('Open a Go file first.')
       return
     }
     await coc.workspace.openResource(fileUri(target))
@@ -117,7 +117,7 @@ export function registerBenchmarkCommands(context: ExtensionContext): void {
   registerCommand(context, 'go.benchmark.cursor', async () => {
     const args = testArgumentsAtCursor(await linesToCursor())
     if (!args?.includes('-bench')) {
-      coc.window.showMessage('No Go benchmark found at the cursor.', 'warning')
+      coc.window.showWarningMessage('No Go benchmark found at the cursor.')
       return
     }
     await runTests([...args, ...benchmarkFlags()], await cwd())
@@ -125,7 +125,7 @@ export function registerBenchmarkCommands(context: ExtensionContext): void {
   registerCommand(context, 'go.benchmark.file', async () => {
     const args = testArgumentsForFile(await currentBufferLines(), true)
     if (!args) {
-      coc.window.showMessage('No Go benchmarks found in the current file.', 'warning')
+      coc.window.showWarningMessage('No Go benchmarks found in the current file.')
       return
     }
     await runTests([...args, ...benchmarkFlags()], await cwd())
