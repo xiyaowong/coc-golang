@@ -6,6 +6,10 @@ import { configValue } from './config'
 import { workspaceDirectories } from './editor'
 import { inferGopath, pathKey, prependPath } from './go-config-utils'
 
+export interface GoEnvironmentOptions {
+  forToolInstall?: boolean
+}
+
 const terminalEnvironmentBackup = new Map<string, string | undefined>()
 
 export function toolsDirectories(environment: NodeJS.ProcessEnv): string[] {
@@ -18,7 +22,8 @@ export function toolsDirectories(environment: NodeJS.ProcessEnv): string[] {
   return directories.filter((directory): directory is string => !!directory)
 }
 
-export function goEnvironment(forToolInstall = false): NodeJS.ProcessEnv {
+export function goEnvironment(options: GoEnvironmentOptions = {}): NodeJS.ProcessEnv {
+  const { forToolInstall = false } = options
   const environment: NodeJS.ProcessEnv = {
     ...process.env,
     ...configValue<Record<string, string>>('toolsEnvVars', {}),

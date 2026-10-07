@@ -5,7 +5,17 @@ import { alternateTool, configValue, goCommand } from './config'
 import { findExecutable, goEnvironment, resolveExecutable, toolsDirectories } from './environment'
 import { execFileText, runProcess, showCommandOutput } from './process'
 
-interface ToolDefinition { module: string, binary?: string, optional?: boolean }
+interface ToolDefinition {
+  module: string
+  binary?: string
+  optional?: boolean
+}
+
+export interface ToolRunOptions {
+  cwd: string
+  input?: string
+  quiet?: boolean
+}
 
 export const tools: Record<string, ToolDefinition> = {
   'gopls': { module: 'golang.org/x/tools/gopls@latest' },
@@ -33,14 +43,13 @@ export const tools: Record<string, ToolDefinition> = {
 
 export async function installTool(name: string): Promise<boolean> {
   const command = configValue('toolsManagement.go', '') || goCommand()
-  showCommandOutput(`${command} install ${tools[name].module}`)
+  const module = tools[name].module
+  showCommandOutput(`${command} install ${module}`)
   try {
-    const result = await runProcess(
-      command,
-      ['install', tools[name].module],
-      coc.workspace.cwd,
-      goEnvironment(true),
-    )
+    const result = await runProcess(command, ['install', module], {
+      cwd: coc.workspace.cwd,
+      env: goEnvironment({ forToolInstall: true }),
+    })
     if (result.code !== 0) {
       coc.window.showErrorMessage(`Failed to install ${name} (exit code ${result.code}). See Go output.`)
       return false
@@ -62,7 +71,7 @@ export async function toolExecutable(name: string): Promise<string | undefined> 
   const directories = toolsDirectories(env)
   if (!env.GOPATH && !configValue('toolsGopath', '')) {
     try {
-      const gopath = (await execFileText(goCommand(), ['env', 'GOPATH'], env)).trim()
+      const gopath = (await execFileText(goCommand(), ['env', 'GOPATH'], { env })).trim()
       directories.push(...gopath.split(delimiter).filter(Boolean).map(item => join(item, 'bin')))
     } catch {
       // The go command is unavailable; only PATH and explicit settings can be used.
@@ -74,9 +83,9 @@ export async function toolExecutable(name: string): Promise<string | undefined> 
 export async function runTool(
   name: string,
   args: string[],
-  cwd: string,
-  options: { input?: string, quiet?: boolean } = {},
+  options: ToolRunOptions,
 ): Promise<ProcessResult | undefined> {
+  const { cwd, input, quiet = false } = options
   let executable = await toolExecutable(name)
   if (!executable && configValue('autoInstallTools', false) && await coc.window.showPrompt(`${name} is missing. Install it now?`)) {
     if (await installTool(name)) executable = await toolExecutable(name)
@@ -85,10 +94,10 @@ export async function runTool(
     coc.window.showWarningMessage(`The ${name} tool is not installed. Run :CocCommand go.tools.install.${name}.`)
     return undefined
   }
-  if (!options.quiet) showCommandOutput(`${executable} ${args.join(' ')}`)
+  if (!quiet) showCommandOutput(`${executable} ${args.join(' ')}`)
   try {
-    const result = await runProcess(executable, args, cwd, goEnvironment(), undefined, options.input)
-    if (options.quiet) return result
+    const result = await runProcess(executable, args, { cwd, env: goEnvironment(), input })
+    if (quiet) return result
     if (result.code !== 0) {
       coc.window.showErrorMessage(`${name} exited with code ${result.code}`)
     }

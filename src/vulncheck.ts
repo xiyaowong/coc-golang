@@ -38,10 +38,7 @@ async function displayReport(gopls: string, report: VulncheckReport, uri: string
   const result = await runProcess(
     gopls,
     ['vulncheck', '--', '-mode=convert', '-show=color'],
-    directoryForUri(uri),
-    goEnvironment(),
-    undefined,
-    reportInput(report),
+    { cwd: directoryForUri(uri), env: goEnvironment(), input: reportInput(report) },
   )
   if (result.output) appendOutput(result.output)
   showOutput()

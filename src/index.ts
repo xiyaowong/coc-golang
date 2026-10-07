@@ -51,12 +51,14 @@ function registerSaveHandler(context: ExtensionContext): void {
     const directory = dirname(file)
     if (!configValue('useLanguageServer', true)) {
       const build = configValue<string>('buildOnSave', 'package')
-      if (build !== 'off') await runCheck('build', build as CheckScope, directory, file)
+      if (build !== 'off') await runCheck('build', build as CheckScope, { cwd: directory, file })
       const vet = configValue<string>('vetOnSave', 'package')
-      if (vet !== 'off') await runCheck('vet', vet as CheckScope, directory, file)
+      if (vet !== 'off') await runCheck('vet', vet as CheckScope, { cwd: directory, file })
     }
     const lint = configValue<string>('lintOnSave', 'package')
-    if (lint !== 'off' && configValue('lintTool', '')) await runCheck('lint', lint as CheckScope, directory, file)
+    if (lint !== 'off' && configValue('lintTool', '')) {
+      await runCheck('lint', lint as CheckScope, { cwd: directory, file })
+    }
     if (configValue('testOnSave', false)) await runTests([], directory)
   }))
 }

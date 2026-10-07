@@ -22,7 +22,7 @@ export function refreshFormatProvider(context: ExtensionContext): void {
       const name = resolved === 'custom' ? 'customFormatter' : resolved
       const args = resolved === 'goimports' ? ['-srcdir', dirname(file), ...flags] : flags
       const text = document.getText()
-      const result = await runTool(name, args, dirname(file), { input: text, quiet: true })
+      const result = await runTool(name, args, { cwd: dirname(file), input: text, quiet: true })
       if (!result || result.code !== 0) {
         if (result) coc.window.showErrorMessage(`${name} failed: ${result.output.trim().split(/\r?\n/)[0] ?? ''}`)
         return []

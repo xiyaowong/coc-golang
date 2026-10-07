@@ -25,8 +25,8 @@ async function addImport(importPath?: string): Promise<void> {
     return
   }
   const uri = fileUri(file)
-  let pkg = typeof importPath === 'string' ? importPath.trim() : ''
-  if (!pkg) {
+  let selected = importPath?.trim() ?? ''
+  if (!selected) {
     let packages: string[] = []
     try {
       const result = await client.sendRequest<{ Packages?: string[] }>('workspace/executeCommand', {
@@ -38,18 +38,18 @@ async function addImport(importPath?: string): Promise<void> {
       packages = []
     }
     if (packages.length) {
-      const selected = await coc.window.showQuickPick(packages, { title: 'Select a package to import', placeHolder: 'Type to filter' })
-      if (!selected) return
-      pkg = selected
+      const picked = await coc.window.showQuickPick(packages, { title: 'Select a package to import', placeHolder: 'Type to filter' })
+      if (!picked) return
+      selected = picked
     } else {
-      pkg = (await coc.window.requestInput('Import path'))?.trim() ?? ''
+      selected = (await coc.window.requestInput('Import path'))?.trim() ?? ''
     }
   }
-  if (!pkg) return
+  if (!selected) return
   try {
     await client.sendRequest('workspace/executeCommand', {
       command: 'gopls.add_import',
-      arguments: [{ ImportPath: pkg, URI: uri }],
+      arguments: [{ ImportPath: selected, URI: uri }],
     })
   } catch (error) {
     coc.window.showErrorMessage(`Failed to add import: ${String(error)}`)
@@ -66,7 +66,7 @@ async function generateTestForFunction(): Promise<void> {
   const functionName = functionNameAtCursor(lines)
   if (!functionName) return
   const file = await activeFile()
-  if (file) await runTool('gotests', gotestsArguments('-w', '-only', `^${functionName}$`, file), dirname(file))
+  if (file) await runTool('gotests', gotestsArguments('-w', '-only', `^${functionName}$`, file), { cwd: dirname(file) })
 }
 
 async function runModifyTags(
@@ -100,7 +100,7 @@ async function runModifyTags(
     coc.window.showWarningMessage('Provide one or more tag names.')
     return
   }
-  await runTool('gomodifytags', args, dirname(file))
+  await runTool('gomodifytags', args, { cwd: dirname(file) })
 }
 
 export function registerEditCommands(context: ExtensionContext): void {
@@ -115,10 +115,10 @@ export function registerEditCommands(context: ExtensionContext): void {
       coc.window.showWarningMessage('Open a Go file first.')
       return
     }
-    await runTool('gotests', gotestsArguments('-w', '-all', file), dirname(file))
+    await runTool('gotests', gotestsArguments('-w', '-all', file), { cwd: dirname(file) })
   })
   registerCommand(context, 'go.test.generate.package', async () =>
-    runTool('gotests', gotestsArguments('-w', '-all', '.'), await activeDirectory()))
+    runTool('gotests', gotestsArguments('-w', '-all', '.'), { cwd: await activeDirectory() }))
   registerCommand(context, 'go.test.generate.function', generateTestForFunction)
 
   registerCommand(context, 'go.tags.add', async (tags?: string[] | string) => runModifyTags('add', tags))
@@ -128,6 +128,6 @@ export function registerEditCommands(context: ExtensionContext): void {
     const file = await activeFile()
     implementation ??= await coc.window.requestInput('Receiver and interface (e.g. *MyReader io.Reader)')
     if (!file || !implementation) return
-    await runTool('impl', ['-dir', dirname(file), ...implementation.trim().split(/\s+/)], dirname(file))
+    await runTool('impl', ['-dir', dirname(file), ...implementation.trim().split(/\s+/)], { cwd: dirname(file) })
   })
 }

@@ -125,11 +125,11 @@ export async function checkGoplsUpdate(context: ExtensionContext): Promise<void>
   if (!executable) return
   const env = goEnvironment()
   try {
-    const info = await execFileText(goCommand(), ['version', '-m', executable], env)
+    const info = await execFileText(goCommand(), ['version', '-m', executable], { env })
     const match = /^\s*mod\s+(\S+)\s+(v\S+)/m.exec(info)
     if (!match) return
     const [, module, installed] = match
-    const latestInfo = await execFileText(goCommand(), ['list', '-m', '-json', `${module}@latest`], env)
+    const latestInfo = await execFileText(goCommand(), ['list', '-m', '-json', `${module}@latest`], { env })
     const latest = (JSON.parse(latestInfo) as { Version?: string }).Version
     if (!latest || latest === installed || installed.includes('-0.')) return
     const autoUpdate = configValue('toolsManagement.autoUpdate', false)

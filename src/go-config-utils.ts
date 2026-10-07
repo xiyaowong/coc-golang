@@ -1,4 +1,4 @@
-export type GoplsOptions = Record<string, any>
+export type GoplsOptions = Record<string, unknown>
 
 export interface GoplsSettings {
   buildFlags: string[]

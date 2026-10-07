@@ -11,7 +11,7 @@ async function showGoEnvironment(name?: string): Promise<void> {
   const args = name ? ['env', name] : ['env']
   showCommandOutput(`${goCommand()} ${args.join(' ')}`)
   try {
-    const result = await runProcess(goCommand(), args, coc.workspace.cwd, goEnvironment())
+    const result = await runProcess(goCommand(), args, { cwd: coc.workspace.cwd, env: goEnvironment() })
     if (result.code !== 0) {
       coc.window.showErrorMessage(`go env exited with code ${result.code}`)
     } else if (name) {
@@ -27,12 +27,12 @@ async function showGoEnvironment(name?: string): Promise<void> {
 async function showVersions(): Promise<void> {
   showCommandOutput(`${goCommand()} version`)
   try {
-    const result = await runProcess(goCommand(), ['version'], coc.workspace.cwd, goEnvironment())
+    const result = await runProcess(goCommand(), ['version'], { cwd: coc.workspace.cwd, env: goEnvironment() })
     const goplsPath = await toolExecutable('gopls')
     let goplsVersion = 'not installed'
     if (goplsPath) {
-      const result = await runProcess(goplsPath, ['version'], coc.workspace.cwd, goEnvironment())
-      goplsVersion = result.stdout.trim() || `exit code ${result.code}`
+      const goplsResult = await runProcess(goplsPath, ['version'], { cwd: coc.workspace.cwd, env: goEnvironment() })
+      goplsVersion = goplsResult.stdout.trim() || `exit code ${goplsResult.code}`
     }
     const message = `Go ${result.stdout.trim()}; gopls ${goplsVersion}`
     if (result.code === 0) coc.window.showInformationMessage(message)
@@ -44,8 +44,7 @@ async function showVersions(): Promise<void> {
 
 async function locateTools(): Promise<void> {
   showCommandOutput('go locate tools')
-  const goBin = resolveExecutable(goCommand())
-  const lines = [`go: ${goBin || 'not found'}`]
+  const lines = [`go: ${resolveExecutable(goCommand()) || 'not found'}`]
   for (const name of Object.keys(tools)) {
     const binary = await toolExecutable(name)
     lines.push(`${name}: ${binary || 'not found'}`)

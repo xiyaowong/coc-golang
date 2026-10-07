@@ -50,14 +50,14 @@ export function goTestFlags(): string[] {
 }
 
 export function goTestEnvironment(): NodeJS.ProcessEnv {
-  const environment: Record<string, string> = {}
   const envFile = configValue('testEnvFile', '')
+  let variables: Record<string, string> = {}
   if (envFile) {
     try {
-      Object.assign(environment, parseEnvFile(readFileSync(envFile, 'utf8')))
+      variables = parseEnvFile(readFileSync(envFile, 'utf8'))
     } catch (error) {
       coc.window.showWarningMessage(`Unable to read go.testEnvFile ${envFile}: ${String(error)}`)
     }
   }
-  return { ...environment, ...configValue<Record<string, string>>('testEnvVars', {}) }
+  return { ...variables, ...configValue<Record<string, string>>('testEnvVars', {}) }
 }

@@ -11,12 +11,50 @@ export interface ProcessResult {
   output: string
 }
 
+export interface ProcessOptions {
+  cwd: string
+  env?: NodeJS.ProcessEnv
+  input?: string
+  group?: Set<ChildProcess>
+}
+
+export interface ExecFileOptions {
+  cwd?: string
+  env?: NodeJS.ProcessEnv
+}
+
+export interface GoRunOptions {
+  cwd: string
+  environment?: NodeJS.ProcessEnv
+  testProcess?: boolean
+  revealOutput?: boolean
+}
+
 const runningProcesses = new Set<ChildProcess>()
-export const runningTests = new Set<ChildProcess>()
+const runningTests = new Set<ChildProcess>()
 let outputChannel: coc.OutputChannel | undefined
 let outputVisibilityCheck: Promise<void> | undefined
 
-function showOutputIfNeeded(): void {
+export function createOutputChannel(): coc.OutputChannel {
+  outputChannel = coc.window.createOutputChannel('Go')
+  return outputChannel
+}
+
+export function disposeOutputChannel(): void {
+  runningTests.clear()
+  outputChannel?.dispose()
+  outputChannel = undefined
+}
+
+export function appendOutput(text: string): void {
+  outputChannel?.appendLine(text)
+}
+
+export function showCommandOutput(title: string): void {
+  outputChannel?.appendLine(`\n> ${title}`)
+}
+
+export function showOutput(): void {
   const channel = outputChannel
   if (!channel || outputVisibilityCheck) return
 
@@ -37,19 +75,6 @@ function showOutputIfNeeded(): void {
   })
 }
 
-export function createOutputChannel(): coc.OutputChannel {
-  outputChannel = coc.window.createOutputChannel('Go')
-  return outputChannel
-}
-
-export function showOutput(): void {
-  showOutputIfNeeded()
-}
-
-export function appendOutput(text: string): void {
-  outputChannel?.appendLine(text)
-}
-
 export function killTests(): void {
   for (const process of runningTests) process.kill()
   runningTests.clear()
@@ -60,20 +85,8 @@ export function killAllProcesses(): void {
   runningProcesses.clear()
 }
 
-export function disposeOutputChannel(): void {
-  runningTests.clear()
-  outputChannel?.dispose()
-  outputChannel = undefined
-}
-
-export function runProcess(
-  command: string,
-  args: string[],
-  cwd: string,
-  env: NodeJS.ProcessEnv = process.env,
-  processGroup?: Set<ChildProcess>,
-  input?: string,
-): Promise<ProcessResult> {
+export function runProcess(command: string, args: string[], options: ProcessOptions): Promise<ProcessResult> {
+  const { cwd, env = process.env, input, group } = options
   return new Promise((resolvePromise, reject) => {
     const child = spawn(command, args, {
       cwd,
@@ -82,7 +95,7 @@ export function runProcess(
       windowsHide: true,
     })
     runningProcesses.add(child)
-    processGroup?.add(child)
+    group?.add(child)
     let stdout = ''
     let output = ''
     child.stdout?.on('data', (chunk: Buffer) => {
@@ -98,12 +111,12 @@ export function runProcess(
     })
     child.once('error', (error) => {
       runningProcesses.delete(child)
-      processGroup?.delete(child)
+      group?.delete(child)
       reject(error)
     })
     child.once('close', (code) => {
       runningProcesses.delete(child)
-      processGroup?.delete(child)
+      group?.delete(child)
       resolvePromise({ code, stdout, output })
     })
     if (input !== undefined) {
@@ -113,41 +126,34 @@ export function runProcess(
   })
 }
 
-export function execFileText(command: string, args: string[], env: NodeJS.ProcessEnv): Promise<string> {
+export function execFileText(command: string, args: string[], options: ExecFileOptions = {}): Promise<string> {
+  const { cwd, env } = options
   return new Promise((resolvePromise, reject) => {
-    execFile(command, args, { env, windowsHide: true }, (error, stdout) => {
+    execFile(command, args, { cwd, env, windowsHide: true }, (error, stdout) => {
       if (error) reject(error)
       else resolvePromise(stdout)
     })
   })
 }
 
-export function showCommandOutput(title: string): void {
-  outputChannel?.appendLine(`\n> ${title}`)
-}
-
 export async function runGo(
   subcommand: string,
   args: string[],
-  cwd: string,
-  testProcess = false,
-  extraEnvironment: NodeJS.ProcessEnv = {},
-  revealOutput = false,
+  options: GoRunOptions,
 ): Promise<ProcessResult | undefined> {
+  const { cwd, environment = {}, testProcess = false, revealOutput = false } = options
   const fullArgs = [subcommand, ...args]
   showCommandOutput(`${goCommand()} ${fullArgs.join(' ')}`)
   try {
-    const result = await runProcess(
-      goCommand(),
-      fullArgs,
+    const result = await runProcess(goCommand(), fullArgs, {
       cwd,
-      { ...goEnvironment(), ...extraEnvironment },
-      testProcess ? runningTests : undefined,
-    )
+      env: { ...goEnvironment(), ...environment },
+      group: testProcess ? runningTests : undefined,
+    })
     if (result.code !== 0) {
       coc.window.showErrorMessage(`go ${subcommand} exited with code ${result.code}`)
     }
-    if (revealOutput) showOutputIfNeeded()
+    if (revealOutput) showOutput()
     return result
   } catch (error) {
     coc.window.showErrorMessage(`Failed to run go ${subcommand}: ${String(error)}`)
