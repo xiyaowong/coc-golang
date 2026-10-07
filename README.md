@@ -128,7 +128,7 @@ Add settings to `coc-settings.json`. For example:
   "go.formatTool": "default",
   "go.testTimeout": "30s",
   "go.testOnSave": false,
-  "go.diagnostic.vulncheck": "Prompt"
+  "go.diagnostic.vulncheck": "Imports"
 }
 ```
 

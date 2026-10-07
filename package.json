@@ -433,15 +433,13 @@
           "markdownDescription": "(Experimental) vulncheck enables vulnerability scanning.\n",
           "enum": [
             "Imports",
-            "Off",
-            "Prompt"
+            "Off"
           ],
           "markdownEnumDescriptions": [
             "`\"Imports\"`: In Imports mode, `gopls` will report vulnerabilities that affect packages\ndirectly and indirectly used by the analyzed main module.\n",
-            "`\"Off\"`: Disable vulnerability analysis.\n",
-            "`\"Prompt\"`: Vulncheck can be triggered via prompt.\n"
+            "`\"Off\"`: Disable vulnerability analysis.\n"
           ],
-          "default": "Prompt"
+          "default": "Imports"
         },
         "go.enableCodeLens": {
           "type": "object",

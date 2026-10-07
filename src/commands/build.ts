@@ -58,7 +58,7 @@ export function registerBuildCommands(context: ExtensionContext): void {
     const config = coc.workspace.getConfiguration('go', document.uri)
     const inspect = config.inspect<string>('diagnostic.vulncheck')
     const configured = inspect?.workspaceFolderValue ?? inspect?.workspaceValue ?? inspect?.globalValue
-    const current = configured ?? config.get<string>('diagnostic.vulncheck', 'Prompt')
+    const current = configured ?? config.get<string>('diagnostic.vulncheck', 'Imports')
     const vulncheck = current === 'Imports' ? 'Off' : 'Imports'
     const target = inspect?.workspaceFolderValue !== undefined
       ? undefined
