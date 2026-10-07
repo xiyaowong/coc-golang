@@ -1,188 +1,133 @@
+<div align="center">
+
 # coc-golang
 
-Go support for [coc.nvim](https://github.com/neoclide/coc.nvim), powered by the official [gopls](https://go.dev/gopls/) language server and Go tools.
+Go language support for [coc.nvim](https://github.com/neoclide/coc.nvim), powered by the official [gopls](https://go.dev/gopls/) language server and Go tools.
 
-## Get started
+[![coc.nvim](https://img.shields.io/badge/coc.nvim-extension-5b9bd5?style=flat-square)](https://github.com/neoclide/coc.nvim)
+[![Go](https://img.shields.io/badge/Go-tools-00ADD8?style=flat-square&logo=go&logoColor=white)](https://go.dev/)
+[![Node.js](https://img.shields.io/badge/Node.js-%3E%3D22.18-339933?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org/)
 
-You need coc.nvim with the 0.0.83-next.27 language-client API or newer, Node.js 22.18 or newer, and Go.
+[Install](#installation) · [Features](#features) · [Commands](#commands) · [Configuration](#configuration) · [Development](#development)
 
-Install the extension:
+</div>
+
+## Overview
+
+`coc-golang` brings Go development features to Vim and Neovim through coc.nvim. It uses `gopls` for language intelligence and provides commands for testing, building, formatting, linting, vulnerability checks, and common Go project tasks.
+
+## Installation
+
+### Requirements
+
+- Vim or Neovim with [coc.nvim](https://github.com/neoclide/coc.nvim) `0.0.83-next.27` or newer
+- Node.js `22.18` or newer
+- [Go](https://go.dev/dl/)
+
+Install the extension from Vim or Neovim:
 
 ```vim
 :CocInstall coc-golang
 ```
 
-If `gopls` is missing, the extension prompts you to install it. You can also run `:CocCommand go.gopls.install`.
+Open a Go file to activate the extension. If `gopls` is not installed, coc-golang prompts you to install it. You can also install it at any time with:
+
+```vim
+:CocCommand go.gopls.install
+```
 
 ## Features
 
-| Use case | Features |
-| --- | --- |
-| Write Go | Completion, hover, signature help, formatting, and import organization |
-| Navigate and refactor | Diagnostics, navigation, references, rename, code actions, and document symbols |
-| Build and test | Build, run, test, benchmark, coverage, and vulnerability scans |
-| Manage projects | Go module and workspace commands, tool installation, and Go environment information |
+- **Language intelligence:** completion, hover, signature help, diagnostics, navigation, references, rename, code actions, and document symbols through `gopls`.
+- **Formatting and imports:** format Go code and add or organize imports.
+- **Build and checks:** build, run, vet, lint, and scan packages or workspaces for known vulnerabilities.
+- **Tests and benchmarks:** run tests at package, workspace, file, or cursor scope; repeat the previous run; collect coverage; and run benchmarks.
+- **Project workflows:** manage modules and workspaces, install Go tools, generate code or tests, edit struct tags, and generate interface implementations.
+- **Go environment:** inspect Go settings and configure environments for `gopls`, Go commands, and installed tools.
 
-`gopls` provides editor language features. Test and Go command output appears in coc.nvim's `Go` output channel. Configure gopls through the `gopls` setting.
+`gopls` handles language features. Test and Go command output is shown in coc.nvim's **Go** output channel.
 
 ## Commands
 
-Run a command with `:CocCommand`, for example `:CocCommand go.test.package`.
+Run commands with `:CocCommand`, for example:
+
+```vim
+:CocCommand go.test.package
+```
 
 ### Tests and benchmarks
 
-Run tests for a package, file, workspace, or test at the cursor:
+| Task | Commands |
+| --- | --- |
+| Run tests | `go.test.package`, `go.test.workspace`, `go.test.file`, `go.test.cursor`, `go.subtest.cursor` |
+| Choose or repeat tests | `go.test.explorer`, `go.test.cursorOrPrevious`, `go.test.previous` |
+| Coverage and test controls | `go.test.coverage`, `go.test.cancel`, `go.test.showOutput`, `go.toggle.test.file` |
+| Run benchmarks | `go.benchmark.package`, `go.benchmark.file`, `go.benchmark.cursor` |
+| Generate tests | `go.test.generate.file`, `go.test.generate.package`, `go.test.generate.function` |
 
-- `go.test.package`, `go.test.file`, `go.test.workspace`, `go.test.explorer`
-- `go.test.cursor`, `go.subtest.cursor`, `go.test.cursorOrPrevious`, `go.test.previous`
+Test generation requires `gotests`. The test explorer is a coc.nvim quick-pick selector; persistent VS Code test explorer UI is not included.
 
-Manage test runs and coverage:
+### Build, checks, and code
 
-- `go.test.coverage`, `go.test.cancel`, `go.test.showOutput`, `go.toggle.test.file`
+| Task | Commands |
+| --- | --- |
+| Build and run | `go.build.package`, `go.build.workspace`, `go.run`, `go.generate.package` |
+| Vet and lint | `go.vet.package`, `go.vet.workspace`, `go.lint.package`, `go.lint.workspace` |
+| Vulnerability checks | `go.vulncheck.package`, `go.vulncheck.workspace`, `go.vulncheck.toggle` |
+| Format and imports | `go.fmt.package`, `go.import.organize`, `go.import.add` |
+| Modules and dependencies | `go.mod.init`, `go.mod.tidy`, `go.mod.vendor`, `go.work.sync`, `go.get.package`, `go.install.package`, `go.browse.packages` |
+| Struct tags and interfaces | `go.tags.add`, `go.tags.remove`, `go.tags.clear`, `go.impl.cursor` |
 
-Run benchmarks or generate tests:
-
-- `go.benchmark.package`, `go.benchmark.file`, `go.benchmark.cursor`
-- `go.test.generate.file`, `go.test.generate.package`, `go.test.generate.function` (requires `gotests`)
-
-Test output is collected in the `Go` output channel.
-
-### Build and Go tools
-
-Build, run, generate, and check Go code:
-
-- `go.build.package`, `go.build.workspace`, `go.run`, `go.generate.package`
-- `go.vet.package`, `go.vet.workspace`, `go.lint.package`, `go.lint.workspace`
-
-Scan Go packages and workspaces for known vulnerabilities:
-
-- `go.vulncheck.package`, `go.vulncheck.workspace` (requires `govulncheck`)
-- `go.vulncheck.toggle` toggles `go.diagnostic.vulncheck` (`Imports`/`Off`) and restarts gopls
-
-Format code and manage imports:
-
-- `go.fmt.package`, `go.import.organize`, `go.import.add`
-
-Manage modules, workspaces, dependencies, and packages:
-
-- `go.mod.init`, `go.mod.tidy`, `go.mod.vendor`, `go.work.sync`
-- `go.get.package`, `go.install.package`, `go.browse.packages`
-
-Add or remove struct tags and generate interface implementations:
-
-- `go.tags.add`, `go.tags.remove`, `go.tags.clear` (requires `gomodifytags`)
-- `go.impl.cursor` (requires `impl`)
+`govulncheck` is required for vulnerability scans, `gomodifytags` for struct tags, and `impl` for interface implementation generation.
 
 ### Go environment and tools
 
-Inspect the Go environment and locate tools:
+Use `go.env`, `go.gopath`, `go.goroot`, `go.version`, and `go.environment.choose` to inspect or select the Go environment. Use `go.locate.tools` to locate installed tools, `go.tools.install` to choose tools to install, or `go.tools.install.<tool>` to install a specific tool. `go.gopls.install` installs `gopls`, and `go.languageserver.restart` restarts it.
 
-- `go.env`, `go.gopath`, `go.goroot`, `go.environment.choose`, `go.version`, `go.locate.tools`
-
-Install `gopls` or optional Go tools:
-
-- `go.gopls.install`, `go.tools.install`, `go.tools.install.<tool>`
-
-Optional tools include `dlv`, `goimports`, `staticcheck`, `govulncheck`, `gomodifytags`, `gotests`, and `impl`. Go build, test, vet, lint, and vulnerability scan output appears in the `Go` output channel.
+Optional tools include `dlv`, `goimports`, `staticcheck`, `govulncheck`, `gomodifytags`, `gotests`, `impl`, `golint`, `golangci-lint`, `golangci-lint-v2`, `revive`, `gofumpt`, and `goformat`. Delve can be used with external DAP clients; coc-golang does not provide a debug adapter UI.
 
 ## Configuration
 
-Add settings to `coc-settings.json`. These are some commonly used options:
+Add settings to `coc-settings.json`. For example:
 
 ```json
 {
   "go.useLanguageServer": true,
-  "go.languageServerFlags": [],
-  "go.trace.server": "off",
-  "go.goplsUseDaemon": true,
   "go.autoInstallGopls": true,
-  "go.disable": {},
+  "go.languageServerFlags": [],
+  "go.goplsUseDaemon": true,
   "gopls": {},
-  "go.diagnostic.vulncheck": "Prompt",
-  "go.inlayHints.assignVariableTypes": false,
-  "go.enableCodeLens": { "runtest": true },
-
-  "go.alternateTools": {},
-  "go.goroot": "",
-  "go.gopath": "",
-  "go.inferGopath": false,
-  "go.toolsGopath": "",
-  "go.toolsEnvVars": {},
-  "go.toolsManagement.go": "",
-  "go.toolsManagement.checkForUpdates": "proxy",
-  "go.toolsManagement.autoUpdate": false,
-  "go.autoInstallTools": false,
-  "go.installDependenciesWhenBuilding": false,
-  "go.terminal.activateEnvironment": true,
-
   "go.buildFlags": [],
   "go.buildTags": "",
-  "go.buildOnSave": "package",
-  "go.vetOnSave": "package",
-  "go.vetFlags": [],
-  "go.lintTool": "",
-  "go.lintOnSave": "package",
-  "go.lintFlags": [],
   "go.formatTool": "default",
-  "go.formatFlags": [],
-
-  "go.testFlags": null,
-  "go.testTags": null,
   "go.testTimeout": "30s",
-  "go.testEnvVars": {},
-  "go.testEnvFile": null,
   "go.testOnSave": false,
-  "go.disableConcurrentTests": false,
-  "go.generateTestsFlags": [],
-  "go.benchmarkFlags": []
+  "go.diagnostic.vulncheck": "Prompt"
 }
 ```
 
-Setting names, types and defaults follow vscode-go. `go.goplsUseDaemon`,
-`go.disable`, `go.autoInstallGopls`, `go.autoInstallTools` and
-`go.benchmarkFlags` are coc-golang specific. All `go.inlayHints.*` hints from
-vscode-go are supported.
+Setting names, types, and defaults follow [vscode-go](https://github.com/golang/vscode-go). The `gopls` setting accepts gopls options (including dotted keys). Go-specific settings such as build flags, build tags, inlay hints, vulnerability checks, and code lenses are forwarded to gopls unless explicitly set there.
 
-- **gopls**: `gopls` (top-level, dotted keys accepted) is passed to gopls.
-  `go.buildFlags`/`go.buildTags` (`build.buildFlags`), `go.inlayHints`
-  (`ui.inlayhint.hints`), `go.diagnostic.vulncheck` (`ui.vulncheck`) and
-  `go.enableCodeLens` are forwarded unless `gopls` sets them. With
-  `go.useLanguageServer: false` gopls is not started and `go.formatTool:
-  "default"` uses `goimports`.
-- **Environment**: `go.goroot`/`go.gopath`/`go.toolsEnvVars` apply to gopls and
-  all tools; `go.toolsGopath` is used for tool installs and lookup;
-  `go.alternateTools` replaces `go`, `gopls`, `dlv`, tools, and
-  `customFormatter`; `go.terminal.activateEnvironment` exports the environment
-  to Neovim.
-- **Checks**: build and vet on save run only when `go.useLanguageServer` is
-  `false`; lint runs on save when `go.lintTool` is set (`staticcheck`, `golint`,
-  `golangci-lint`, `golangci-lint-v2`, `revive`). Results appear as coc
-  diagnostics. `go.formatTool` supports `gofmt`, `goimports`, `goformat`,
-  `gofumpt` and `custom`.
-- **Tests**: `go.testFlags` falls back to `go.buildFlags`, `go.testTags` to
-  `go.buildTags`; `-timeout` is added from `go.testTimeout`.
-  `go.testEnvFile` is read before `go.testEnvVars`.
+Some settings to know:
 
-### Migrating from earlier versions
+- **Go environment:** `go.goroot`, `go.gopath`, `go.toolsEnvVars`, `go.toolsGopath`, and `go.alternateTools` control the environment and executable paths used by Go commands, `gopls`, and tool installs. Set `go.terminal.activateEnvironment` to export the configured environment to Neovim.
+- **Formatting:** `go.formatTool` supports `gofmt`, `goimports`, `goformat`, `gofumpt`, and `custom`. With `go.useLanguageServer: false`, the default formatter uses `goimports`.
+- **Checks:** build and vet on save run when `go.useLanguageServer` is `false`. Lint on save runs when `go.lintTool` is configured. Available lint tools are `staticcheck`, `golint`, `golangci-lint`, `golangci-lint-v2`, and `revive`; diagnostics are reported by coc.nvim.
+- **Tests:** `go.testFlags` and `go.testTags` fall back to `go.buildFlags` and `go.buildTags`. `go.testTimeout` supplies the test timeout, and `go.testEnvFile` is loaded before `go.testEnvVars`.
+- **Language server:** set `go.useLanguageServer` to `false` to disable `gopls` and use Go commands and formatters directly.
 
-| Old | New |
-| --- | --- |
-| `go.goPath` | `go.alternateTools.go` |
-| `go.goplsPath` | `go.alternateTools.gopls` |
-| `go.goplsArgs` | `go.languageServerFlags` |
-| `go.goplsOptions` | `gopls` |
-| `go.goplsEnv`, `go.goEnv`, `go.gobin` | `go.toolsEnvVars` |
-| `go.testEnv` | `go.testEnvVars` |
-| `go.buildOnSave` (boolean) | `"package"`, `"workspace"` or `"off"` |
+## Development
 
-## Not yet ported
+Install dependencies, then build and type-check:
 
-The persistent VS Code test explorer (`go.experiments`), Delve debug adapter
-UI, survey and telemetry, coverage overlays, and rich diagnostic visualization
-are not included. Update checks cover `gopls` only (as upstream). A coc.nvim quick-pick test selector and gopls-provided
-run/generate code lenses cover the basic test workflow; Delve can be installed
-for external DAP clients.
+```sh
+npm install
+npm run build
+npm run typecheck
+```
 
-## License
+The build writes the extension bundles to `lib/`.
 
-[MIT](LICENSE) © [wongxy](https://github.com/xiyaowong)
+## Scope
+
+The persistent VS Code test explorer, Delve debug adapter UI, survey and telemetry, coverage overlays, and rich diagnostic visualization are not included. Update checks cover `gopls` only.
