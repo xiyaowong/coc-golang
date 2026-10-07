@@ -54,6 +54,20 @@ function tokenFrom(value: unknown): ProgressToken | undefined {
   return typeof token === 'string' || typeof token === 'number' ? token : undefined
 }
 
+const goLanguages = new Set(['go', 'gomod', 'gowork', 'gotmpl'])
+
+// gopls rejects govulncheck while any overlay differs from disk. coc.nvim syncs
+// text with '\n' line endings, so CRLF files never hash-match their disk bytes
+// even when saved. Re-asserting didSave for unmodified buffers marks them saved.
+async function markCleanBuffersSaved(client: coc.LanguageClient): Promise<void> {
+  for (const doc of coc.workspace.documents) {
+    if (!doc.attached || !goLanguages.has(doc.languageId)) continue
+    const modified = await coc.workspace.nvim.call('getbufvar', [doc.bufnr, '&modified'])
+    if (modified) continue
+    await client.sendNotification('textDocument/didSave', { textDocument: { uri: doc.uri } })
+  }
+}
+
 export function vulncheckMiddleware(
   gopls: string,
   getClient: () => coc.LanguageClient | undefined,
@@ -114,6 +128,10 @@ export function vulncheckMiddleware(
     executeCommand: async (command, args, next) => {
       const input = record(args[0])
       const uri = input?.URI
+      if (command === 'gopls.run_govulncheck' || command === 'gopls.vulncheck') {
+        const client = getClient()
+        if (client) await markCleanBuffersSaved(client)
+      }
       if (command === 'gopls.run_govulncheck' && typeof uri === 'string') {
         if (activeUri) {
           coc.window.showWarningMessage('Cannot start vulncheck while another vulncheck is in progress.')
