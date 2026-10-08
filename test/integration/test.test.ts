@@ -2,9 +2,9 @@ import type { Project } from './helpers'
 import assert from 'node:assert/strict'
 import { after, describe, it } from 'node:test'
 import { workspace } from 'coc.nvim'
-import { createProject, goOutput, outputMatching, run, waitFor } from './helpers'
+import { createProject, rerunTerminalMatching, run, terminalBuffer, terminalMatching } from './helpers'
 
-// Every test fails with a unique marker, so the shared output channel shows exactly which tests ran.
+// Every test fails with a unique marker, so the terminal shows exactly which tests ran.
 const fixture = (id: string): string => `package fixture
 
 import "testing"
@@ -34,7 +34,7 @@ describe('go test commands', () => {
     const p = project('pkg')
     await p.open('a_test.go')
     await run('go.test.package')
-    const output = await outputMatching(/pkg-alpha[\s\S]*pkg-beta|pkg-beta[\s\S]*pkg-alpha/)
+    const output = await terminalMatching(/pkg-alpha[\s\S]*pkg-beta|pkg-beta[\s\S]*pkg-alpha/)
     assert.match(output, /FAIL\s+example\.com\/fixture/)
   })
 
@@ -42,7 +42,7 @@ describe('go test commands', () => {
     const p = project('cur')
     await p.open('a_test.go', 5)
     await run('go.test.cursor')
-    const output = await outputMatching(/cur-alpha/)
+    const output = await terminalMatching(/cur-alpha/)
     assert.doesNotMatch(output, /cur-beta/)
   })
 
@@ -50,7 +50,7 @@ describe('go test commands', () => {
     const p = project('file')
     await p.open('a_test.go')
     await run('go.test.file')
-    const output = await outputMatching(/file-alpha[\s\S]*file-beta|file-beta[\s\S]*file-alpha/)
+    const output = await terminalMatching(/file-alpha[\s\S]*file-beta|file-beta[\s\S]*file-alpha/)
     assert.ok(output)
   })
 
@@ -59,7 +59,7 @@ describe('go test commands', () => {
     await p.open('a_test.go', 8)
     await workspaceCursorOnWord('inner')
     await run('go.subtest.cursor')
-    const output = await outputMatching(/sub-inner/)
+    const output = await terminalMatching(/sub-inner/)
     assert.doesNotMatch(output, /sub-alpha/)
   })
 
@@ -67,29 +67,29 @@ describe('go test commands', () => {
     const p = project('prev')
     await p.open('a_test.go', 5)
     await run('go.test.cursor')
-    await outputMatching(/prev-alpha/)
+    await terminalMatching(/prev-alpha/)
+    const first = await terminalBuffer()
     await p.open('a_test.go', 3)
     await run('go.test.cursorOrPrevious')
-    const output = await waitFor(goOutput, text => (text.match(/prev-alpha/g) ?? []).length >= 2)
-    assert.equal((output.match(/prev-alpha/g) ?? []).length, 2)
+    await rerunTerminalMatching(first, /prev-alpha/)
   })
 
   it('go.test.previous repeats the last run', async () => {
     const p = project('again')
     await p.open('a_test.go', 5)
     await run('go.test.cursor')
-    await outputMatching(/again-alpha/)
+    await terminalMatching(/again-alpha/)
+    const first = await terminalBuffer()
     await run('go.test.previous')
-    const output = await waitFor(goOutput, text => (text.match(/again-alpha/g) ?? []).length >= 2)
-    assert.equal((output.match(/again-alpha/g) ?? []).length, 2)
+    await rerunTerminalMatching(first, /again-alpha/)
   })
 
   it('go.test.coverage reports coverage', async () => {
     const p = project('cover', { 'lib.go': 'package fixture\n\nfunc Used() int { return 1 }\n' })
     await p.open('a_test.go')
     await run('go.test.coverage')
-    await outputMatching(/cover-alpha/)
-    await outputMatching(/coverage:/)
+    await terminalMatching(/cover-alpha/)
+    await terminalMatching(/coverage:/)
   })
 
   it('go.test.workspace runs tests across the workspace', async () => {
@@ -97,28 +97,28 @@ describe('go test commands', () => {
     await p.open('a_test.go')
     await workspace.nvim.command(`cd ${p.root}`)
     await run('go.test.workspace')
-    await outputMatching(/ws-alpha/)
+    await terminalMatching(/ws-alpha/)
   })
 
   it('go.benchmark.package runs benchmarks', async () => {
     const p = project('bpkg')
     await p.open('a_test.go')
     await run('go.benchmark.package')
-    await outputMatching(/bpkg-bench/)
+    await terminalMatching(/bpkg-bench/)
   })
 
   it('go.benchmark.cursor runs the benchmark under the cursor', async () => {
     const p = project('bcur')
     await p.open('a_test.go', 12)
     await run('go.benchmark.cursor')
-    await outputMatching(/bcur-bench/)
+    await terminalMatching(/bcur-bench/)
   })
 
   it('go.benchmark.file runs benchmarks of the current file', async () => {
     const p = project('bfile')
     await p.open('a_test.go')
     await run('go.benchmark.file')
-    await outputMatching(/bfile-bench/)
+    await terminalMatching(/bfile-bench/)
   })
 
   it('go.test.showOutput and go.test.cancel run without error', async () => {

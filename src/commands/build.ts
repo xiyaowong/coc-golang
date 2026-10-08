@@ -4,7 +4,7 @@ import { runCheck } from '../check'
 import { goBuildFlags, goCommand } from '../config'
 import { activeDirectory, workspaceDirectories } from '../editor'
 import { goEnvironment } from '../environment'
-import { runGo, runProcess, showCommandOutput } from '../process'
+import { runGo, runGoInTerminal, runProcess, showCommandOutput } from '../process'
 import { registerCommand } from './register'
 
 async function browsePackages(): Promise<void> {
@@ -19,7 +19,7 @@ async function browsePackages(): Promise<void> {
     }
     const selected = await coc.window.showQuickPick(packages, { title: 'Select a Go package', placeHolder: 'Type to filter' })
     if (!selected) return
-    await runGo('doc', [selected], { cwd: directory, revealOutput: true })
+    await runGoInTerminal('doc', [selected], { cwd: directory })
   } catch (error) {
     coc.window.showErrorMessage(`Failed to list Go packages: ${String(error)}`)
   }
@@ -40,7 +40,7 @@ export function registerBuildCommands(context: ExtensionContext): void {
   packageCommand('go.work.sync', 'work', ['sync'])
 
   registerCommand(context, 'go.run', async (target?: string) =>
-    runGo('run', [...goBuildFlags(), target || '.'], { cwd: await activeDirectory(), revealOutput: true }))
+    runGoInTerminal('run', [...goBuildFlags(), target || '.'], { cwd: await activeDirectory(), focus: true }))
 
   for (const [id, kind] of [
     ['go.build.workspace', 'build'],
@@ -79,19 +79,19 @@ export function registerBuildCommands(context: ExtensionContext): void {
   registerCommand(context, 'go.mod.init', async (modulePath?: string) => {
     modulePath ??= await coc.window.requestInput('Module path (e.g. example.com/project)')
     if (!modulePath) return
-    await runGo('mod', ['init', modulePath], { cwd: await activeDirectory() })
+    await runGoInTerminal('mod', ['init', modulePath], { cwd: await activeDirectory() })
   })
 
   registerCommand(context, 'go.get.package', async (packagePath?: string) => {
     packagePath ??= await coc.window.requestInput('Go module or package path')
     if (!packagePath) return
-    await runGo('get', [packagePath], { cwd: await activeDirectory() })
+    await runGoInTerminal('get', [packagePath], { cwd: await activeDirectory() })
   })
 
   registerCommand(context, 'go.install.package', async (packagePath?: string) => {
     packagePath ??= await coc.window.requestInput('Go package path')
     if (!packagePath) return
-    await runGo('install', [...goBuildFlags(), packagePath], { cwd: await activeDirectory() })
+    await runGoInTerminal('install', [...goBuildFlags(), packagePath], { cwd: await activeDirectory() })
   })
 
   registerCommand(context, 'go.browse.packages', browsePackages)

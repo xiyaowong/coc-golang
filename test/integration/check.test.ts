@@ -4,7 +4,7 @@ import { existsSync, readFileSync, rmSync } from 'node:fs'
 import { join } from 'node:path'
 import { after, describe, it } from 'node:test'
 import { DiagnosticSeverity, workspace } from 'coc.nvim'
-import { createProject, currentDiagnostics, currentDiagnosticsCleared, outputMatching, run, waitFor } from './helpers'
+import { createProject, currentDiagnostics, currentDiagnosticsCleared, outputMatching, run, terminalMatching, waitFor } from './helpers'
 
 const projects: Project[] = []
 function project(files: Record<string, string>): Project {
@@ -71,7 +71,8 @@ describe('run and module commands', () => {
     const p = project({ 'main.go': 'package main\n\nfunc main() { println("run-marker") }\n' })
     await p.open('main.go')
     await run('go.run')
-    await outputMatching(/run-marker/)
+    await terminalMatching(/run-marker/)
+    await workspace.nvim.command('wincmd p')
   })
 
   it('go.fmt.package formats the files on disk', async () => {

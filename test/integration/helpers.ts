@@ -59,6 +59,34 @@ export async function outputMatching(pattern: RegExp): Promise<string> {
   return waitFor(goOutput, output => pattern.test(output))
 }
 
+// The Go terminal is replaced by every terminal command, so the newest terminal buffer is the current one.
+export async function terminalBuffer(): Promise<number> {
+  const infos = await workspace.nvim.call('getbufinfo', []) as Array<{ bufnr: number }>
+  let found = -1
+  for (const { bufnr } of infos) {
+    if (await workspace.nvim.call('getbufvar', [bufnr, '&buftype']) === 'terminal') found = Math.max(found, bufnr)
+  }
+  return found
+}
+
+export async function terminalOutput(): Promise<string> {
+  const buffer = await terminalBuffer()
+  if (buffer < 0) return ''
+  const lines = await workspace.nvim.call('getbufline', [buffer, 1, '$']) as string[]
+  return lines.join('\n')
+}
+
+// The terminal is updated asynchronously, so poll instead of reading it once.
+export async function terminalMatching(pattern: RegExp): Promise<string> {
+  return waitFor(terminalOutput, output => pattern.test(output))
+}
+
+// Waits until a terminal other than `previous` shows the pattern.
+export async function rerunTerminalMatching(previous: number, pattern: RegExp): Promise<string> {
+  const read = async (): Promise<string> => (await terminalBuffer()) === previous ? '' : terminalOutput()
+  return waitFor(read, output => pattern.test(output))
+}
+
 // Diagnostics of the current buffer.
 export async function currentDiagnostics(collection: string): Promise<Diagnostic[]> {
   const read = async (): Promise<Diagnostic[]> => {
