@@ -2,7 +2,7 @@ import type { ExtensionContext } from 'coc.nvim'
 import { dirname } from 'node:path'
 import * as coc from 'coc.nvim'
 import { configValue } from '../config'
-import { activeDirectory, activeFile, fileUri, linesToCursor, wordAtCursor } from '../editor'
+import { activeDirectory, activeFile, fileUri, linesToCursor } from '../editor'
 import { functionNameAtCursor, testArgumentsAtCursor } from '../go-test-utils'
 import { getClient } from '../language-server'
 import { runTool } from '../tools'
@@ -69,40 +69,6 @@ async function generateTestForFunction(): Promise<void> {
   if (file) await runTool('gotests', gotestsArguments('-w', '-only', `^${functionName}$`, file), { cwd: dirname(file) })
 }
 
-async function runModifyTags(
-  operation: 'add' | 'remove' | 'clear',
-  tagInput?: string[] | string,
-): Promise<void> {
-  const file = await activeFile()
-  if (!file) {
-    coc.window.showWarningMessage('Open a Go file first.')
-    return
-  }
-  const structName = await wordAtCursor()
-  if (!structName) {
-    coc.window.showWarningMessage('Place the cursor on a Go struct name.')
-    return
-  }
-  if (operation !== 'clear' && tagInput === undefined) {
-    tagInput = await coc.window.requestInput(`${operation === 'add' ? 'Tags to add' : 'Tags to remove'} (comma-separated)`)
-  }
-  const tags = typeof tagInput === 'string'
-    ? tagInput.split(',').map(tag => tag.trim()).filter(Boolean)
-    : tagInput ?? []
-  const args = ['-file', file, '-struct', structName, '-w']
-  if (operation === 'add' && tags.length) {
-    args.push('-add-tags', tags.join(','))
-  } else if (operation === 'remove' && tags.length) {
-    args.push('-remove-tags', tags.join(','))
-  } else if (operation === 'clear') {
-    args.push('-clear-tags')
-  } else {
-    coc.window.showWarningMessage('Provide one or more tag names.')
-    return
-  }
-  await runTool('gomodifytags', args, { cwd: dirname(file) })
-}
-
 export function registerEditCommands(context: ExtensionContext): void {
   registerCommand(context, 'go.import.organize', async () => {
     await coc.commands.executeCommand('editor.action.organizeImport')
@@ -121,9 +87,6 @@ export function registerEditCommands(context: ExtensionContext): void {
     runTool('gotests', gotestsArguments('-w', '-all', '.'), { cwd: await activeDirectory() }))
   registerCommand(context, 'go.test.generate.function', generateTestForFunction)
 
-  registerCommand(context, 'go.tags.add', async (tags?: string[] | string) => runModifyTags('add', tags))
-  registerCommand(context, 'go.tags.remove', async (tags?: string[] | string) => runModifyTags('remove', tags))
-  registerCommand(context, 'go.tags.clear', async () => runModifyTags('clear'))
   registerCommand(context, 'go.impl.cursor', async (implementation?: string) => {
     const file = await activeFile()
     implementation ??= await coc.window.requestInput('Receiver and interface (e.g. *MyReader io.Reader)')

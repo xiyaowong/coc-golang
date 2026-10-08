@@ -1,6 +1,7 @@
 import type { Project } from './helpers'
 import assert from 'node:assert/strict'
 import { after, describe, it } from 'node:test'
+import * as coc from 'coc.nvim'
 import { workspace } from 'coc.nvim'
 import { createProject, currentDiagnostics, run, terminalMatching, waitFor } from './helpers'
 
@@ -25,6 +26,50 @@ describe('go.toggle.test.file', () => {
     assert.equal(await waitFor(currentFile, name => name === 'lib_test.go'), 'lib_test.go')
     await run('go.toggle.test.file')
     assert.equal(await waitFor(currentFile, name => name === 'lib.go'), 'lib.go')
+  })
+})
+
+describe('go.tags commands', () => {
+  it('adds tags to struct via go.tags.add', async () => {
+    const p = project({
+      'tags.go': 'package fixture\n\ntype User struct {\n\tName string\n}\n',
+    })
+    await p.open('tags.go', 3)
+    const commandsList = await workspace.nvim.call('CocAction', ['commands'])
+    console.log('COMMANDS:', commandsList)
+    try {
+      await run('go.tags.add', 'json,json=omitempty')
+    } catch (e) {
+      console.log('RUN ERROR:', e)
+    }
+    const doc = await workspace.document
+    await waitFor(() => Promise.resolve(doc.content), content => content.includes('`json:"name,omitempty"`'))
+    assert.match(doc.content, /Name\s+string\s+`json:"name,omitempty"`/)
+  })
+
+  it('clears tags and options via go.tags.clear', async () => {
+    const p = project({
+      'tags.go': 'package fixture\n\ntype User struct {\n\tName string `json:"name,omitempty"`\n}\n',
+    })
+    await p.open('tags.go', 3)
+    await run('go.tags.clear')
+    const doc = await workspace.document
+    await waitFor(() => Promise.resolve(doc.content), content => !content.includes('`json:'))
+    assert.doesNotMatch(doc.content, /`json:/)
+  })
+
+  it('works with dirty buffer without saving to disk first', async () => {
+    const p = project({
+      'tags.go': 'package fixture\n',
+    })
+    await p.open('tags.go', 1)
+    const doc = await workspace.document
+    await doc.applyEdits([coc.TextEdit.insert(coc.Position.create(1, 0), '\ntype Item struct {\n\tID int\n}\n')])
+    await coc.wait(200)
+    await workspace.nvim.call('cursor', [3, 1])
+    await run('go.tags.add', 'json')
+    await waitFor(() => Promise.resolve(doc.content), content => content.includes('`json:"id"`'))
+    assert.match(doc.content, /ID\s+int\s+`json:"id"`/)
   })
 })
 

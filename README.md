@@ -110,6 +110,14 @@ Test generation requires `gotests`. The test explorer is a coc.nvim quick-pick s
 
 `gomodifytags` is required for struct tags, and `impl` for interface implementation generation. Vulnerability analysis is provided by `gopls`.
 
+### Struct tags
+
+`go.tags.add`, `go.tags.remove`, and `go.tags.clear` run `gomodifytags` on the struct under the cursor:
+
+- **Whole struct:** the cursor is on the `type ... struct {` line, the closing `}`, or a field's indentation.
+- **Single field:** the cursor is on a field.
+- **Selected fields:** in visual mode, the selection.
+
 ### Go environment and tools
 
 Use `go.env`, `go.gopath`, `go.goroot`, `go.version`, and `go.environment.choose` to inspect or select the Go environment. Use `go.locate.tools` to locate installed tools, `go.tools.install` to choose tools to install, or `go.tools.install.<tool>` to install a specific tool. `go.gopls.install` installs `gopls`, and `go.languageserver.restart` restarts it.
