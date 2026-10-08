@@ -24,7 +24,7 @@ Go language support for [coc.nvim](https://github.com/neoclide/coc.nvim), powere
 
 ### Requirements
 
-- Vim or Neovim with [coc.nvim](https://github.com/neoclide/coc.nvim) `0.0.83-next.27` or newer
+- Vim or Neovim with [coc.nvim](https://github.com/neoclide/coc.nvim) `0.0.82` or newer
 - Node.js `22.18` or newer
 - [Go](https://go.dev/dl/)
 
