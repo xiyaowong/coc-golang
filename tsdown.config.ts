@@ -1,10 +1,10 @@
 import { defineConfig } from 'tsdown'
 
 export default defineConfig({
-  entry: ['src/index.ts', 'src/go-test-utils.ts'],
+  entry: ['src/index.ts'],
   outDir: 'lib',
-  format: 'cjs',
-  target: 'node20',
+  format: 'esm',
+  target: 'node22',
   platform: 'node',
   minify: false,
   dts: false,
