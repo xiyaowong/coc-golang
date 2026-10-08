@@ -99,8 +99,18 @@ Test generation requires `gotests`. The test explorer is a coc.nvim quick-pick s
 - `go.mod.init` Initialize a Go module.
 - `go.mod.tidy` Tidy the current module dependencies.
 - `go.mod.vendor` Copy module dependencies into the vendor directory.
+- `go.mod.download` Download module dependencies into the module cache.
+- `go.mod.verify` Verify that module dependencies are unmodified.
+- `go.mod.why` Explain why a package or module is a dependency.
+- `go.mod.graph` Show the module requirement graph.
+- `go.mod.edit.require` Add a requirement to `go.mod`.
+- `go.mod.edit.replace` Replace a module in `go.mod`.
+- `go.mod.edit.droprequire` Drop a requirement from `go.mod`.
+- `go.work.init` Initialize a Go workspace.
+- `go.work.use` Add a module to the Go workspace.
 - `go.work.sync` Sync workspace dependencies.
 - `go.get.package` Add or update a module or package dependency.
+- `go.get.upgrade` Upgrade the current module dependencies.
 - `go.install.package` Install a Go package.
 - `go.browse.packages` Browse Go packages.
 - `go.tags.add` Add struct tags.

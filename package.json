@@ -55,9 +55,19 @@
     "onCommand:go.generate.package",
     "onCommand:go.mod.tidy",
     "onCommand:go.mod.vendor",
+    "onCommand:go.mod.download",
     "onCommand:go.work.sync",
+    "onCommand:go.work.init",
+    "onCommand:go.work.use",
     "onCommand:go.mod.init",
+    "onCommand:go.mod.verify",
+    "onCommand:go.mod.why",
+    "onCommand:go.mod.graph",
+    "onCommand:go.mod.edit.require",
+    "onCommand:go.mod.edit.replace",
+    "onCommand:go.mod.edit.droprequire",
     "onCommand:go.get.package",
+    "onCommand:go.get.upgrade",
     "onCommand:go.install.package",
     "onCommand:go.test.generate.file",
     "onCommand:go.test.generate.package",
@@ -265,8 +275,23 @@
         "category": "Go"
       },
       {
+        "command": "go.mod.download",
+        "title": "Download Go Modules",
+        "category": "Go"
+      },
+      {
         "command": "go.work.sync",
         "title": "Sync Go Workspace",
+        "category": "Go"
+      },
+      {
+        "command": "go.work.init",
+        "title": "Initialize Go Workspace",
+        "category": "Go"
+      },
+      {
+        "command": "go.work.use",
+        "title": "Add Module to Go Workspace",
         "category": "Go"
       },
       {
@@ -275,8 +300,43 @@
         "category": "Go"
       },
       {
+        "command": "go.mod.verify",
+        "title": "Verify Go Modules",
+        "category": "Go"
+      },
+      {
+        "command": "go.mod.why",
+        "title": "Explain Go Dependency",
+        "category": "Go"
+      },
+      {
+        "command": "go.mod.graph",
+        "title": "Show Go Module Graph",
+        "category": "Go"
+      },
+      {
+        "command": "go.mod.edit.require",
+        "title": "Add Go Module Requirement",
+        "category": "Go"
+      },
+      {
+        "command": "go.mod.edit.replace",
+        "title": "Replace Go Module",
+        "category": "Go"
+      },
+      {
+        "command": "go.mod.edit.droprequire",
+        "title": "Drop Go Module Requirement",
+        "category": "Go"
+      },
+      {
         "command": "go.get.package",
         "title": "Get Go Package",
+        "category": "Go"
+      },
+      {
+        "command": "go.get.upgrade",
+        "title": "Upgrade Go Dependencies",
         "category": "Go"
       },
       {

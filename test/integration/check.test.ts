@@ -16,6 +16,14 @@ after(() => projects.forEach(created => created.cleanup()))
 
 const broken = 'package main\n\nfunc main() {\n\tvar unused int\n}\n'
 
+// A module with a dependency replaced by a sibling directory, so module commands run without network access.
+const moduleFixture = (): Record<string, string> => ({
+  'main.go': 'package main\n\nimport "example.com/dependency"\n\nfunc main() { println(dependency.Value) }\n',
+  'go.mod': 'module example.com/fixture\n\ngo 1.21\n\nrequire example.com/dependency v0.0.0\n\nreplace example.com/dependency => ./dependency\n',
+  'dependency/dependency.go': 'package dependency\n\nconst Value = 1\n',
+  'dependency/go.mod': 'module example.com/dependency\n\ngo 1.21\n',
+})
+
 describe('build and vet', () => {
   it('go.build.package reports compile errors as error diagnostics', async () => {
     const p = project({ 'main.go': broken })
@@ -98,6 +106,49 @@ describe('run and module commands', () => {
     await run('go.mod.tidy')
     await run('go.mod.vendor')
     await waitFor(async () => existsSync(p.path('vendor')), Boolean)
+  })
+
+  it('go.mod.download and go.mod.verify run in the module', async () => {
+    const p = project(moduleFixture())
+    await p.open('main.go')
+    await run('go.mod.download')
+    await run('go.mod.verify')
+    await outputMatching(/all modules verified/)
+  })
+
+  it('go.mod.why explains a dependency', async () => {
+    const p = project(moduleFixture())
+    await p.open('main.go')
+    await run('go.mod.why', 'example.com/dependency')
+    await outputMatching(/# example\.com\/dependency/)
+  })
+
+  it('go.mod.graph shows the requirement graph', async () => {
+    const p = project(moduleFixture())
+    await p.open('main.go')
+    await run('go.mod.graph')
+    await outputMatching(/example\.com\/fixture example\.com\/dependency@v0\.0\.0/)
+  })
+
+  it('go.mod.edit commands update go.mod', async () => {
+    const p = project(moduleFixture())
+    await p.open('main.go')
+    await run('go.mod.edit.require', 'example.com/added@v1.2.3')
+    await waitFor(async () => readFileSync(p.path('go.mod'), 'utf8'), text => /example\.com\/added v1\.2\.3/.test(text))
+    await run('go.mod.edit.replace', 'example.com/added=../local')
+    await waitFor(async () => readFileSync(p.path('go.mod'), 'utf8'), text => /replace example\.com\/added => \.\.\/local/.test(text))
+    await run('go.mod.edit.droprequire', 'example.com/added')
+    await waitFor(async () => readFileSync(p.path('go.mod'), 'utf8'), text => !/example\.com\/added v1\.2\.3/.test(text))
+  })
+
+  it('go.work.init and go.work.use manage go.work', async () => {
+    const p = project(moduleFixture())
+    await p.open('main.go')
+    await run('go.work.init')
+    await waitFor(async () => existsSync(p.path('go.work')), Boolean)
+    await p.open('main.go')
+    await run('go.work.use', './dependency')
+    await waitFor(async () => readFileSync(p.path('go.work'), 'utf8'), text => text.includes('./dependency'))
   })
 
   it('go.generate.package runs go:generate directives', async () => {
