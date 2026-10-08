@@ -28,7 +28,13 @@ export function createProject(files: Files): Project {
       await workspace.nvim.call('execute', [`edit ${join(root, file).replace(/ /g, '\\ ')}`])
       await workspace.nvim.call('cursor', [line, 1])
     },
-    cleanup: () => rmSync(root, { recursive: true, force: true }),
+    cleanup: () => {
+      try {
+        rmSync(root, { recursive: true, force: true })
+      } catch {
+        // ignore
+      }
+    },
   }
 }
 
