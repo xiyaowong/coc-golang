@@ -35,13 +35,7 @@ describe('go.tags commands', () => {
       'tags.go': 'package fixture\n\ntype User struct {\n\tName string\n}\n',
     })
     await p.open('tags.go', 3)
-    const commandsList = await workspace.nvim.call('CocAction', ['commands'])
-    console.log('COMMANDS:', commandsList)
-    try {
-      await run('go.tags.add', 'json,json=omitempty')
-    } catch (e) {
-      console.log('RUN ERROR:', e)
-    }
+    await run('go.tags.add', 'json,json=omitempty')
     const doc = await workspace.document
     await waitFor(() => Promise.resolve(doc.content), content => content.includes('`json:"name,omitempty"`'))
     assert.match(doc.content, /Name\s+string\s+`json:"name,omitempty"`/)
@@ -65,7 +59,6 @@ describe('go.tags commands', () => {
     await p.open('tags.go', 1)
     const doc = await workspace.document
     await doc.applyEdits([coc.TextEdit.insert(coc.Position.create(1, 0), '\ntype Item struct {\n\tID int\n}\n')])
-    await coc.wait(200)
     await workspace.nvim.call('cursor', [3, 1])
     await run('go.tags.add', 'json')
     await waitFor(() => Promise.resolve(doc.content), content => content.includes('`json:"id"`'))
