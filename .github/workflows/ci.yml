@@ -13,9 +13,12 @@ jobs:
         with:
           node-version: 24
           cache: npm
+      - uses: actions/setup-go@v5
+        with:
+          go-version: stable
+      - run: sudo apt-get update && sudo apt-get install -y neovim
       - run: npm ci
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run build
-      - run: npm run test:pure
       - run: npm test

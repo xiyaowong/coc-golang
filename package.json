@@ -861,18 +861,28 @@
     "lint": "eslint",
     "lint:fix": "eslint --fix",
     "release": "bumpp && npm publish",
-    "test": "node test/run.ts",
+    "test": "npm run test:pure && npm run test:integration",
     "test:pure": "node --test test/pure/*.test.ts",
     "typecheck": "tsc --noEmit",
-    "prepare": "tsdown"
+    "prepare": "tsdown",
+    "test:integration": "node test/integration.ts"
   },
   "devDependencies": {
     "@types/node": "^22.20.2",
     "@wongxy/eslint-config": "^4.0.3",
     "bumpp": "^12.3.0",
+    "coc-test": "^0.2.1",
     "coc.nvim": "^0.0.83-next.27",
     "jiti": "^2.7.0",
     "tsdown": "^0.23.0",
     "typescript": "^5.9.3"
+  },
+  "coc-test": {
+    "entryFile": "src/index.ts",
+    "target": "esm",
+    "user-settings": {
+      "go.useLanguageServer": false,
+      "go.terminal.activateEnvironment": false
+    }
   }
 }
