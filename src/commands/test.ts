@@ -13,7 +13,7 @@ import {
 } from '../editor'
 import { goEnvironment } from '../environment'
 import { escapeRegExp, testArgumentsAtCursor, testArgumentsForFile, testNameAtCursor } from '../go-test-utils'
-import { killTests, runProcess, showCommandOutput, showOutput } from '../process'
+import { interruptTerminal, runProcess, showCommandOutput, showTerminal } from '../process'
 import { getPreviousTest, runTests } from '../test'
 import { registerCommand } from './register'
 
@@ -104,8 +104,8 @@ export function registerTestCommands(context: ExtensionContext): void {
     }
     await coc.workspace.openResource(fileUri(target))
   })
-  registerCommand(context, 'go.test.cancel', killTests)
-  registerCommand(context, 'go.test.showOutput', showOutput)
+  registerCommand(context, 'go.test.cancel', interruptTerminal)
+  registerCommand(context, 'go.test.showOutput', showTerminal)
 }
 
 export function registerBenchmarkCommands(context: ExtensionContext): void {

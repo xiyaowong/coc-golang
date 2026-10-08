@@ -49,7 +49,7 @@ Open a Go file to activate the extension. If `gopls` is not installed, coc-golan
 - **Project workflows:** manage modules and workspaces, install Go tools, generate code or tests, edit struct tags, and generate interface implementations.
 - **Go environment:** inspect Go settings and configure environments for `gopls`, Go commands, and installed tools.
 
-`gopls` handles language features. Test and Go command output is shown in coc.nvim's **Go** output channel.
+`gopls` handles language features. `go run`, `go test`, benchmarks, `go doc`, `go get`, `go install` and `go mod init` run in a coc.nvim terminal named **Go**; other command output is shown in the **Go** output channel.
 
 ## Commands
 
@@ -71,7 +71,7 @@ Run commands with `:CocCommand`, for example:
 - `go.test.previous` Repeat the previous test command.
 - `go.test.coverage` Run package tests with coverage.
 - `go.test.cancel` Cancel the current test run.
-- `go.test.showOutput` Show test output.
+- `go.test.showOutput` Show the Go terminal.
 - `go.toggle.test.file` Open the corresponding test or source file.
 - `go.benchmark.package` Run benchmarks in the current package.
 - `go.benchmark.file` Run benchmarks in the current file.

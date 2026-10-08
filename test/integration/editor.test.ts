@@ -2,7 +2,7 @@ import type { Project } from './helpers'
 import assert from 'node:assert/strict'
 import { after, describe, it } from 'node:test'
 import { workspace } from 'coc.nvim'
-import { createProject, currentDiagnostics, outputMatching, run, waitFor } from './helpers'
+import { createProject, currentDiagnostics, run, terminalMatching, waitFor } from './helpers'
 
 const projects: Project[] = []
 function project(files: Record<string, string>): Project {
@@ -47,7 +47,7 @@ describe('save handler', () => {
       })
       await p.open('lib.go')
       await workspace.nvim.command('write!')
-      await outputMatching(/onsave-marker/)
+      await terminalMatching(/onsave-marker/)
     } finally {
       await config.update('testOnSave', undefined, true)
     }

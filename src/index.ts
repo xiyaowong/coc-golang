@@ -15,7 +15,7 @@ import {
   startLanguageClient,
   stopLanguageClient,
 } from './language-server'
-import { createOutputChannel, disposeOutputChannel, killAllProcesses } from './process'
+import { createOutputChannel, disposeOutputChannel, disposeTerminal, killAllProcesses } from './process'
 import { runTests } from './test'
 
 function registerConfigurationHandler(context: ExtensionContext): void {
@@ -81,5 +81,6 @@ export async function deactivate(): Promise<void> {
   disposeFormatProvider()
   await stopLanguageClient()
   killAllProcesses()
+  disposeTerminal()
   disposeOutputChannel()
 }
