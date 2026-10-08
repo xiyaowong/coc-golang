@@ -60,7 +60,7 @@ const goLanguages = new Set(['go', 'gomod', 'gowork', 'gotmpl'])
 async function markCleanBuffersSaved(client: coc.LanguageClient): Promise<void> {
   for (const doc of coc.workspace.documents) {
     if (!doc.attached || !goLanguages.has(doc.languageId)) continue
-    const modified = await coc.workspace.nvim.call('getbufvar', [doc.bufnr, '&modified'])
+    const modified = await doc.buffer.getOption('modified') as boolean
     if (modified) continue
     await client.sendNotification('textDocument/didSave', { textDocument: { uri: doc.uri } })
   }
