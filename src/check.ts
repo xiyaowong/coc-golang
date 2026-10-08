@@ -10,6 +10,11 @@ import { runTool } from './tools'
 export type CheckKind = 'build' | 'vet' | 'lint'
 export type CheckScope = 'file' | 'package' | 'workspace'
 
+export interface CheckOptions {
+  cwd: string
+  file?: string
+}
+
 const checkCollections = new Map<string, coc.DiagnosticCollection>()
 
 function checkCollection(kind: CheckKind, tool?: string): coc.DiagnosticCollection {
@@ -26,7 +31,12 @@ function lintTool(): string {
   return configValue('lintTool', '') || 'staticcheck'
 }
 
-export async function runCheck(kind: CheckKind, scope: CheckScope, cwd: string, file?: string): Promise<void> {
+export async function runCheck(
+  kind: CheckKind,
+  scope: CheckScope,
+  options: CheckOptions,
+): Promise<void> {
+  const { cwd, file } = options
   const target = scope === 'workspace' ? './...' : scope === 'file' && file ? file : '.'
   let result: ProcessResult | undefined
   let tool: string | undefined
@@ -34,13 +44,14 @@ export async function runCheck(kind: CheckKind, scope: CheckScope, cwd: string, 
     tool = lintTool()
     const args = lintArguments(tool, configValue<string[]>('lintFlags', []), target)
     showCommandOutput(`${tool} ${args.join(' ')}`)
-    result = await runTool(tool, args, cwd, { quiet: true })
+    result = await runTool(tool, args, { cwd, quiet: true })
   } else if (kind === 'vet') {
-    result = await runGo('vet', [...goBuildFlags(), ...configValue<string[]>('vetFlags', []), target], cwd)
+    result = await runGo('vet', [...goBuildFlags(), ...configValue<string[]>('vetFlags', []), target], { cwd })
   } else {
     const flags = [...goBuildFlags()]
     if (configValue('installDependenciesWhenBuilding', false)) flags.unshift('-i')
-    result = await runGo('build', [...flags, ...(scope === 'workspace' ? [] : ['-o', devNull]), target], cwd)
+    const output = scope === 'workspace' ? [] : ['-o', devNull]
+    result = await runGo('build', [...flags, ...output, target], { cwd })
   }
   if (!result) return
 

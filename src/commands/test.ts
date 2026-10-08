@@ -23,7 +23,7 @@ async function listAndRunTest(): Promise<void> {
   const directory = await activeDirectory()
   showCommandOutput(`${goCommand()} test -list .`)
   try {
-    const result = await runProcess(goCommand(), ['test', '-list', '.'], directory, goEnvironment())
+    const result = await runProcess(goCommand(), ['test', '-list', '.'], { cwd: directory, env: goEnvironment() })
     const names = result.stdout.split(/\r?\n/).filter(name =>
       /^(?:Test[A-Z0-9]\w*|Benchmark[A-Z0-9]\w*|Example(?:[A-Z]\w*|_[a-z]\w*)?)$/.test(name),
     )
@@ -48,8 +48,7 @@ async function listAndRunTest(): Promise<void> {
 }
 
 export function registerTestCommands(context: ExtensionContext): void {
-  const cwd = activeDirectory
-  registerCommand(context, 'go.test.package', async () => runTests([], await cwd()))
+  registerCommand(context, 'go.test.package', async () => runTests([], await activeDirectory()))
   registerCommand(context, 'go.test.explorer', listAndRunTest)
   registerCommand(context, 'go.test.workspace', async () => {
     for (const directory of workspaceDirectories()) await runTests(['./...'], directory)
@@ -60,7 +59,7 @@ export function registerTestCommands(context: ExtensionContext): void {
       coc.window.showWarningMessage('No Go tests or examples found in the current file.')
       return
     }
-    await runTests(args, await cwd())
+    await runTests(args, await activeDirectory())
   })
   registerCommand(context, 'go.test.cursor', async () => {
     const args = testArgumentsAtCursor(await linesToCursor())
@@ -68,12 +67,12 @@ export function registerTestCommands(context: ExtensionContext): void {
       coc.window.showWarningMessage('No Go test, benchmark, or example found at the cursor.')
       return
     }
-    await runTests(args, await cwd())
+    await runTests(args, await activeDirectory())
   })
   registerCommand(context, 'go.test.cursorOrPrevious', async () => {
     const args = testArgumentsAtCursor(await linesToCursor())
     if (args) {
-      await runTests(args, await cwd())
+      await runTests(args, await activeDirectory())
       return
     }
     await coc.commands.executeCommand('go.test.previous')
@@ -85,7 +84,7 @@ export function registerTestCommands(context: ExtensionContext): void {
       coc.window.showWarningMessage('Place the cursor on a subtest inside a Go test function.')
       return
     }
-    await runTests(['-run', `^${escapeRegExp(testName)}$/${escapeRegExp(subtestName)}$`], await cwd())
+    await runTests(['-run', `^${escapeRegExp(testName)}$/${escapeRegExp(subtestName)}$`], await activeDirectory())
   })
   registerCommand(context, 'go.test.previous', async () => {
     const previous = getPreviousTest()
@@ -95,7 +94,7 @@ export function registerTestCommands(context: ExtensionContext): void {
     }
     await runTests(previous.args, previous.cwd)
   })
-  registerCommand(context, 'go.test.coverage', async () => runTests(['-cover'], await cwd()))
+  registerCommand(context, 'go.test.coverage', async () => runTests(['-cover'], await activeDirectory()))
   registerCommand(context, 'go.toggle.test.file', async () => {
     const file = await activeFile()
     const target = file ? counterpartGoFile(file) : undefined
@@ -110,23 +109,22 @@ export function registerTestCommands(context: ExtensionContext): void {
 }
 
 export function registerBenchmarkCommands(context: ExtensionContext): void {
-  const cwd = activeDirectory
   registerCommand(context, 'go.benchmark.package', async () =>
-    runTests(['-run', '^$', '-bench', '.', ...benchmarkFlags()], await cwd()))
+    runTests(['-run', '^$', '-bench', '.', ...benchmarkFlags()], await activeDirectory()))
   registerCommand(context, 'go.benchmark.cursor', async () => {
     const args = testArgumentsAtCursor(await linesToCursor())
     if (!args?.includes('-bench')) {
       coc.window.showWarningMessage('No Go benchmark found at the cursor.')
       return
     }
-    await runTests([...args, ...benchmarkFlags()], await cwd())
+    await runTests([...args, ...benchmarkFlags()], await activeDirectory())
   })
   registerCommand(context, 'go.benchmark.file', async () => {
-    const args = testArgumentsForFile(await currentBufferLines(), true)
+    const args = testArgumentsForFile(await currentBufferLines(), { benchmarks: true })
     if (!args) {
       coc.window.showWarningMessage('No Go benchmarks found in the current file.')
       return
     }
-    await runTests([...args, ...benchmarkFlags()], await cwd())
+    await runTests([...args, ...benchmarkFlags()], await activeDirectory())
   })
 }

@@ -2,6 +2,9 @@ import { dirname } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import * as coc from 'coc.nvim'
 
+const goFileSuffix = '.go'
+const testFileSuffix = '_test.go'
+
 export async function activeFile(): Promise<string | undefined> {
   const { document } = await coc.workspace.getCurrentState()
   try {
@@ -47,10 +50,11 @@ export async function wordAtCursor(): Promise<string> {
 }
 
 export function counterpartGoFile(file: string): string | undefined {
-  if (!file.endsWith('.go')) return undefined
-  return file.endsWith('_test.go')
-    ? `${file.slice(0, -'_test.go'.length)}.go`
-    : `${file.slice(0, -'.go'.length)}_test.go`
+  if (!file.endsWith(goFileSuffix)) return undefined
+  if (file.endsWith(testFileSuffix)) {
+    return `${file.slice(0, -testFileSuffix.length)}${goFileSuffix}`
+  }
+  return `${file.slice(0, -goFileSuffix.length)}${testFileSuffix}`
 }
 
 export function fileUri(file: string): string {

@@ -2,6 +2,10 @@ const testFunctionPattern
   = /^\s*func\s+(Test(?:[A-Z]\w*)?|Benchmark(?:[A-Z]\w*)?|Example(?:[A-Z]\w*|_[a-z]\w*)?)\s*\(/
 const functionDeclarationPattern = /^\s*func\s+(?:\([^)]*\)\s*)?([A-Za-z_]\w*)\s*\(/
 
+export interface TestSelectionOptions {
+  benchmarks?: boolean
+}
+
 export function escapeRegExp(name: string): string {
   return name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
@@ -29,7 +33,8 @@ export function testArgumentsForLine(line: string): string[] | undefined {
     : ['-run', `^${escaped}$`]
 }
 
-export function testArgumentsForFile(lines: string[], benchmarks = false): string[] | undefined {
+export function testArgumentsForFile(lines: string[], options: TestSelectionOptions = {}): string[] | undefined {
+  const { benchmarks = false } = options
   const names = lines.flatMap((line) => {
     const name = testFunctionPattern.exec(line)?.[1]
     return name && name.startsWith('Benchmark') === benchmarks ? [escapeRegExp(name)] : []
