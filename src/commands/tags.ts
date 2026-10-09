@@ -5,7 +5,6 @@ import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import * as coc from 'coc.nvim'
 import { activeFile } from '../editor'
-import { appendOutput } from '../process'
 import { parseTagAndOptionInput } from '../tag-utils'
 import { runTool } from '../tools'
 import { registerCommand } from './register'
@@ -102,9 +101,6 @@ async function runModifyTags(
     }
 
     const result = await runTool('gomodifytags', args, { cwd: dirname(filePath), quiet: true })
-    if (result) {
-      appendOutput(`[gomodifytags] code=${result.code}\nstdout:\n${result.stdout}\nstderr/output:\n${result.output}\nargs: ${args.join(' ')}`)
-    }
     if (!result || result.code !== 0) {
       coc.window.showErrorMessage(`gomodifytags failed (code ${result?.code}): ${result?.output?.trim() || 'no output'}`)
       return
@@ -143,10 +139,7 @@ async function runModifyTags(
 }
 
 export function registerTagCommands(context: ExtensionContext): void {
-  registerCommand(context, 'go.tags.add', async (tags?: string[] | string) => {
-    appendOutput('go.tags.add invoked')
-    await runModifyTags('add', tags)
-  })
+  registerCommand(context, 'go.tags.add', async (tags?: string[] | string) => runModifyTags('add', tags))
   registerCommand(context, 'go.tags.remove', async (tags?: string[] | string) => runModifyTags('remove', tags))
   registerCommand(context, 'go.tags.clear', async () => runModifyTags('clear'))
 }
