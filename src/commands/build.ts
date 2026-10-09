@@ -38,13 +38,16 @@ export function registerBuildCommands(context: ExtensionContext): void {
     })
   }
 
+  registerCommand(context, 'go.lint.workspace', async () => {
+    await Promise.all(workspaceDirectories().map(directory => runCheck('lint', 'workspace', { cwd: directory })))
+  })
+
   for (const [id, kind, scope] of [
     ['go.build.package', 'build', 'package'],
     ['go.vet.package', 'vet', 'package'],
     ['go.lint.package', 'lint', 'package'],
     ['go.build.workspace', 'build', 'workspace'],
     ['go.vet.workspace', 'vet', 'workspace'],
-    ['go.lint.workspace', 'lint', 'workspace'],
   ] as const) {
     checkCommand(id, kind, scope)
   }
