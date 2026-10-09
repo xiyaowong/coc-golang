@@ -2608,6 +2608,7 @@
   },
   "scripts": {
     "build": "tsdown",
+    "check:docs": "node docs/scripts/generate.ts --check",
     "lint": "eslint",
     "lint:fix": "eslint --fix",
     "release": "bumpp && npm publish",
