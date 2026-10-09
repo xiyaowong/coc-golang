@@ -1,5 +1,11 @@
 node_modules/
 lib/
-coverage/
 
 .coc-test-virtual/
+.qwen/
+.cursor/
+.claude/
+.windsurf/
+.aider*
+.codex/
+

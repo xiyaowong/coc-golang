@@ -1,8 +1,0 @@
-src/
-tsconfig.json
-tsdown.config.mts
-package-lock.json
-.gitignore
-.npmignore
-eslint.config.ts
-AGENTS.md

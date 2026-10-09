@@ -180,6 +180,10 @@ The build writes the extension bundles to `lib/`.
 
 Most of the code is AI-generated. Direction was manual.
 
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md).
+
 ## Scope
 
 The persistent VS Code test explorer, Delve debug adapter UI, survey and telemetry, coverage overlays, and rich diagnostic visualization are not included. Update checks cover `gopls` only.
