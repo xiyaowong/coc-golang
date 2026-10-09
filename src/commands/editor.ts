@@ -34,6 +34,7 @@ export function workspaceDirectories(): string[] {
 
 export async function currentBufferLines(): Promise<string[]> {
   const document = await coc.workspace.document
+  if (!document) return []
   return [...document.textDocument.lines]
 }
 
@@ -45,6 +46,7 @@ export async function linesToCursor(): Promise<string[]> {
 export async function wordAtCursor(): Promise<string> {
   const { position } = await coc.workspace.getCurrentState()
   const document = await coc.workspace.document
+  if (!document) return ''
   const range = document.getWordRangeAtPosition(position)
   return range ? document.textDocument.getText(range) : ''
 }

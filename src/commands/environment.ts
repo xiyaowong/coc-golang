@@ -57,7 +57,10 @@ export function registerEnvironmentCommands(context: ExtensionContext): void {
     const current = configValue('goroot', '')
     const value = await coc.window.requestInput('GOROOT to use (empty to use Go default)', current)
     if (value === undefined) return
-    await coc.workspace.getConfiguration('go').update('goroot', value || undefined, true)
+    // coc.nvim's requestInput resolves '' from input() or null from the float
+    // prompt on cancel instead of undefined, so cancel must not clear the value.
+    if (!value) return
+    await coc.workspace.getConfiguration('go').update('goroot', value, true)
   })
   registerCommand(context, 'go.version', showVersions)
   registerCommand(context, 'go.locate.tools', locateTools)
