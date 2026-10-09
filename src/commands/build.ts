@@ -79,13 +79,20 @@ export function registerBuildCommands(context: ExtensionContext): void {
     const configured = inspect?.workspaceFolderValue ?? inspect?.workspaceValue ?? inspect?.globalValue
     const current = configured ?? config.get<string>('diagnostic.vulncheck', 'Imports')
     const vulncheck = current === 'Imports' ? 'Off' : 'Imports'
+    // coc.nvim treats a missing target as WorkspaceFolder and has no Workspace scope
+    // (ConfigurationTarget.Workspace is 'Not exists with coc.nvim yet'), so an
+    // existing value is updated at its own scope and a new one requires a folder.
     const target = inspect?.workspaceFolderValue !== undefined
-      ? undefined
-      : inspect?.workspaceValue !== undefined
-        ? false
-        : inspect?.globalValue !== undefined
-          ? true
-          : undefined
+      ? coc.ConfigurationTarget.WorkspaceFolder
+      : inspect?.globalValue !== undefined
+        ? coc.ConfigurationTarget.Global
+        : coc.ConfigurationTarget.WorkspaceFolder
+    if (target === coc.ConfigurationTarget.WorkspaceFolder && !coc.workspace.workspaceFolders.length) {
+      coc.window.showWarningMessage(
+        'go.diagnostic.vulncheck is not set; a workspace folder is required to store it. Set it in the global settings to toggle without one.',
+      )
+      return
+    }
     await config.update('diagnostic.vulncheck', vulncheck, target)
     await coc.window.showNotification({ kind: 'info', title: 'gopls vulncheck', content: vulncheck })
   })
