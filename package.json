@@ -2612,7 +2612,7 @@
         },
         "go.autoInstallTools": {
           "type": "boolean",
-          "default": false,
+          "default": true,
           "description": "Offer to install Go tools when a command needs a missing tool."
         },
         "go.benchmarkFlags": {

@@ -34,8 +34,8 @@ Run `:CocCommand go.tools.install` to pick from a list, or
 `:CocCommand go.locate.tools` to see which tools are already installed. See the
 [Go tools reference](./reference/tools).
 
-Set `go.autoInstallTools` to `true` to be offered a prompt instead of a
-message when a tool is missing.
+When a command needs a missing tool, it offers to install it. Set
+`go.autoInstallTools` to `false` to be told about the missing tool instead.
 
 ## Where did the output go?
 

@@ -70,7 +70,7 @@ This page lists the 65 `go.*` settings. See [gopls settings](./gopls-settings) f
 | `go.inlayHints.ignoredError` | `boolean` | `false` |
 | `go.goplsUseDaemon` | `boolean` | `true` |
 | `go.autoInstallGopls` | `boolean` | `true` |
-| `go.autoInstallTools` | `boolean` | `false` |
+| `go.autoInstallTools` | `boolean` | `true` |
 | `go.benchmarkFlags` | `string[]` | `[]` |
 | `go.disable` | `object` | `{}` |
 
@@ -557,7 +557,7 @@ Ask to install gopls when it is not found.
 
 ## `go.autoInstallTools`
 
-**Type:** `boolean` · **Default:** `false`
+**Type:** `boolean` · **Default:** `true`
 
 Offer to install Go tools when a command needs a missing tool.
 
