@@ -3,6 +3,7 @@
 
 # generated content
 .source
+/content/docs/changelog.md
 
 # test & build
 /coverage
