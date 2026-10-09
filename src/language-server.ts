@@ -101,22 +101,21 @@ export async function startLanguageClient(context: ExtensionContext): Promise<vo
   context.subscriptions.push(clientRegistration)
 }
 
-export async function replaceLanguageClient(context: ExtensionContext): Promise<void> {
-  const current = client
-  client = undefined
+async function teardownClient(): Promise<void> {
   clientRegistration?.dispose()
   clientRegistration = undefined
+  const current = client
+  client = undefined
   if (current?.needsStop()) await current.stop().catch(() => undefined)
+}
+
+export async function replaceLanguageClient(context: ExtensionContext): Promise<void> {
+  await teardownClient()
   await startLanguageClient(context)
 }
 
 export async function stopLanguageClient(): Promise<void> {
-  const current = client
-  const registration = clientRegistration
-  client = undefined
-  clientRegistration = undefined
-  registration?.dispose()
-  if (current?.needsStop()) await current.stop().catch(() => undefined)
+  await teardownClient()
 }
 
 export async function checkGoplsUpdate(context: ExtensionContext): Promise<void> {

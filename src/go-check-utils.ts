@@ -28,8 +28,6 @@ export function parseProblems(output: string, cwd: string): Problem[] {
   return problems
 }
 
-export type LintTool = 'staticcheck' | 'golint' | 'golangci-lint' | 'golangci-lint-v2' | 'revive'
-
 export function lintArguments(tool: string, flags: string[], target: string): string[] {
   return tool.startsWith('golangci-lint') ? ['run', ...flags, target] : [...flags, target]
 }

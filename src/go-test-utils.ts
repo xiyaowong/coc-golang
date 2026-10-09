@@ -10,15 +10,14 @@ export function escapeRegExp(name: string): string {
   return name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
-export function functionLineAtCursor(lines: string[] | string): string | undefined {
-  const currentLines = Array.isArray(lines) ? lines : String(lines || '').split('\n')
-  for (let index = currentLines.length - 1; index >= 0; index--) {
-    if (functionDeclarationPattern.test(currentLines[index])) return currentLines[index]
+export function functionLineAtCursor(lines: string[]): string | undefined {
+  for (let index = lines.length - 1; index >= 0; index--) {
+    if (functionDeclarationPattern.test(lines[index])) return lines[index]
   }
   return undefined
 }
 
-export function functionNameAtCursor(lines: string[] | string): string | undefined {
+export function functionNameAtCursor(lines: string[]): string | undefined {
   const line = functionLineAtCursor(lines)
   return line ? functionDeclarationPattern.exec(line)?.[1] : undefined
 }
@@ -45,12 +44,12 @@ export function testArgumentsForFile(lines: string[], options: TestSelectionOpti
   return benchmarks ? ['-run', '^$', '-bench', pattern] : ['-run', pattern]
 }
 
-export function testArgumentsAtCursor(lines: string[] | string): string[] | undefined {
+export function testArgumentsAtCursor(lines: string[]): string[] | undefined {
   const line = functionLineAtCursor(lines)
   return line ? testArgumentsForLine(line) : undefined
 }
 
-export function testNameAtCursor(lines: string[] | string): string | undefined {
+export function testNameAtCursor(lines: string[]): string | undefined {
   const line = functionLineAtCursor(lines)
   const testName = line && testFunctionPattern.exec(line)?.[1]
   return testName?.startsWith('Test') ? testName : undefined
