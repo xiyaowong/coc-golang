@@ -4,7 +4,7 @@ import * as coc from 'coc.nvim'
 import { configValue, goBuildFlags } from '../config'
 import { lintArguments, parseProblems } from '../go-check-utils'
 import { runGo, showCommandOutput } from '../process'
-import { runTool } from '../tools'
+import { runTool, toolFailure } from '../tools'
 import { fileUri } from './editor'
 
 export type CheckKind = 'build' | 'vet' | 'lint'
@@ -58,7 +58,11 @@ export async function runCheck(
   const collection = checkCollection(kind, tool)
   const problems = parseProblems(result.output, cwd)
   if (kind === 'lint' && result.code !== 0 && !problems.length) {
-    coc.window.showErrorMessage(`${tool} exited with code ${result.code}. See Go output.`)
+    await coc.window.showNotification({
+      kind: 'error',
+      title: `${tool} failed`,
+      content: toolFailure(`Exit code ${result.code}`, result),
+    })
   }
   const severity = kind === 'build' ? coc.DiagnosticSeverity.Error : coc.DiagnosticSeverity.Warning
   const diagnostics = new Map<string, coc.Diagnostic[]>()

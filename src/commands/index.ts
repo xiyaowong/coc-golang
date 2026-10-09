@@ -1,6 +1,7 @@
 import type { ExtensionContext } from 'coc.nvim'
 import * as coc from 'coc.nvim'
 import { registerBuildCommands } from './build'
+import { registerConvertCommands } from './convert'
 import { registerEditCommands } from './edit'
 import { registerEnvironmentCommands } from './environment'
 import { registerTagCommands } from './tags'
@@ -11,6 +12,7 @@ export function registerCommands(context: ExtensionContext): void {
   registerBuildCommands(context)
   registerEditCommands(context)
   registerTagCommands(context)
+  registerConvertCommands(context)
   registerEnvironmentCommands(context)
 }
 
