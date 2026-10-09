@@ -169,22 +169,27 @@ export function execFileText(command: string, args: string[], options: ExecFileO
   })
 }
 
+export function runGoProcess(
+  subcommand: string,
+  args: string[],
+  options: GoRunOptions,
+): Promise<ProcessResult> {
+  const { cwd, environment = {} } = options
+  showCommandOutput(`${goCommand()} ${subcommand} ${args.join(' ')}`)
+  return runProcess(goCommand(), [subcommand, ...args], {
+    cwd,
+    env: { ...goEnvironment(), ...environment },
+  })
+}
+
 export async function runGo(
   subcommand: string,
   args: string[],
   options: GoRunOptions,
 ): Promise<ProcessResult | undefined> {
-  const { cwd, environment = {} } = options
-  const fullArgs = [subcommand, ...args]
-  showCommandOutput(`${goCommand()} ${fullArgs.join(' ')}`)
   try {
-    const result = await runProcess(goCommand(), fullArgs, {
-      cwd,
-      env: { ...goEnvironment(), ...environment },
-    })
-    if (result.code !== 0) {
-      coc.window.showErrorMessage(`go ${subcommand} exited with code ${result.code}`)
-    }
+    const result = await runGoProcess(subcommand, args, options)
+    if (result.code !== 0) coc.window.showErrorMessage(`go ${subcommand} exited with code ${result.code}`)
     return result
   } catch (error) {
     coc.window.showErrorMessage(`Failed to run go ${subcommand}: ${String(error)}`)

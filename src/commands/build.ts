@@ -1,17 +1,15 @@
 import type { ExtensionContext } from 'coc.nvim'
 import * as coc from 'coc.nvim'
 import { runCheck } from '../check'
-import { goBuildFlags, goCommand } from '../config'
 import { activeDirectory, workspaceDirectories } from '../editor'
-import { goEnvironment } from '../environment'
-import { runGo, runGoInTerminal, runProcess, showCommandOutput, showOutput } from '../process'
+import { goBuildFlags } from '../config'
+import { runGo, runGoInTerminal, runGoProcess, showOutput } from '../process'
 import { registerCommand } from './register'
 
 async function browsePackages(): Promise<void> {
   const directory = await activeDirectory()
-  showCommandOutput(`${goCommand()} list all`)
   try {
-    const result = await runProcess(goCommand(), ['list', 'all'], { cwd: directory, env: goEnvironment() })
+    const result = await runGoProcess('list', ['all'], { cwd: directory })
     const packages = [...new Set(result.stdout.split(/\r?\n/).filter(Boolean))]
     if (result.code !== 0 || !packages.length) {
       coc.window.showErrorMessage(`Unable to list Go packages (exit code ${result.code}).`)

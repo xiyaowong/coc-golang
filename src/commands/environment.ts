@@ -3,15 +3,14 @@ import * as coc from 'coc.nvim'
 import { configValue, goCommand } from '../config'
 import { goEnvironment, resolveExecutable } from '../environment'
 import { replaceLanguageClient, restartClient } from '../language-server'
-import { appendOutput, runProcess, showCommandOutput, showOutput } from '../process'
+import { appendOutput, runGoProcess, runProcess, showCommandOutput, showOutput } from '../process'
 import { installTool, toolExecutable, tools } from '../tools'
 import { registerCommand } from './register'
 
 async function showGoEnvironment(name?: string): Promise<void> {
   const args = name ? ['env', name] : ['env']
-  showCommandOutput(`${goCommand()} ${args.join(' ')}`)
   try {
-    const result = await runProcess(goCommand(), args, { cwd: coc.workspace.cwd, env: goEnvironment() })
+    const result = await runGoProcess('env', args, { cwd: coc.workspace.cwd })
     if (result.code !== 0) {
       coc.window.showErrorMessage(`go env exited with code ${result.code}`)
     } else if (name) {
@@ -25,9 +24,8 @@ async function showGoEnvironment(name?: string): Promise<void> {
 }
 
 async function showVersions(): Promise<void> {
-  showCommandOutput(`${goCommand()} version`)
   try {
-    const result = await runProcess(goCommand(), ['version'], { cwd: coc.workspace.cwd, env: goEnvironment() })
+    const result = await runGoProcess('version', [], { cwd: coc.workspace.cwd })
     const goplsPath = await toolExecutable('gopls')
     let goplsVersion = 'not installed'
     if (goplsPath) {
