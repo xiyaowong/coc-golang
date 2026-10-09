@@ -11,7 +11,8 @@ import { fileURLToPath } from 'node:url'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const repoRoot = resolve(here, '..', '..')
-const outDir = join(repoRoot, 'docs', 'content', 'docs', 'reference')
+const contentDir = join(repoRoot, 'docs', 'content', 'docs')
+const outDir = join(contentDir, 'reference')
 const checkOnly = process.argv.includes('--check')
 
 interface Command { command: string, title: string, category?: string }
@@ -328,17 +329,45 @@ function renderTools(tools: Tool[], commands: Command[]): string {
 }
 
 // ---------------------------------------------------------------------------
+// Changelog
+// ---------------------------------------------------------------------------
+
+// release-please writes a H1 per release ("## [0.5.0](compare-url) (date)") and
+// H2 sections per change type, so shifting the headings by two levels nests
+// each release under the page's own H1 while the version stays a real anchor.
+function indentHeadings(markdown: string): string {
+  return markdown.replace(/^(#{1,6})(\s)/gm, '##$1$2')
+}
+
+// The changelog page is a copy of the repository's CHANGELOG.md (written by
+// release-please at the repo root, outside this Next.js app and so outside its
+// reach). The copy is generated on the fly and git-ignored, never committed.
+function renderChangelogPage(): string {
+  const changelog = readFileSync(join(repoRoot, 'CHANGELOG.md'), 'utf8')
+  const releases = changelog.replace(/^# Changelog\s*/, '').trim()
+  if (!releases) throw new Error('CHANGELOG.md has no releases')
+  return frontmatter('Changelog', 'Release notes for coc-golang.', 'CHANGELOG.md')
+    + indentHeadings(releases) + '\n'
+}
+
+// A Next.js build runs without the repo root, so an existing copy that differs
+// only in line endings is left alone rather than reported as drift.
+function sameContent(a: string | undefined, b: string): boolean {
+  return a !== undefined && a.replace(/\r\n/g, '\n') === b.replace(/\r\n/g, '\n')
+}
+
+// ---------------------------------------------------------------------------
 // Assembly
 // ---------------------------------------------------------------------------
 
-function frontmatter(title: string, description: string): string {
+function frontmatter(title: string, description: string, source = 'package.json (and src/tools.ts)'): string {
   return [
     '---',
     `title: ${title}`,
     `description: ${description}`,
     '---',
     '',
-    '<!-- Generated from package.json (and src/tools.ts). Do not edit by hand. -->',
+    `<!-- Generated from ${source}. Do not edit by hand. -->`,
     '',
   ].join('\n')
 }
@@ -365,6 +394,11 @@ function build(): Map<string, string> {
     title: 'Reference',
     pages: ['commands', 'settings', 'gopls-settings', 'gopls-analyses', 'tools'],
   }, null, 2)}\n`)
+  files.set(join('..', 'meta.json'), `${JSON.stringify({
+    title: 'coc-golang',
+    pages: ['index', 'getting-started', 'keybindings', 'troubleshooting', 'reference', 'changelog'],
+  }, null, 2)}\n`)
+  files.set(join('..', 'changelog.md'), renderChangelogPage())
   return files
 }
 
@@ -374,16 +408,19 @@ function main(): void {
 
   for (const [name, content] of files) {
     const target = join(outDir, name)
-    const existing = existsSync(target) ? readFileSync(target, 'utf8') : undefined
+    const exists = existsSync(target)
+    const existing = exists ? readFileSync(target, 'utf8') : undefined
     if (checkOnly) {
-      if (existing !== content) {
+      if (!sameContent(existing, content)) {
         drift = true
         console.error(`drift: ${relative(repoRoot, target)}`)
       }
       continue
     }
+    // Writes stay literal: a file that differs only in line endings (a copy
+    // checked out by git) is still rewritten to the canonical LF content.
     if (existing !== content) {
-      mkdirSync(outDir, { recursive: true })
+      mkdirSync(dirname(target), { recursive: true })
       writeFileSync(target, content)
       console.log(`wrote ${relative(repoRoot, target)}`)
     }

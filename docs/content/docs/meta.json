@@ -1,4 +1,11 @@
 {
   "title": "coc-golang",
-  "pages": ["index", "getting-started", "keybindings", "troubleshooting", "reference"]
+  "pages": [
+    "index",
+    "getting-started",
+    "keybindings",
+    "troubleshooting",
+    "reference",
+    "changelog"
+  ]
 }

@@ -4,8 +4,8 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "next build",
-    "dev": "next dev",
+    "build": "node scripts/generate.ts && next build",
+    "dev": "node scripts/generate.ts && next dev",
     "generate": "node scripts/generate.ts",
     "check:generate": "node scripts/generate.ts --check",
     "start": "serve out",

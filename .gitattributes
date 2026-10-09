@@ -1,0 +1,4 @@
+# Generated pages: keep the committed line endings in step with what the
+# generator writes, so a run on a core.autocrlf checkout leaves no
+# line-ending-only diff.
+docs/content/docs/reference/*.md text eol=lf
