@@ -4,7 +4,7 @@ import { basename, dirname, extname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import * as coc from 'coc.nvim'
 import { runTool, toolFailure } from '../tools'
-import { activeSchemaFile, fileUri, isSchemaFile } from './editor'
+import { activeSchemaFile, fileUri, isSchemaFile, toolFilePath } from './editor'
 import { registerCommand } from './index'
 
 const goFileSuffix = '.go'
@@ -61,7 +61,7 @@ export function registerConvertCommands(context: ExtensionContext): void {
 
     if (!await confirmOverwrite(outputPath)) return
 
-    const result = await runTool('go-jsonschema', [schema, '-p', packageName], { cwd: dirname(schema), quiet: true })
+    const result = await runTool('go-jsonschema', [toolFilePath(schema), '-p', packageName], { cwd: dirname(schema), quiet: true })
     if (!result) return
     if (result.code !== 0) {
       await coc.window.showNotification({
