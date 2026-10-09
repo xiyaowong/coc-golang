@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/xiyaowong/coc-golang/compare/coc-golang-v0.3.0...coc-golang-v0.4.0) (2026-10-09)
+
+
+### Features
+
+* show the gopls status in the status bar ([655884b](https://github.com/xiyaowong/coc-golang/commit/655884bdbfe417aabe4e7ea3fbcda910d263aa3c))
+
 ## [0.3.0](https://github.com/xiyaowong/coc-golang/compare/coc-golang-v0.2.0...coc-golang-v0.3.0) (2026-10-08)
 
 
