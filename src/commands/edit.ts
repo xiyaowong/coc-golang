@@ -2,7 +2,7 @@ import type { ExtensionContext } from 'coc.nvim'
 import { dirname } from 'node:path'
 import * as coc from 'coc.nvim'
 import { configValue } from '../config'
-import { activeDirectory, activeFile, fileUri, isGoFile, linesToCursor } from '../editor'
+import { activeDirectory, activeFile, activeGoFile, fileUri, linesToCursor } from '../editor'
 import { functionNameAtCursor, testArgumentsAtCursor } from '../go-test-utils'
 import { getClient } from '../language-server'
 import { runTool } from '../tools'
@@ -14,11 +14,8 @@ const gotestsArguments = (...args: string[]): string[] => [
 ]
 
 async function addImport(importPath?: string): Promise<void> {
-  const file = await activeFile()
-  if (!file || !isGoFile(file)) {
-    coc.window.showWarningMessage('Open a Go file first.')
-    return
-  }
+  const file = await activeGoFile()
+  if (!file) return
   const client = getClient()
   if (!client) {
     coc.window.showWarningMessage('gopls is not running.')
@@ -76,11 +73,8 @@ export function registerEditCommands(context: ExtensionContext): void {
   registerCommand(context, 'go.import.add', addImport)
 
   registerCommand(context, 'go.test.generate.file', async () => {
-    const file = await activeFile()
-    if (!file) {
-      coc.window.showWarningMessage('Open a Go file first.')
-      return
-    }
+    const file = await activeGoFile()
+    if (!file) return
     await runTool('gotests', gotestsArguments('-w', '-all', file), { cwd: dirname(file) })
   })
   registerCommand(context, 'go.test.generate.package', async () =>

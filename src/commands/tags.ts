@@ -4,7 +4,7 @@ import { rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import * as coc from 'coc.nvim'
-import { activeFile, isGoFile } from '../editor'
+import { activeGoFile } from '../editor'
 import { parseTagAndOptionInput } from '../tag-utils'
 import { runTool } from '../tools'
 import { registerCommand } from './register'
@@ -19,11 +19,8 @@ async function runModifyTags(
   operation: 'add' | 'remove' | 'clear',
   tagInput?: string[] | string,
 ): Promise<void> {
-  const filePath = await activeFile()
-  if (!filePath || !isGoFile(filePath)) {
-    coc.window.showWarningMessage('Open a Go file first.')
-    return
-  }
+  const filePath = await activeGoFile()
+  if (!filePath) return
 
   const doc = await coc.workspace.document
   if (!doc) return

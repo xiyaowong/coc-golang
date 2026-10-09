@@ -3,7 +3,7 @@ import * as coc from 'coc.nvim'
 import { configValue } from '../config'
 import {
   activeDirectory,
-  activeFile,
+  activeGoFile,
   counterpartGoFile,
   currentBufferLines,
   fileUri,
@@ -87,12 +87,9 @@ export function registerTestCommands(context: ExtensionContext): void {
   })
   registerCommand(context, 'go.test.coverage', async () => runTests(['-cover'], await activeDirectory()))
   registerCommand(context, 'go.toggle.test.file', async () => {
-    const file = await activeFile()
+    const file = await activeGoFile()
     const target = file ? counterpartGoFile(file) : undefined
-    if (!target) {
-      coc.window.showWarningMessage('Open a Go file first.')
-      return
-    }
+    if (!target) return
     await coc.workspace.openResource(fileUri(target))
   })
   registerCommand(context, 'go.test.cancel', interruptTerminal)
