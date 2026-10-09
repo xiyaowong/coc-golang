@@ -486,6 +486,11 @@
           "default": [],
           "description": "Flags like -rpc.trace and -logfile to be used while running the language server."
         },
+        "go.statusBar.enable": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show the gopls status in the status bar."
+        },
         "go.trace.server": {
           "type": "string",
           "enum": [

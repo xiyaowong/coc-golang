@@ -16,6 +16,7 @@ import {
   stopLanguageClient,
 } from './language-server'
 import { createOutputChannel, disposeOutputChannel, disposeTerminal, killAllProcesses } from './process'
+import { createStatusBar, refreshStatusBarClient } from './status-bar'
 import { runTests } from './test'
 
 function registerConfigurationHandler(context: ExtensionContext): void {
@@ -40,6 +41,7 @@ function registerConfigurationHandler(context: ExtensionContext): void {
     }
     if (restartSettings.some(name => event.affectsConfiguration(name))) {
       await replaceLanguageClient(context)
+      refreshStatusBarClient()
     }
   }))
 }
@@ -69,6 +71,7 @@ export async function activate(context: ExtensionContext): Promise<void> {
   registerCommands(context)
 
   await startLanguageClient(context)
+  context.subscriptions.push(createStatusBar())
   refreshFormatProvider(context)
   await activateTerminalEnvironment()
   void checkGoplsUpdate(context)
