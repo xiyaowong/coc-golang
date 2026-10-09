@@ -8,7 +8,7 @@ import { installTool, toolExecutable, tools } from '../tools'
 import { registerCommand } from './register'
 
 async function showGoEnvironment(name?: string): Promise<void> {
-  const args = name ? ['env', name] : ['env']
+  const args = name ? [name] : []
   try {
     const result = await runGoProcess('env', args, { cwd: coc.workspace.cwd })
     if (result.code !== 0) {
