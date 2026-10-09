@@ -1,4 +1,5 @@
-import type { LanguageClientOptions, ProgressToken } from 'coc.nvim'
+import type { ProgressToken } from 'coc.nvim'
+import type { MiddlewareHooks } from './middleware'
 import { dirname, extname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import * as coc from 'coc.nvim'
@@ -52,24 +53,10 @@ function tokenFrom(value: unknown): ProgressToken | undefined {
   return typeof token === 'string' || typeof token === 'number' ? token : undefined
 }
 
-const goLanguages = new Set(['go', 'gomod', 'gowork', 'gotmpl'])
-
-// gopls rejects govulncheck while any overlay differs from disk. coc.nvim syncs
-// text with '\n' line endings, so CRLF files never hash-match their disk bytes
-// even when saved. Re-asserting didSave for unmodified buffers marks them saved.
-async function markCleanBuffersSaved(client: coc.LanguageClient): Promise<void> {
-  for (const doc of coc.workspace.documents) {
-    if (!doc.attached || !goLanguages.has(doc.languageId)) continue
-    const modified = await doc.buffer.getOption('modified') as boolean
-    if (modified) continue
-    await client.sendNotification('textDocument/didSave', { textDocument: { uri: doc.uri } })
-  }
-}
-
 export function vulncheckMiddleware(
   gopls: string,
   getClient: () => coc.LanguageClient | undefined,
-): Pick<NonNullable<LanguageClientOptions['middleware']>, 'executeCommand' | 'handleWorkDoneProgress'> {
+): MiddlewareHooks {
   const runs = new Map<ProgressToken, string>()
   const earlyProgress = new Map<ProgressToken, WorkDoneProgress[]>()
   let activeUri: string | undefined
@@ -124,9 +111,6 @@ export function vulncheckMiddleware(
 
   return {
     executeCommand: async (command, args, next) => {
-      const client = getClient()
-      if (client) await markCleanBuffersSaved(client)
-
       const input = record(args[0])
       const uri = input?.URI
 

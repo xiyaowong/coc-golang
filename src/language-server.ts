@@ -4,6 +4,7 @@ import * as coc from 'coc.nvim'
 import { configValue, goCommand } from './config'
 import { goEnvironment } from './environment'
 import { goplsConfiguration } from './go-config-utils'
+import { combineMiddleware, saveSyncMiddleware } from './middleware'
 import { execFileText } from './process'
 import { installTool, toolExecutable } from './tools'
 import { vulncheckMiddleware } from './vulncheck'
@@ -63,16 +64,19 @@ async function makeLanguageClient(): Promise<LanguageClient | undefined> {
     progressOnInitialization: true,
     disabledFeatures: disabled,
     initializationOptions: () => goplsOptions(),
-    middleware: {
-      ...vulncheckMiddleware(resolved, () => client),
-      workspace: {
-        configuration: async (params, token, next) => {
-          const result = await next(params, token)
-          if (!Array.isArray(result)) return result
-          return params.items.map((item, index) => item.section === 'gopls' ? goplsOptions() : result[index])
+    middleware: combineMiddleware(
+      saveSyncMiddleware(getClient),
+      vulncheckMiddleware(resolved, getClient),
+      {
+        workspace: {
+          configuration: async (params, token, next) => {
+            const result = await next(params, token)
+            if (!Array.isArray(result)) return result
+            return params.items.map((item, index) => item.section === 'gopls' ? goplsOptions() : result[index])
+          },
         },
       },
-    },
+    ),
   })
   applyTrace(instance)
   return instance
