@@ -1,8 +1,9 @@
 import type { ExtensionContext } from 'coc.nvim'
+import type { CheckKind, CheckScope } from '../check'
 import * as coc from 'coc.nvim'
 import { runCheck } from '../check'
-import { activeDirectory, workspaceDirectories } from '../editor'
 import { goBuildFlags } from '../config'
+import { activeDirectory, workspaceDirectories } from '../editor'
 import { runGo, runGoInTerminal, runGoProcess, showOutput } from '../process'
 import { registerCommand } from './register'
 
@@ -30,9 +31,26 @@ export function registerBuildCommands(context: ExtensionContext): void {
     })
   }
 
-  registerCommand(context, 'go.build.package', async () => runCheck('build', 'package', { cwd: await activeDirectory() }))
-  registerCommand(context, 'go.vet.package', async () => runCheck('vet', 'package', { cwd: await activeDirectory() }))
+  const checkCommand = (id: string, kind: CheckKind, scope: CheckScope): void => {
+    registerCommand(context, id, async () => {
+      const directories = scope === 'workspace' ? workspaceDirectories() : [await activeDirectory()]
+      for (const directory of directories) await runCheck(kind, scope, { cwd: directory })
+    })
+  }
+
+  for (const [id, kind, scope] of [
+    ['go.build.package', 'build', 'package'],
+    ['go.vet.package', 'vet', 'package'],
+    ['go.lint.package', 'lint', 'package'],
+    ['go.build.workspace', 'build', 'workspace'],
+    ['go.vet.workspace', 'vet', 'workspace'],
+    ['go.lint.workspace', 'lint', 'workspace'],
+  ] as const) {
+    checkCommand(id, kind, scope)
+  }
+
   packageCommand('go.generate.package', 'generate')
+  packageCommand('go.fmt.package', 'fmt')
   packageCommand('go.mod.tidy', 'mod', ['tidy'])
   packageCommand('go.mod.vendor', 'mod', ['vendor'])
   packageCommand('go.mod.download', 'mod', ['download'])
@@ -51,20 +69,6 @@ export function registerBuildCommands(context: ExtensionContext): void {
   registerCommand(context, 'go.run', async (target?: string) =>
     runGoInTerminal('run', [...goBuildFlags(), target || '.'], { cwd: await activeDirectory(), focus: true }))
 
-  for (const [id, kind] of [
-    ['go.build.workspace', 'build'],
-    ['go.vet.workspace', 'vet'],
-  ] as const) {
-    registerCommand(context, id, async () => {
-      for (const directory of workspaceDirectories()) await runCheck(kind, 'workspace', { cwd: directory })
-    })
-  }
-
-  registerCommand(context, 'go.lint.package', async () => runCheck('lint', 'package', { cwd: await activeDirectory() }))
-  registerCommand(context, 'go.lint.workspace', async () => {
-    await Promise.all(workspaceDirectories().map(directory => runCheck('lint', 'workspace', { cwd: directory })))
-  })
-
   registerCommand(context, 'go.vulncheck.toggle', async () => {
     const { document } = await coc.workspace.getCurrentState()
     const config = coc.workspace.getConfiguration('go', document.uri)
@@ -82,8 +86,6 @@ export function registerBuildCommands(context: ExtensionContext): void {
     await config.update('diagnostic.vulncheck', vulncheck, target)
     coc.window.showInformationMessage(`gopls vulncheck: ${vulncheck}`)
   })
-
-  registerCommand(context, 'go.fmt.package', async () => runGo('fmt', ['.'], { cwd: await activeDirectory() }))
 
   registerCommand(context, 'go.mod.init', async (modulePath?: string) => {
     modulePath ??= await coc.window.requestInput('Module path (e.g. example.com/project)')
