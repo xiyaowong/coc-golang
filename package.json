@@ -1,7 +1,7 @@
 {
   "name": "coc-golang",
   "type": "module",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Go language support for coc.nvim using gopls",
   "author": "wongxy <xiyao.wong@foxmail.com>",
   "license": "MIT",

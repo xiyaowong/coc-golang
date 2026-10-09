@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.6.0](https://github.com/xiyaowong/coc-golang/compare/coc-golang-v0.5.0...coc-golang-v0.6.0) (2026-10-09)
+
+
+### Features
+
+* **docs:** add a changelog page to the documentation site ([#39](https://github.com/xiyaowong/coc-golang/issues/39)) ([fe9d733](https://github.com/xiyaowong/coc-golang/commit/fe9d733612b14eea62c11763f0a3c1fa51c81472))
+
+
+### Bug Fixes
+
+* pass go-jsonschema an absolute path it can resolve on Windows ([#37](https://github.com/xiyaowong/coc-golang/issues/37)) ([d274b69](https://github.com/xiyaowong/coc-golang/commit/d274b699eed4dcf5fff43c7bd7c2d7ad610c5466))
+
 ## [0.5.0](https://github.com/xiyaowong/coc-golang/compare/coc-golang-v0.4.0...coc-golang-v0.5.0) (2026-10-09)
 
 
