@@ -404,6 +404,10 @@ function build(): Map<string, string> {
 
 function main(): void {
   const files = build()
+  // The changelog copy is derived from CHANGELOG.md at build time and never
+  // committed, so `--check` neither requires it to exist nor reports it: only
+  // the generated pages tracked in git are checked for drift.
+  if (checkOnly) files.delete(join('..', 'changelog.md'))
   let drift = false
 
   for (const [name, content] of files) {
