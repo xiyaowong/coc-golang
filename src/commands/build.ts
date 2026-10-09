@@ -3,6 +3,7 @@ import type { CheckKind, CheckScope } from './check'
 import * as coc from 'coc.nvim'
 import { goBuildFlags } from '../config'
 import { runGo, runGoInTerminal, runGoProcess, showOutput } from '../process'
+import { toolFailure } from '../tools'
 import { runCheck } from './check'
 import { activeDirectory, workspaceDirectories } from './editor'
 import { registerCommand } from './index'
@@ -13,7 +14,11 @@ async function browsePackages(): Promise<void> {
     const result = await runGoProcess('list', ['all'], { cwd: directory })
     const packages = [...new Set(result.stdout.split(/\r?\n/).filter(Boolean))]
     if (result.code !== 0 || !packages.length) {
-      coc.window.showErrorMessage(`Unable to list Go packages (exit code ${result.code}).`)
+      await coc.window.showNotification({
+        kind: 'error',
+        title: 'Unable to list Go packages',
+        content: toolFailure(`Exit code ${result.code}`, result),
+      })
       return
     }
     const selected = await coc.window.showQuickPick(packages, { title: 'Select a Go package', placeHolder: 'Type to filter' })

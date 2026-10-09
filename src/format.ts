@@ -3,7 +3,7 @@ import { dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import * as coc from 'coc.nvim'
 import { configValue } from './config'
-import { runTool } from './tools'
+import { runTool, toolFailure } from './tools'
 
 let formatRegistration: Disposable | undefined
 
@@ -24,7 +24,13 @@ export function refreshFormatProvider(context: ExtensionContext): void {
       const text = document.getText()
       const result = await runTool(name, args, { cwd: dirname(file), input: text, quiet: true })
       if (!result || result.code !== 0) {
-        if (result) coc.window.showErrorMessage(`${name} failed: ${result.output.trim().split(/\r?\n/)[0] ?? ''}`)
+        if (result) {
+          await coc.window.showNotification({
+            kind: 'error',
+            title: `${name} failed`,
+            content: toolFailure(`Exit code ${result.code}`, result),
+          })
+        }
         return []
       }
       if (result.stdout === text) return []

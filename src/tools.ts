@@ -53,7 +53,11 @@ export async function installTool(name: string): Promise<boolean> {
       env: goEnvironment({ forToolInstall: true }),
     })
     if (result.code !== 0) {
-      coc.window.showErrorMessage(`Failed to install ${name} (exit code ${result.code}). See Go output.`)
+      await coc.window.showNotification({
+        kind: 'error',
+        title: `Failed to install ${name}`,
+        content: toolFailure(`Exit code ${result.code}`, result),
+      })
       return false
     }
     coc.window.showInformationMessage(`${name} installed successfully.`)
@@ -82,6 +86,11 @@ export async function toolExecutable(name: string): Promise<string | undefined> 
   return findExecutable(directories, configured)
 }
 
+export function toolFailure(title: string, result: ProcessResult): string {
+  const detail = result.output.trim().split(/\r?\n/).filter(Boolean).slice(-3).join('\n')
+  return [title, detail].filter(Boolean).join('\n')
+}
+
 export async function runTool(
   name: string,
   args: string[],
@@ -101,7 +110,11 @@ export async function runTool(
     const result = await runProcess(executable, args, { cwd, env: goEnvironment(), input })
     if (quiet) return result
     if (result.code !== 0) {
-      coc.window.showErrorMessage(`${name} exited with code ${result.code}`)
+      await coc.window.showNotification({
+        kind: 'error',
+        title: `${name} failed`,
+        content: toolFailure(`Exit code ${result.code}`, result),
+      })
     }
     return result
   } catch (error) {
