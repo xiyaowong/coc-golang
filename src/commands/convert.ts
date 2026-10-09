@@ -1,9 +1,9 @@
 import type { ExtensionContext } from 'coc.nvim'
+import { existsSync, writeFileSync } from 'node:fs'
 import { basename, dirname, extname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import * as coc from 'coc.nvim'
-import { configValue } from '../config'
-import { runTool } from '../tools'
+import { runTool, toolFailure } from '../tools'
 import { activeSchemaFile, fileUri, isSchemaFile } from './editor'
 import { registerCommand } from './index'
 
@@ -37,10 +37,12 @@ async function pickSchemaFile(): Promise<string | undefined> {
 
 async function confirmOverwrite(outputPath: string): Promise<boolean> {
   const document = coc.workspace.getDocument(fileUri(outputPath))
-  if (!document) return true
-  const modified = await document.buffer.getOption('modified') as boolean
-  if (!modified) return true
-  return coc.window.showPrompt(`${basename(outputPath)} has unsaved changes. Overwrite it?`)
+  if (document) {
+    const modified = await document.buffer.getOption('modified') as boolean
+    if (modified) return coc.window.showPrompt(`${basename(outputPath)} has unsaved changes. Overwrite it?`)
+  }
+  if (!existsSync(outputPath)) return true
+  return coc.window.showPrompt(`${basename(outputPath)} already exists. Overwrite it?`)
 }
 
 export function registerConvertCommands(context: ExtensionContext): void {
@@ -59,17 +61,22 @@ export function registerConvertCommands(context: ExtensionContext): void {
 
     if (!await confirmOverwrite(outputPath)) return
 
-    const args = [
-      ...configValue<string[]>('convertFlags', []),
-      '-p',
-      packageName,
-      '-o',
-      outputPath,
-      schema,
-    ]
-    const result = await runTool('go-jsonschema', args, { cwd: dirname(schema) })
-    if (!result || result.code !== 0) return
+    const result = await runTool('go-jsonschema', [schema, '-p', packageName], { cwd: dirname(schema), quiet: true })
+    if (!result) return
+    if (result.code !== 0) {
+      await coc.window.showNotification({
+        kind: 'error',
+        title: 'go-jsonschema failed',
+        content: toolFailure(`Exit code ${result.code}`, result),
+      })
+      return
+    }
+    if (!result.stdout.includes('package ')) {
+      await coc.window.showErrorMessage('go-jsonschema produced no Go source.')
+      return
+    }
 
+    writeFileSync(outputPath, result.stdout)
     await coc.workspace.openResource(fileUri(outputPath))
   })
 }

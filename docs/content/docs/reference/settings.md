@@ -4,7 +4,7 @@ description: Configuration reference for the go.* settings.
 ---
 
 <!-- Generated from package.json (and src/tools.ts). Do not edit by hand. -->
-This page lists the 65 `go.*` settings. See [gopls settings](./gopls-settings) for language-server options.
+This page lists the 63 `go.*` settings. See [gopls settings](./gopls-settings) for language-server options.
 
 | Setting | Type | Default |
 | --- | --- | --- |
@@ -39,7 +39,6 @@ This page lists the 65 `go.*` settings. See [gopls settings](./gopls-settings) f
 | `go.alternateTools.revive` | `string` | `""` |
 | `go.alternateTools.gofumpt` | `string` | `""` |
 | `go.alternateTools.goformat` | `string` | `""` |
-| `go.alternateTools.go-jsonschema` | `string` | `""` |
 | `go.installDependenciesWhenBuilding` | `boolean` | `false` |
 | `go.terminal.activateEnvironment` | `boolean` | `true` |
 | `go.buildOnSave` | `string` | `"package"` |
@@ -59,7 +58,6 @@ This page lists the 65 `go.*` settings. See [gopls settings](./gopls-settings) f
 | `go.testEnvFile` | `string` | `null` |
 | `go.testFlags` | `array | null` | `null` |
 | `go.generateTestsFlags` | `string[]` | `[]` |
-| `go.convertFlags` | `string[]` | `[]` |
 | `go.inlayHints.assignVariableTypes` | `boolean` | `false` |
 | `go.inlayHints.compositeLiteralFields` | `boolean` | `false` |
 | `go.inlayHints.compositeLiteralTypes` | `boolean` | `false` |
@@ -279,12 +277,6 @@ Alternate tool to use instead of the gofumpt binary or alternate path to use for
 
 Alternate tool to use instead of the goformat binary or alternate path to use for the goformat binary.
 
-## `go.alternateTools.go-jsonschema`
-
-**Type:** `string` · **Default:** `""`
-
-Alternate tool to use instead of the go-jsonschema binary or alternate path to use for the go-jsonschema binary.
-
 ## `go.installDependenciesWhenBuilding`
 
 **Type:** `boolean` · **Default:** `false`
@@ -434,12 +426,6 @@ Flags to pass to `go test`. If null, then buildFlags will be used. This is not p
 **Type:** `string[]` · **Default:** `[]`
 
 Additional command line flags to pass to `gotests` for generating tests.
-
-## `go.convertFlags`
-
-**Type:** `string[]` · **Default:** `[]`
-
-Additional command line flags to pass to the `go.convert.*` commands.
 
 ## `go.inlayHints.assignVariableTypes`
 

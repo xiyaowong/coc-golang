@@ -679,11 +679,6 @@
               "type": "string",
               "default": "",
               "description": "Alternate tool to use instead of the goformat binary or alternate path to use for the goformat binary."
-            },
-            "go-jsonschema": {
-              "type": "string",
-              "default": "",
-              "description": "Alternate tool to use instead of the go-jsonschema binary or alternate path to use for the go-jsonschema binary."
             }
           },
           "additionalProperties": true
@@ -862,14 +857,6 @@
           },
           "default": [],
           "description": "Additional command line flags to pass to `gotests` for generating tests."
-        },
-        "go.convertFlags": {
-          "type": "array",
-          "items": {
-            "type": "string"
-          },
-          "default": [],
-          "description": "Additional command line flags to pass to the `go.convert.*` commands."
         },
         "go.inlayHints.assignVariableTypes": {
           "type": "boolean",
