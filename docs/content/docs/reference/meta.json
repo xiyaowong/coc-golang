@@ -1,0 +1,10 @@
+{
+  "title": "Reference",
+  "pages": [
+    "commands",
+    "settings",
+    "gopls-settings",
+    "gopls-analyses",
+    "tools"
+  ]
+}

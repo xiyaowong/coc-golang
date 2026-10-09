@@ -2,6 +2,9 @@ import wongxy from '@wongxy/eslint-config'
 
 export default wongxy(
   {
+    ignores: ['docs/**'],
+  },
+  {
     rules: {
       'node/prefer-global/process': 'off',
     },

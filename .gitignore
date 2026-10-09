@@ -1,5 +1,7 @@
 node_modules/
-lib/
+/lib/
+docs/.next/
+docs/out/
 
 .coc-test-virtual/
 .qwen/
