@@ -124,12 +124,12 @@ export function vulncheckMiddleware(
 
   return {
     executeCommand: async (command, args, next) => {
+      const client = getClient()
+      if (client) await markCleanBuffersSaved(client)
+
       const input = record(args[0])
       const uri = input?.URI
-      if (command === 'gopls.run_govulncheck' || command === 'gopls.vulncheck') {
-        const client = getClient()
-        if (client) await markCleanBuffersSaved(client)
-      }
+
       if (command === 'gopls.run_govulncheck' && typeof uri === 'string') {
         if (activeUri) {
           coc.window.showWarningMessage('Cannot start vulncheck while another vulncheck is in progress.')
