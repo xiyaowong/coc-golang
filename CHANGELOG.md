@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.5.0](https://github.com/xiyaowong/coc-golang/compare/coc-golang-v0.4.0...coc-golang-v0.5.0) (2026-10-09)
+
+
+### Features
+
+* add go.convert.jsonSchema and surface command failures ([#36](https://github.com/xiyaowong/coc-golang/issues/36)) ([15137a4](https://github.com/xiyaowong/coc-golang/commit/15137a483eab28e5adec4154bc40f492afdccd71))
+* **docs:** add a documentation website ([#35](https://github.com/xiyaowong/coc-golang/issues/35)) ([200f0fa](https://github.com/xiyaowong/coc-golang/commit/200f0fad67b25dfa943b3846b861472ab3fa24fb))
+* show verbose go command results as notifications ([5f9cd1a](https://github.com/xiyaowong/coc-golang/commit/5f9cd1ab2518f5b32296af16d360235317163d46))
+
+
+### Bug Fixes
+
+* guard coc.nvim host APIs in command inputs and settings writes ([#34](https://github.com/xiyaowong/coc-golang/issues/34)) ([598c376](https://github.com/xiyaowong/coc-golang/commit/598c376779607eebc3cf9cab41ebddf1fc449ec6))
+* keep gopls overlays in sync for every command ([5b0988f](https://github.com/xiyaowong/coc-golang/commit/5b0988fbcc24290a81807d80123f38531f82108f))
+
 ## [0.4.0](https://github.com/xiyaowong/coc-golang/compare/coc-golang-v0.3.0...coc-golang-v0.4.0) (2026-10-09)
 
 
