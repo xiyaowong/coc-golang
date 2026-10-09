@@ -2,3 +2,17 @@
 # generator writes, so a run on a core.autocrlf checkout leaves no
 # line-ending-only diff.
 docs/content/docs/reference/*.md text eol=lf
+
+# Repo-wide baseline: normalise to LF in the index, check out LF on every
+# platform, so a clone never diff-churns line endings.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.pdf binary
