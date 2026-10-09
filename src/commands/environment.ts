@@ -14,7 +14,7 @@ async function showGoEnvironment(name?: string): Promise<void> {
     if (result.code !== 0) {
       coc.window.showErrorMessage(`go env exited with code ${result.code}`)
     } else if (name) {
-      coc.window.showInformationMessage(`${name}: ${result.stdout.trim()}`)
+      await coc.window.showNotification({ kind: 'info', title: name, content: result.stdout.trim() })
     } else {
       showOutput()
     }
@@ -32,9 +32,7 @@ async function showVersions(): Promise<void> {
       const goplsResult = await runProcess(goplsPath, ['version'], { cwd: coc.workspace.cwd, env: goEnvironment() })
       goplsVersion = goplsResult.stdout.trim() || `exit code ${goplsResult.code}`
     }
-    const message = `Go ${result.stdout.trim()}; gopls ${goplsVersion}`
-    if (result.code === 0) coc.window.showInformationMessage(message)
-    else coc.window.showErrorMessage(message)
+    await coc.window.showNotification({ kind: result.code === 0 ? 'info' : 'error', title: `Go ${result.stdout.trim()}`, content: `gopls ${goplsVersion}` })
   } catch (error) {
     coc.window.showErrorMessage(`Failed to run go version: ${String(error)}`)
   }

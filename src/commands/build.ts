@@ -87,7 +87,7 @@ export function registerBuildCommands(context: ExtensionContext): void {
           ? true
           : undefined
     await config.update('diagnostic.vulncheck', vulncheck, target)
-    coc.window.showInformationMessage(`gopls vulncheck: ${vulncheck}`)
+    await coc.window.showNotification({ kind: 'info', title: 'gopls vulncheck', content: vulncheck })
   })
 
   registerCommand(context, 'go.mod.init', async (modulePath?: string) => {
