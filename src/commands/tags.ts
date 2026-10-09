@@ -4,10 +4,10 @@ import { rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import * as coc from 'coc.nvim'
-import { activeGoFile } from '../editor'
 import { parseTagAndOptionInput } from '../tag-utils'
 import { runTool } from '../tools'
-import { registerCommand } from './register'
+import { activeGoFile } from './editor'
+import { registerCommand } from './index'
 
 interface ModifyTagsOutput {
   start: number

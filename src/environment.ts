@@ -1,9 +1,9 @@
 import { accessSync, constants, existsSync } from 'node:fs'
 import { homedir, platform } from 'node:os'
 import { delimiter, isAbsolute, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import * as coc from 'coc.nvim'
 import { configValue } from './config'
-import { workspaceDirectories } from './editor'
 import { inferGopath, pathKey, prependPath } from './go-config-utils'
 
 export interface GoEnvironmentOptions {
@@ -31,7 +31,8 @@ export function goEnvironment(options: GoEnvironmentOptions = {}): NodeJS.Proces
   const goroot = configValue('goroot', '')
   let gopath = configValue('gopath', '')
   if (configValue('inferGopath', false)) {
-    const folder = workspaceDirectories()[0]
+    const [first] = coc.workspace.workspaceFolders
+    const folder = first && fileURLToPath(first.uri)
     if (folder && !existsSync(join(folder, 'go.mod'))) gopath = inferGopath(folder) ?? gopath
   }
   if (goroot) {

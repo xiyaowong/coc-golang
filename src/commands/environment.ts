@@ -5,7 +5,7 @@ import { goEnvironment, resolveExecutable } from '../environment'
 import { replaceLanguageClient, restartClient } from '../language-server'
 import { appendOutput, runGoProcess, runProcess, showCommandOutput, showOutput } from '../process'
 import { installTool, toolExecutable, tools } from '../tools'
-import { registerCommand } from './register'
+import { registerCommand } from './index'
 
 async function showGoEnvironment(name?: string): Promise<void> {
   const args = name ? [name] : []

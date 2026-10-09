@@ -22,10 +22,6 @@ function render(): void {
 }
 
 export function updateStatusBar(): void {
-  render()
-}
-
-export function refreshStatusBarClient(): void {
   stateSubscription?.dispose()
   stateSubscription = getClient()?.onDidChangeState(() => render())
   render()
@@ -47,9 +43,8 @@ export function createStatusBar(): Disposable {
   if (!configValue('statusBar.enable', true)) return { dispose: () => undefined }
 
   item = coc.window.createStatusBarItem(0)
-  render()
+  updateStatusBar()
   void resolveVersion().then(render)
-  refreshStatusBarClient()
   return {
     dispose: () => {
       stateSubscription?.dispose()

@@ -37,6 +37,10 @@ let goTerminal: coc.Terminal | undefined
 let outputChannel: coc.OutputChannel | undefined
 let outputVisibilityCheck: Promise<void> | undefined
 
+export function terminal(): coc.Terminal | undefined {
+  return goTerminal
+}
+
 export function createOutputChannel(): coc.OutputChannel {
   outputChannel = coc.window.createOutputChannel('Go')
   return outputChannel
@@ -81,21 +85,9 @@ export function killAllProcesses(): void {
   runningProcesses.clear()
 }
 
-export function disposeTerminal(): void {
+function disposeTerminal(): void {
   goTerminal?.dispose()
   goTerminal = undefined
-}
-
-export function interruptTerminal(): void {
-  goTerminal?.sendText('\x03', false)
-}
-
-export async function showTerminal(): Promise<void> {
-  if (!goTerminal) {
-    coc.window.showWarningMessage('No Go terminal. Run a Go command first.')
-    return
-  }
-  await goTerminal.show(true)
 }
 
 export async function runGoInTerminal(
