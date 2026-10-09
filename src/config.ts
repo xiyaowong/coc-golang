@@ -1,6 +1,5 @@
-import { readFileSync } from 'node:fs'
 import * as coc from 'coc.nvim'
-import { buildFlagsWithTags, parseEnvFile, testFlagsFor } from './go-config-utils'
+import { buildFlagsWithTags, testFlagsFor } from './go-config-utils'
 
 export const restartSettings = [
   'go.useLanguageServer',
@@ -47,17 +46,4 @@ export function goTestFlags(): string[] {
     buildTags: configValue('buildTags', ''),
     testTimeout: configValue('testTimeout', ''),
   })
-}
-
-export function goTestEnvironment(): NodeJS.ProcessEnv {
-  const envFile = configValue('testEnvFile', '')
-  let variables: Record<string, string> = {}
-  if (envFile) {
-    try {
-      variables = parseEnvFile(readFileSync(envFile, 'utf8'))
-    } catch (error) {
-      coc.window.showWarningMessage(`Unable to read go.testEnvFile ${envFile}: ${String(error)}`)
-    }
-  }
-  return { ...variables, ...configValue<Record<string, string>>('testEnvVars', {}) }
 }

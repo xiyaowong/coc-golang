@@ -1,27 +1,25 @@
 import type { ExtensionContext } from 'coc.nvim'
-import type { CheckScope } from './check'
+import type { CheckScope } from './commands/check'
 import { dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import * as coc from 'coc.nvim'
-import { runCheck } from './check'
 import { registerCommands } from './commands'
+import { runCheck } from './commands/check'
+import { runTests } from './commands/test'
 import { configValue, restartSettings } from './config'
 import { activateTerminalEnvironment } from './environment'
 import { disposeFormatProvider, refreshFormatProvider } from './format'
 import {
-  applyTrace,
   checkGoplsUpdate,
   replaceLanguageClient,
   startLanguageClient,
   stopLanguageClient,
 } from './language-server'
-import { createOutputChannel, disposeOutputChannel, disposeTerminal, killAllProcesses } from './process'
-import { createStatusBar, refreshStatusBarClient } from './status-bar'
-import { runTests } from './test'
+import { createOutputChannel, disposeOutputChannel, killAllProcesses } from './process'
+import { createStatusBar, updateStatusBar } from './status-bar'
 
 function registerConfigurationHandler(context: ExtensionContext): void {
   context.subscriptions.push(coc.workspace.onDidChangeConfiguration(async (event) => {
-    if (event.affectsConfiguration('go.trace.server')) applyTrace()
     if (
       event.affectsConfiguration('go.formatTool')
       || event.affectsConfiguration('go.useLanguageServer')
@@ -41,7 +39,7 @@ function registerConfigurationHandler(context: ExtensionContext): void {
     }
     if (restartSettings.some(name => event.affectsConfiguration(name))) {
       await replaceLanguageClient(context)
-      refreshStatusBarClient()
+      updateStatusBar()
     }
   }))
 }
@@ -84,6 +82,5 @@ export async function deactivate(): Promise<void> {
   disposeFormatProvider()
   await stopLanguageClient()
   killAllProcesses()
-  disposeTerminal()
   disposeOutputChannel()
 }

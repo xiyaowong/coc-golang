@@ -1,11 +1,11 @@
 import type { ExtensionContext } from 'coc.nvim'
-import type { CheckKind, CheckScope } from '../check'
+import type { CheckKind, CheckScope } from './check'
 import * as coc from 'coc.nvim'
-import { runCheck } from '../check'
 import { goBuildFlags } from '../config'
-import { activeDirectory, workspaceDirectories } from '../editor'
 import { runGo, runGoInTerminal, runGoProcess, showOutput } from '../process'
-import { registerCommand } from './register'
+import { runCheck } from './check'
+import { activeDirectory, workspaceDirectories } from './editor'
+import { registerCommand } from './index'
 
 async function browsePackages(): Promise<void> {
   const directory = await activeDirectory()
