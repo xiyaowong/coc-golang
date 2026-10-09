@@ -4,7 +4,7 @@ description: The Go tools coc-golang can install for you.
 ---
 
 <!-- Generated from package.json (and src/tools.ts). Do not edit by hand. -->
-coc-golang installs 13 Go tools with `go install`. Install one with its command, or run `:CocCommand go.tools.install` to pick from a list.
+coc-golang installs 14 Go tools with `go install`. Install one with its command, or run `:CocCommand go.tools.install` to pick from a list.
 
 | Tool | Module | Install command | Optional |
 | --- | --- | --- | --- |
@@ -21,5 +21,6 @@ coc-golang installs 13 Go tools with `go install`. Install one with its command,
 | `revive` | `github.com/mgechev/revive` | `go.tools.install.revive` | yes |
 | `gofumpt` | `mvdan.cc/gofumpt` | `go.tools.install.gofumpt` | yes |
 | `goformat` | `winterdrache.de/goformat/goformat` | `go.tools.install.goformat` | yes |
+| `go-jsonschema` | `github.com/atombender/go-jsonschema` | `go.tools.install.go-jsonschema` | yes |
 
 Optional tools are only needed for their specific feature; run `:CocCommand go.locate.tools` to see what is already installed.

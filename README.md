@@ -47,6 +47,7 @@ Open a Go file to activate the extension. If `gopls` is not installed, coc-golan
 - **Build and checks:** build, run, vet, lint, and scan packages or workspaces for known vulnerabilities.
 - **Tests and benchmarks:** run tests at package, workspace, file, or cursor scope; repeat the previous run; collect coverage; and run benchmarks.
 - **Project workflows:** manage modules and workspaces, install Go tools, generate code or tests, edit struct tags, and generate interface implementations.
+- **Converters:** generate Go types from a JSON Schema.
 - **Go environment:** inspect Go settings and configure environments for `gopls`, Go commands, and installed tools.
 
 `gopls` handles language features. `go run`, `go test`, benchmarks, `go doc`, `go get`, `go install` and `go mod init` run in a coc.nvim terminal named **Go**; other command output is shown in the **Go** output channel.
@@ -120,6 +121,12 @@ Test generation requires `gotests`. The test explorer is a coc.nvim quick-pick s
 
 `gomodifytags` is required for struct tags, and `impl` for interface implementation generation. Vulnerability analysis is provided by `gopls`.
 
+### Converters
+
+- `go.convert.jsonSchema` Generate Go types from a JSON Schema.
+
+`go.convert.jsonSchema` runs `go-jsonschema` on the active JSON Schema file (or a schema you pick from the workspace), prompting for the package name and the output file. Schemas that use the `date` or `date-time` formats make the generated code import `github.com/atombender/go-jsonschema/pkg/types`.
+
 ### Struct tags
 
 `go.tags.add`, `go.tags.remove`, and `go.tags.clear` run `gomodifytags` on the struct under the cursor:
@@ -132,7 +139,7 @@ Test generation requires `gotests`. The test explorer is a coc.nvim quick-pick s
 
 Use `go.env`, `go.gopath`, `go.goroot`, `go.version`, and `go.environment.choose` to inspect or select the Go environment. Use `go.locate.tools` to locate installed tools, `go.tools.install` to choose tools to install, or `go.tools.install.<tool>` to install a specific tool. `go.gopls.install` installs `gopls`, and `go.languageserver.restart` restarts it.
 
-Optional tools include `dlv`, `goimports`, `staticcheck`, `gomodifytags`, `gotests`, `impl`, `golint`, `golangci-lint`, `golangci-lint-v2`, `revive`, `gofumpt`, and `goformat`. Delve can be used with external DAP clients; coc-golang does not provide a debug adapter UI.
+Optional tools include `dlv`, `goimports`, `staticcheck`, `gomodifytags`, `gotests`, `impl`, `golint`, `golangci-lint`, `golangci-lint-v2`, `revive`, `gofumpt`, `goformat`, and `go-jsonschema`. Delve can be used with external DAP clients; coc-golang does not provide a debug adapter UI.
 
 ## Configuration
 

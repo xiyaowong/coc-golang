@@ -102,7 +102,9 @@
     "onCommand:go.tools.install.golangci-lint-v2",
     "onCommand:go.tools.install.revive",
     "onCommand:go.tools.install.gofumpt",
-    "onCommand:go.tools.install.goformat"
+    "onCommand:go.tools.install.goformat",
+    "onCommand:go.convert.jsonSchema",
+    "onCommand:go.tools.install.go-jsonschema"
   ],
   "contributes": {
     "commands": [
@@ -470,6 +472,16 @@
         "command": "go.tools.install.goformat",
         "title": "Install goformat",
         "category": "Go"
+      },
+      {
+        "command": "go.convert.jsonSchema",
+        "title": "Generate Go Types from JSON Schema",
+        "category": "Go"
+      },
+      {
+        "command": "go.tools.install.go-jsonschema",
+        "title": "Install go-jsonschema",
+        "category": "Go"
       }
     ],
     "configuration": {
@@ -667,6 +679,11 @@
               "type": "string",
               "default": "",
               "description": "Alternate tool to use instead of the goformat binary or alternate path to use for the goformat binary."
+            },
+            "go-jsonschema": {
+              "type": "string",
+              "default": "",
+              "description": "Alternate tool to use instead of the go-jsonschema binary or alternate path to use for the go-jsonschema binary."
             }
           },
           "additionalProperties": true
@@ -845,6 +862,14 @@
           },
           "default": [],
           "description": "Additional command line flags to pass to `gotests` for generating tests."
+        },
+        "go.convertFlags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Additional command line flags to pass to the `go.convert.*` commands."
         },
         "go.inlayHints.assignVariableTypes": {
           "type": "boolean",

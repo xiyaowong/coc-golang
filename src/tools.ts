@@ -39,6 +39,8 @@ export const tools: Record<string, ToolDefinition> = {
   'revive': { module: 'github.com/mgechev/revive@latest', optional: true },
   'gofumpt': { module: 'mvdan.cc/gofumpt@latest', optional: true },
   'goformat': { module: 'winterdrache.de/goformat/goformat@latest', optional: true },
+  // The module declares github.com/atombender/go-jsonschema, not the omissis repository path.
+  'go-jsonschema': { module: 'github.com/atombender/go-jsonschema@latest', optional: true },
 }
 
 export async function installTool(name: string): Promise<boolean> {

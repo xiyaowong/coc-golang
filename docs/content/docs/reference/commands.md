@@ -6,7 +6,7 @@ description: Every go.* command, grouped by area.
 <!-- Generated from package.json (and src/tools.ts). Do not edit by hand. -->
 ## Commands
 
-All 73 commands are run with `:CocCommand <id>`.
+All 75 commands are run with `:CocCommand <id>`.
 
 ### Tests & benchmarks
 
@@ -120,4 +120,6 @@ All 73 commands are run with `:CocCommand <id>`.
 | `go.tools.install.revive` | Install revive |
 | `go.tools.install.gofumpt` | Install gofumpt |
 | `go.tools.install.goformat` | Install goformat |
+| `go.convert.jsonSchema` | Generate Go Types from JSON Schema |
+| `go.tools.install.go-jsonschema` | Install go-jsonschema |
 
