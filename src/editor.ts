@@ -49,8 +49,12 @@ export async function wordAtCursor(): Promise<string> {
   return range ? document.textDocument.getText(range) : ''
 }
 
+export function isGoFile(file: string): boolean {
+  return file.endsWith(goFileSuffix)
+}
+
 export function counterpartGoFile(file: string): string | undefined {
-  if (!file.endsWith(goFileSuffix)) return undefined
+  if (!isGoFile(file)) return undefined
   if (file.endsWith(testFileSuffix)) {
     return `${file.slice(0, -testFileSuffix.length)}${goFileSuffix}`
   }

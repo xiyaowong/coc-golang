@@ -2,7 +2,7 @@ import type { ExtensionContext } from 'coc.nvim'
 import { dirname } from 'node:path'
 import * as coc from 'coc.nvim'
 import { configValue } from '../config'
-import { activeDirectory, activeFile, fileUri, linesToCursor } from '../editor'
+import { activeDirectory, activeFile, fileUri, isGoFile, linesToCursor } from '../editor'
 import { functionNameAtCursor, testArgumentsAtCursor } from '../go-test-utils'
 import { getClient } from '../language-server'
 import { runTool } from '../tools'
@@ -15,7 +15,7 @@ const gotestsArguments = (...args: string[]): string[] => [
 
 async function addImport(importPath?: string): Promise<void> {
   const file = await activeFile()
-  if (!file?.endsWith('.go')) {
+  if (!file || !isGoFile(file)) {
     coc.window.showWarningMessage('Open a Go file first.')
     return
   }
