@@ -33,15 +33,40 @@ export function testFunctions(lines: string[]): TestFunction[] {
   return found
 }
 
-// Per-test results printed by `go test -v` (`--- PASS: TestFoo`). Subtests
-// appear with their slash-separated name.
-export function parseTestResults(output: string): Array<{ name: string, outcome: 'passed' | 'failed' }> {
-  const results: Array<{ name: string, outcome: 'passed' | 'failed' }> = []
+// Per-test results printed by `go test -v`. The indented log lines (and panic
+// traces) written while a test runs are attached to that test, so a failed test
+// can report the output that made it fail. Subtests appear with their
+// slash-separated name.
+export type TestOutcome = 'passed' | 'failed' | 'skipped'
+
+export interface TestResult {
+  name: string
+  outcome: TestOutcome
+  output: string[]
+}
+
+export function parseTestResults(output: string): TestResult[] {
+  const logs = new Map<string, string[]>()
+  const results = new Map<string, TestResult>()
+  let current: string | undefined
   for (const line of output.split(/\r?\n/)) {
-    const match = /^\s*--- (PASS|FAIL): (\S+)/.exec(line)
-    if (match) results.push({ name: match[2], outcome: match[1] === 'PASS' ? 'passed' : 'failed' })
+    const run = /^===\s+(?:RUN|PAUSE|CONT)\s+(\S+)/.exec(line)
+    if (run) {
+      current = run[1]
+      if (!logs.has(current)) logs.set(current, [])
+      continue
+    }
+    const result = /^\s*---\s+(PASS|FAIL|SKIP):\s+(\S+)/.exec(line)
+    if (result) {
+      const name = result[2]
+      const outcome: TestOutcome = result[1] === 'PASS' ? 'passed' : result[1] === 'FAIL' ? 'failed' : 'skipped'
+      results.set(name, { name, outcome, output: logs.get(name) ?? [] })
+      continue
+    }
+    // Anything else while a test runs is its output; skip the terminal summary.
+    if (current && !/^(?:FAIL|PASS|ok)\b/.test(line.trim())) logs.get(current)!.push(line.trim())
   }
-  return results
+  return [...results.values()]
 }
 
 export function functionLineAtCursor(lines: string[]): string | undefined {

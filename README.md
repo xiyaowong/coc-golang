@@ -83,11 +83,11 @@ Some commands need an extra tool: test generation uses `gotests`, struct tags us
 `go.test.explorer.show` opens a **Go Tests** tree view that lists the tests and benchmarks in your workspace by folder, package, and name:
 
 - Run a test by selecting it and pressing `<cr>`, or run a whole package or folder from its row.
-- Each test shows an icon for its last result: `✓` passed, `✗` failed, `●` running, `○` skipped. Subtests reported by `go test -v` appear nested under their test.
+- Each test shows an icon for its last result: `✓` passed, `✗` failed, `●` running, `○` skipped. Subtests reported by `go test -v` appear nested under their test, and hovering a failed test shows the output that made it fail.
 - `go.test.explorer.open` (or the **Go to Test** action, on `<tab>`) jumps to the test's file and line.
 - `go.test.explorer.refresh` re-scans for tests, which also happens when you save a `_test.go` file.
 
-The view is a regular Neovim buffer in a split, created on demand; close it with `<esc>`. Set `go.testExplorer.enable` to `false` to turn it off. `go.test.explorer` remains as the quick-pick alternative.
+The view is a regular Neovim buffer in a split, created on demand; close it with `<esc>`. `go.test.explorer` remains as the quick-pick alternative.
 
 ### 🔄 Converters
 

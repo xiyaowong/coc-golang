@@ -3,13 +3,10 @@ import type { Dirent } from 'node:fs'
 import { readdir, readFile } from 'node:fs/promises'
 import { basename, dirname, join, relative, sep } from 'node:path'
 import * as coc from 'coc.nvim'
-import { configValue } from '../config'
 import { workspaceDirectories } from '../editor'
 import { escapeRegExp, parseTestResults, testFunctions } from '../go-test-utils'
 import { runTestsCaptured } from '../run-tests'
 import { registerCommand } from './index'
-
-const enabled = (): boolean => configValue('testExplorer.enable', true)
 
 type Outcome = 'passed' | 'failed' | 'skipped'
 type Status = Outcome | 'running'
@@ -58,6 +55,8 @@ const subtestId = (dir: string, path: string): string => `subtest:${dir}|${path}
 // Status of the last run, keyed by `package directory|test name`. Kept between
 // runs so a partial run (a single test) does not clear the other results.
 const results = new Map<string, Outcome>()
+// Output of the last run for each test, so a failure's message can be shown.
+const testOutput = new Map<string, string[]>()
 const runningIds = new Set<string>()
 
 const folderNodes = new Map<string, FolderNode>()
@@ -316,7 +315,7 @@ class TestDataProvider implements coc.TreeDataProvider<Node> {
       case 'test': {
         const children = subtestChildren(element.dir, element.name, element)
         const item = new coc.TreeItem(element.name, children.length ? coc.TreeItemCollapsibleState.Expanded : coc.TreeItemCollapsibleState.None)
-        item.tooltip = `${element.file}:${element.line}`
+        item.tooltip = testTooltip(element)
         applyStatus(item, testStatus(element))
         item.command = { title: 'Run Go Test', command: 'go.test.explorer.run', arguments: [element] }
         return item
@@ -324,6 +323,7 @@ class TestDataProvider implements coc.TreeDataProvider<Node> {
       case 'subtest': {
         const children = subtestChildren(element.dir, element.path, element)
         const item = new coc.TreeItem(element.name, children.length ? coc.TreeItemCollapsibleState.Expanded : coc.TreeItemCollapsibleState.None)
+        item.tooltip = testTooltip(element)
         applyStatus(item, subtestStatus(element))
         item.command = { title: 'Run Go Subtest', command: 'go.test.explorer.run', arguments: [element] }
         return item
@@ -404,7 +404,11 @@ async function executeRun(ids: string[], dir: string, args: string[]): Promise<v
   provider.refresh()
   try {
     const { output } = await runTestsCaptured(args, dir)
-    for (const { name, outcome } of parseTestResults(output)) results.set(`${dir}|${name}`, outcome)
+    for (const { name, outcome, output: messages } of parseTestResults(output)) {
+      const key = `${dir}|${name}`
+      results.set(key, outcome)
+      testOutput.set(key, messages)
+    }
   } finally {
     for (const id of ids) runningIds.delete(id)
     provider.refresh()
@@ -439,6 +443,31 @@ async function runPackageOf(node: Node): Promise<void> {
   if (node.kind !== 'test' && node.kind !== 'subtest') return
   const pkg = packageNodes.get(packageId(node.dir))
   if (pkg) await runPackage(pkg)
+}
+
+function outputOf(node: TestNode | SubtestNode): string[] {
+  const name = node.kind === 'test' ? node.name : node.path
+  return testOutput.get(`${node.dir}|${name}`) ?? []
+}
+
+// A subtest's own log lines; its parent's output includes everything the
+// subtest wrote, so the shared lines are dropped from the subtest's message.
+function selfOutput(node: SubtestNode): string[] {
+  const mine = new Set(outputOf(node))
+  return outputOf(node.parent).filter(line => mine.has(line))
+}
+
+// The tooltip shows where the test is defined, and for a failed test the output
+// that made it fail. Markdown keeps the failure message in a fenced block.
+function testTooltip(node: TestNode | SubtestNode): coc.MarkupContent {
+  const test = node.kind === 'test' ? node : topTest(node)
+  const lines = [`\`${test.file}:${test.line}\``]
+  const status = node.kind === 'test' ? testStatus(node) : subtestStatus(node)
+  if (status === 'failed') {
+    const output = node.kind === 'test' ? outputOf(node) : selfOutput(node)
+    lines.push(output.length ? `\`\`\`\n${output.join('\n')}\n\`\`\`` : 'No output recorded for this failure.')
+  }
+  return { kind: coc.MarkupKind.Markdown, value: lines.join('\n\n') }
 }
 
 async function openNode(node: Node): Promise<void> {
@@ -498,10 +527,6 @@ async function ensureHighlights(): Promise<void> {
 
 export function registerTestExplorerCommands(context: ExtensionContext): void {
   registerCommand(context, 'go.test.explorer.show', async () => {
-    if (!enabled()) {
-      coc.window.showWarningMessage('The Go test explorer is disabled (go.testExplorer.enable).')
-      return
-    }
     await ensureHighlights()
     await discoverTests()
     const created = ensureView(context)
@@ -510,7 +535,7 @@ export function registerTestExplorerCommands(context: ExtensionContext): void {
   })
 
   registerCommand(context, 'go.test.explorer.refresh', async () => {
-    if (!enabled() || !view) return
+    if (!view) return
     await discoverTests()
     provider.refresh()
   })
@@ -530,7 +555,6 @@ export function registerTestExplorerCommands(context: ExtensionContext): void {
   })
 
   registerCommand(context, 'go.test.explorer.runAll', async () => {
-    if (!enabled()) return
     await discoverTests()
     for (const dir of folderDirs) {
       const folder = folderNodes.get(folderId(dir))

@@ -886,11 +886,6 @@
           "default": null,
           "description": "Flags to pass to `go test`. If null, then buildFlags will be used. This is not propagated to the language server."
         },
-        "go.testExplorer.enable": {
-          "type": "boolean",
-          "default": true,
-          "description": "List Go tests in a tree view with `:CocCommand go.test.explorer.show`, run them individually, and show each test's pass or fail status."
-        },
         "go.generateTestsFlags": {
           "type": "array",
           "items": {
