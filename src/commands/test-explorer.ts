@@ -16,12 +16,21 @@ type Status = Outcome | 'running'
 interface FolderNode {
   kind: 'folder'
   dir: string
-  importPath: string
   packages: PackageNode[]
 }
 
 interface PackageNode {
   kind: 'package'
+  dir: string
+  importPath: string
+  folder: string
+  files: FileNode[]
+}
+
+interface FileNode {
+  kind: 'file'
+  file: string
+  name: string
   dir: string
   importPath: string
   folder: string
@@ -47,9 +56,10 @@ interface SubtestNode {
   parent: TestNode | SubtestNode
 }
 
-type Node = FolderNode | PackageNode | TestNode | SubtestNode
+type Node = FolderNode | PackageNode | FileNode | TestNode | SubtestNode
 
 const packageKey = (importPath: string): string => importPath
+const fileKey = (importPath: string, file: string): string => `${importPath}\u0000${file}`
 const testKey = (importPath: string, name: string): string => `${importPath}\u0000${name}`
 const testId = (importPath: string, name: string): string => `test:${testKey(importPath, name)}`
 const subtestId = (importPath: string, path: string): string => `subtest:${testKey(importPath, path)}`
@@ -58,6 +68,7 @@ const results = new Map<string, { outcome: Outcome, elapsed: number, output: str
 const runningIds = new Set<string>()
 
 const packageNodes = new Map<string, PackageNode>()
+const fileNodes = new Map<string, FileNode>()
 const testNodes = new Map<string, TestNode>()
 const subtestNodes = new Map<string, SubtestNode>()
 
@@ -97,6 +108,10 @@ function topTest(node: TestNode | SubtestNode): TestNode {
   let current: TestNode | SubtestNode = node
   while (current.kind === 'subtest') current = current.parent
   return current
+}
+
+function isBenchmark(name: string): boolean {
+  return name.startsWith('Benchmark')
 }
 
 function subtestChildren(importPath: string, parentPath: string, parent: TestNode | SubtestNode): SubtestNode[] {
@@ -154,6 +169,19 @@ function summary(statuses: Array<Status | undefined>): string {
   return parts.join(' · ')
 }
 
+function fileStatus(node: FileNode): Status | undefined {
+  return aggregateStatus(node.tests.map(testStatus))
+}
+
+// Flattens the tests under a file, package, or folder node, for running them.
+function testsUnder(node: PackageNode | FileNode | FolderNode): TestNode[] {
+  switch (node.kind) {
+    case 'folder': return node.packages.flatMap(testsUnder)
+    case 'package': return node.files.flatMap(testsUnder)
+    case 'file': return node.tests
+  }
+}
+
 function applyStatus(item: TreeItem, status: Status | undefined): void {
   if (status) item.icon = statusIcons[status]
 }
@@ -182,6 +210,7 @@ async function testLocations(pkg: TestPackage): Promise<Map<string, { file: stri
 async function discoverTests(): Promise<void> {
   folderDirs = workspaceDirectories()
   packageNodes.clear()
+  fileNodes.clear()
   const packages: PackageNode[] = []
 
   for (const directory of folderDirs) {
@@ -191,23 +220,39 @@ async function discoverTests(): Promise<void> {
       const locations = await testLocations(info)
       const names = listedNames.get(info.importPath) ?? [...locations.keys()]
       const folder = folderFor(info.dir)
-      const fallbackFile = info.testFiles[0] ? join(info.dir, info.testFiles[0]) : ''
       const pkg = cached(packageNodes, packageKey(info.importPath), () => ({
         kind: 'package' as const,
         dir: info.dir,
         importPath: info.importPath,
         folder,
-        tests: [],
+        files: [],
       }))
       pkg.dir = info.dir
       pkg.folder = folder
-      pkg.tests = names.map((name) => {
-        const id = testId(info.importPath, name)
+
+      // Group the package's tests by the file they are defined in, keeping the
+      // tree's file order stable (internal test files before external ones).
+      const byFile = new Map<string, FileNode>()
+      for (const name of names) {
         const location = locations.get(name)
-        const test = cached(testNodes, id, () => ({
+        const file = location?.file ?? (info.testFiles[0] ? join(info.dir, info.testFiles[0]) : '')
+        const fileNode = cached(fileNodes, fileKey(info.importPath, file), () => ({
+          kind: 'file' as const,
+          file,
+          name: file ? basename(file) : info.importPath,
+          dir: info.dir,
+          importPath: info.importPath,
+          folder,
+          tests: [],
+        }))
+        fileNode.file = file
+        fileNode.name = file ? basename(file) : info.importPath
+        fileNode.dir = info.dir
+        fileNode.folder = folder
+        const test = cached(testNodes, testId(info.importPath, name), () => ({
           kind: 'test' as const,
           name,
-          file: location?.file ?? fallbackFile,
+          file,
           line: location?.line ?? 1,
           dir: info.dir,
           importPath: info.importPath,
@@ -218,9 +263,13 @@ async function discoverTests(): Promise<void> {
         test.line = location?.line ?? test.line
         test.dir = info.dir
         test.folder = folder
-        return test
-      }).sort((a, b) => a.name.localeCompare(b.name))
-      if (pkg.tests.length) packages.push(pkg)
+        fileNode.tests.push(test)
+        byFile.set(file, fileNode)
+      }
+
+      pkg.files = [...byFile.values()]
+      for (const fileNode of pkg.files) fileNode.tests.sort((a, b) => a.name.localeCompare(b.name))
+      if (pkg.files.length) packages.push(pkg)
     }
   }
 
@@ -229,7 +278,7 @@ async function discoverTests(): Promise<void> {
   } else {
     const folders = new Map<string, FolderNode>()
     for (const pkg of packages) {
-      const folder = cached(folders, pkg.folder, () => ({ kind: 'folder' as const, dir: pkg.folder, importPath: '', packages: [] }))
+      const folder = cached(folders, pkg.folder, () => ({ kind: 'folder' as const, dir: pkg.folder, packages: [] }))
       folder.packages.push(pkg)
     }
     topLevel = [...folders.values()]
@@ -258,15 +307,23 @@ class TestDataProvider implements coc.TreeDataProvider<Node> {
       case 'folder': {
         const item = new coc.TreeItem(basename(element.dir) || element.dir, coc.TreeItemCollapsibleState.Expanded)
         item.tooltip = element.dir
-        item.description = summary(element.packages.filter(node => node.tests.length).map(pkg => aggregateStatus(pkg.tests.map(testStatus))))
+        item.description = summary(element.packages.flatMap(pkg => pkg.files.map(fileStatus)))
         return item
       }
       case 'package': {
         const label = relative(element.folder, element.dir).replace(/\\/g, '/') || '.'
         const item = new coc.TreeItem(label, coc.TreeItemCollapsibleState.Expanded)
         item.tooltip = element.importPath
+        const statuses = element.files.map(fileStatus)
+        item.description = summary(statuses)
+        applyStatus(item, aggregateStatus(statuses))
+        return item
+      }
+      case 'file': {
+        const item = new coc.TreeItem(element.name, coc.TreeItemCollapsibleState.Expanded)
+        item.tooltip = element.file
         item.description = summary(element.tests.map(testStatus))
-        applyStatus(item, aggregateStatus(element.tests.map(testStatus)))
+        applyStatus(item, fileStatus(element))
         return item
       }
       case 'test':
@@ -284,8 +341,9 @@ class TestDataProvider implements coc.TreeDataProvider<Node> {
   getChildren(element?: Node): Node[] {
     if (!element) return topLevel
     switch (element.kind) {
-      case 'folder': return element.packages.filter(pkg => pkg.tests.length)
-      case 'package': return element.tests
+      case 'folder': return element.packages.filter(pkg => pkg.files.length)
+      case 'package': return element.files
+      case 'file': return element.tests
       case 'test': return subtestChildren(element.importPath, element.name, element)
       case 'subtest': return subtestChildren(element.importPath, element.path, element)
     }
@@ -295,7 +353,8 @@ class TestDataProvider implements coc.TreeDataProvider<Node> {
     switch (element.kind) {
       case 'folder': return undefined
       case 'package': return folderDirs.length > 1 ? topLevel.find(node => node.kind === 'folder' && node.dir === element.folder) : undefined
-      case 'test': return packageNodes.get(packageKey(element.importPath))
+      case 'file': return packageNodes.get(packageKey(element.importPath))
+      case 'test': return fileNodes.get(fileKey(element.importPath, element.file))
       case 'subtest': return element.parent
     }
   }
@@ -306,6 +365,12 @@ class TestDataProvider implements coc.TreeDataProvider<Node> {
         { title: 'Run Test', handler: node => runNode(node) },
         { title: 'Go to Test', handler: node => openNode(node) },
         { title: 'Run Package Tests', handler: node => runPackageOf(node) },
+      ]
+    }
+    if (element.kind === 'file') {
+      return [
+        { title: 'Run File Tests', handler: node => runNode(node) },
+        { title: 'Go to File', handler: node => openNode(node) },
       ]
     }
     return [{ title: 'Run Tests', handler: node => runNode(node) }]
@@ -413,18 +478,38 @@ async function executeRun(ids: string[], dir: string, args: string[]): Promise<b
   }
 }
 
+// Splits names into `-run` targets and benchmarks, which need `-bench` (with
+// an empty `-run`) to actually execute.
+function runArguments(names: string[]): string[] {
+  const tests = names.filter(name => !isBenchmark(name)).map(escapeRegExp)
+  const benchmarks = names.filter(isBenchmark).map(escapeRegExp)
+  const args: string[] = []
+  if (tests.length) args.push('-run', `^(${tests.join('|')})$`)
+  else if (benchmarks.length) args.push('-run', '^$')
+  if (benchmarks.length) args.push('-bench', `^(${benchmarks.join('|')})$`)
+  return args
+}
+
+async function runTestNodes(nodes: TestNode[], dir: string): Promise<boolean> {
+  return executeRun(nodes.map(node => testId(node.importPath, node.name)), dir, runArguments(nodes.map(node => node.name)))
+}
+
 async function runTest(node: TestNode): Promise<void> {
-  const ok = await executeRun([testId(node.importPath, node.name)], node.dir, ['-run', `^${escapeRegExp(node.name)}$`])
+  const ok = await runTestNodes([node], node.dir)
   if (!ok) coc.window.showWarningMessage(`No results for ${node.name}.`)
 }
 
 async function runSubtest(node: SubtestNode): Promise<void> {
-  const pattern = node.path.split('/').map(segment => `^${escapeRegExp(segment)}$`).join('/')
-  await executeRun([testId(node.importPath, topTest(node).name)], node.dir, ['-run', pattern])
+  const segments = node.path.split('/').map(escapeRegExp)
+  await executeRun([testId(node.importPath, topTest(node).name)], node.dir, ['-run', `^${segments.join('/')}$`])
+}
+
+async function runFile(node: FileNode): Promise<void> {
+  await runTestNodes(node.tests, node.dir)
 }
 
 async function runPackage(node: PackageNode): Promise<void> {
-  await executeRun(node.tests.map(test => testId(node.importPath, test.name)), node.dir, [])
+  await runTestNodes(testsUnder(node), node.dir)
 }
 
 async function runFolder(node: FolderNode): Promise<void> {
@@ -434,6 +519,7 @@ async function runFolder(node: FolderNode): Promise<void> {
 async function runNode(node: Node): Promise<void> {
   if (node.kind === 'test') await runTest(node)
   else if (node.kind === 'subtest') await runSubtest(node)
+  else if (node.kind === 'file') await runFile(node)
   else if (node.kind === 'package') await runPackage(node)
   else await runFolder(node)
 }
@@ -462,7 +548,16 @@ function testTooltip(node: TestNode | SubtestNode): MarkupContent {
 
 async function openNode(node: Node): Promise<void> {
   if (node.kind === 'package' || node.kind === 'folder') {
-    coc.window.showWarningMessage('Only tests and subtests can be located.')
+    coc.window.showWarningMessage('Only files, tests, and subtests can be located.')
+    return
+  }
+  if (node.kind === 'file') {
+    if (!node.file) {
+      coc.window.showWarningMessage(`Could not locate ${node.name}.`)
+      return
+    }
+    await leaveTreeWindow()
+    await coc.workspace.jumpTo(coc.Uri.file(node.file).toString(), coc.Position.create(0, 0))
     return
   }
   const test = node.kind === 'test' ? node : topTest(node)

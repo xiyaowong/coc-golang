@@ -68,14 +68,19 @@ nnoremap <leader>ge :CocCommand go.test.explorer<CR>
 
 ## Browse and run tests from a tree
 
-`go.test.explorer.show` opens the **Go Tests** tree view. Run or locate the
-selected test with the tree commands:
+`go.test.explorer.show` opens the **Go Tests** tree view, which nests folders,
+packages, files, tests, and subtests. Run or locate the selected node with the
+tree commands:
 
 ```vim
 nnoremap <leader>gt :CocCommand go.test.explorer.show<CR>
 nnoremap <leader>gr :CocCommand go.test.explorer.run<CR>
 nnoremap <leader>go :CocCommand go.test.explorer.open<CR>
 ```
+
+`go.test.explorer.run` runs the selected node — a single test, or everything in
+the file, package, or folder it belongs to. `go.test.explorer.open` jumps to the
+file and line a test is defined in (or the file itself for a file node).
 
 The tree is a normal coc.nvim tree buffer, so its built-in keys work — in
 particular `f` filters the tree by fuzzy-matching test names, and `<cr>` runs
