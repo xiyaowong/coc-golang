@@ -68,9 +68,11 @@ nnoremap <leader>ge :CocCommand go.test.explorer<CR>
 
 ## Browse and run tests from a tree
 
-`go.test.explorer.show` opens the **Go Tests** tree view, which nests folders,
-packages, files, tests, and subtests. Every node runs — a file, package, or
-folder runs everything beneath it. Open it and bind its actions:
+`go.test.explorer.show` opens the **Go Tests** tree view:
+
+- Nested `folder → package → file → test → subtest`.
+- Every node runs — a file, package, or folder runs everything beneath it.
+- `go.test.explorer.open` jumps to the node's file and line.
 
 ```vim
 nnoremap <leader>gt :CocCommand go.test.explorer.show<CR>

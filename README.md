@@ -80,7 +80,14 @@ Some commands need an extra tool: test generation uses `gotests`, struct tags us
 
 ### 🌳 Test explorer
 
-`go.test.explorer.show` opens a **Go Tests** tree view of your workspace's tests and benchmarks, nested folder → package → file → test → subtest. Every node runs — a file, package, or folder runs everything beneath it; tests report pass/fail status; and each node jumps to the file and line it is defined in. Press `f` to filter by name. `go.test.explorer` remains as the quick-pick alternative.
+`go.test.explorer.show` opens a **Go Tests** tree view of your workspace's tests and benchmarks:
+
+- Nested `folder → package → file → test → subtest`.
+- Run any node — a file, package, or folder runs everything beneath it.
+- Pass/fail status on every node, plus a location to jump to.
+- Press `f` to filter the tree by name.
+
+`go.test.explorer` remains as the quick-pick alternative.
 
 ### 🔄 Converters
 
