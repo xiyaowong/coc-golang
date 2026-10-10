@@ -68,20 +68,11 @@ nnoremap <leader>ge :CocCommand go.test.explorer<CR>
 
 ## Browse and run tests from a tree
 
-`go.test.explorer.show` opens the **Go Tests** tree view, listing the tests in
-the workspace by folder, package, and name with a pass/fail icon beside each
-one:
+`go.test.explorer.show` opens the **Go Tests** tree view. Run or locate the
+selected test with the tree commands:
 
 ```vim
 nnoremap <leader>gt :CocCommand go.test.explorer.show<CR>
-```
-
-Inside the view, `<cr>` on a row runs that test or package, `<tab>` opens the
-actions menu (**Run Test**, **Go to Test**, **Run Package Tests**), and `<esc>`
-closes the view. Bind the tree commands outside the view too, so you can run or
-locate whatever the cursor is on:
-
-```vim
 nnoremap <leader>gr :CocCommand go.test.explorer.run<CR>
 nnoremap <leader>go :CocCommand go.test.explorer.open<CR>
 ```
