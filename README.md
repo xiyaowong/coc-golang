@@ -45,7 +45,7 @@ Open a Go file to activate the extension. If `gopls` is not installed, coc-golan
 - 🧠 **Language intelligence:** completion, hover, signature help, diagnostics, navigation, references, rename, code actions, and document symbols through `gopls`.
 - 🧹 **Formatting and imports:** format Go code and add or organize imports.
 - 🏗️ **Build and checks:** build, run, vet, lint, and scan packages or workspaces for known vulnerabilities.
-- 🧪 **Tests and benchmarks:** run tests at package, workspace, file, or cursor scope; repeat the previous run; collect coverage; and run benchmarks.
+- 🧪 **Tests and benchmarks:** run tests at package, workspace, file, or cursor scope; browse and run them from a tree view with pass/fail status; repeat the previous run; collect coverage; and run benchmarks.
 - 📁 **Project workflows:** manage modules and workspaces, install Go tools, generate code or tests, edit struct tags, and generate interface implementations.
 - 🔄 **Converters:** generate Go types from a JSON Schema or from JSON.
 - 🌱 **Go environment:** inspect Go settings and configure environments for `gopls`, Go commands, and installed tools.
@@ -74,9 +74,20 @@ The ones you'll reach for most:
 | Show the Go environment | `go.env` |
 | Install a Go tool | `go.tools.install` |
 
-Every `go.*` command — all 76, grouped by area — is in the [command reference](https://xiyaowong.github.io/coc-golang/docs/reference/commands).
+Every `go.*` command — all 81, grouped by area — is in the [command reference](https://xiyaowong.github.io/coc-golang/docs/reference/commands).
 
 Some commands need an extra tool: test generation uses `gotests`, struct tags use `gomodifytags`, and interface generation uses `impl`. Vulnerability analysis is provided by `gopls`.
+
+### 🌳 Test explorer
+
+`go.test.explorer.show` opens a **Go Tests** tree view that lists the tests and benchmarks in your workspace by folder, package, and name:
+
+- Run a test by selecting it and pressing `<cr>`, or run a whole package or folder from its row.
+- Each test shows an icon for its last result: `✓` passed, `✗` failed, `●` running, `○` skipped. Subtests reported by `go test -v` appear nested under their test.
+- `go.test.explorer.open` (or the **Go to Test** action, on `<tab>`) jumps to the test's file and line.
+- `go.test.explorer.refresh` re-scans for tests, which also happens when you save a `_test.go` file.
+
+The view is a regular Neovim buffer in a split, created on demand; close it with `<esc>`. Set `go.testExplorer.enable` to `false` to turn it off. `go.test.explorer` remains as the quick-pick alternative.
 
 ### 🔄 Converters
 
@@ -161,4 +172,4 @@ See [CHANGELOG.md](CHANGELOG.md).
 
 ## 🎯 Scope
 
-The persistent VS Code test explorer, Delve debug adapter UI, survey and telemetry, coverage overlays, and rich diagnostic visualization are not included. Update checks cover `gopls` only.
+The VS Code test explorer's run/debug gutter and status-bar widgets, the Delve debug adapter UI, survey and telemetry, coverage overlays, and rich diagnostic visualization are not included. Update checks cover `gopls` only.

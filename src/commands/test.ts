@@ -11,7 +11,7 @@ import {
   wordAtCursor,
   workspaceDirectories,
 } from '../editor'
-import { escapeRegExp, testArgumentsAtCursor, testArgumentsForFile, testNameAtCursor } from '../go-test-utils'
+import { escapeRegExp, parseTestList, testArgumentsAtCursor, testArgumentsForFile, testNameAtCursor } from '../go-test-utils'
 import { runGoProcess } from '../process'
 import { getPreviousTest, runTests } from '../run-tests'
 import { terminal } from '../terminal'
@@ -23,9 +23,7 @@ async function listAndRunTest(): Promise<void> {
   const directory = await activeDirectory()
   try {
     const result = await runGoProcess('test', ['-list', '.'], { cwd: directory })
-    const names = result.stdout.split(/\r?\n/).filter(name =>
-      /^(?:Test[A-Z0-9]\w*|Benchmark[A-Z0-9]\w*|Example(?:[A-Z]\w*|_[a-z]\w*)?)$/.test(name),
-    )
+    const names = parseTestList(result.stdout)
     if (result.code !== 0) {
       coc.window.showErrorMessage(`go test -list exited with code ${result.code}`)
       return

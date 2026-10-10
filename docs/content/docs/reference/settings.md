@@ -4,7 +4,7 @@ description: Configuration reference for the go.* settings.
 ---
 
 <!-- Generated from package.json (and src/tools.ts). Do not edit by hand. -->
-This page lists the 63 `go.*` settings. See [gopls settings](./gopls-settings) for language-server options.
+This page lists the 64 `go.*` settings. See [gopls settings](./gopls-settings) for language-server options.
 
 | Setting | Type | Default |
 | --- | --- | --- |
@@ -57,6 +57,7 @@ This page lists the 63 `go.*` settings. See [gopls settings](./gopls-settings) f
 | `go.testEnvVars` | `object` | `{}` |
 | `go.testEnvFile` | `string` | `null` |
 | `go.testFlags` | `array | null` | `null` |
+| `go.testExplorer.enable` | `boolean` | `true` |
 | `go.generateTestsFlags` | `string[]` | `[]` |
 | `go.inlayHints.assignVariableTypes` | `boolean` | `false` |
 | `go.inlayHints.compositeLiteralFields` | `boolean` | `false` |
@@ -420,6 +421,12 @@ Absolute path to a file containing environment variables definitions. File conte
 **Type:** `array | null` · **Default:** `null`
 
 Flags to pass to `go test`. If null, then buildFlags will be used. This is not propagated to the language server.
+
+## `go.testExplorer.enable`
+
+**Type:** `boolean` · **Default:** `true`
+
+List Go tests in a tree view with `:CocCommand go.test.explorer.show`, run them individually, and show each test's pass or fail status.
 
 ## `go.generateTestsFlags`
 

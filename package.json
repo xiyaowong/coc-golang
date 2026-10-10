@@ -32,6 +32,11 @@
     "onLanguage:gowork",
     "onCommand:go.test.package",
     "onCommand:go.test.explorer",
+    "onCommand:go.test.explorer.show",
+    "onCommand:go.test.explorer.refresh",
+    "onCommand:go.test.explorer.run",
+    "onCommand:go.test.explorer.open",
+    "onCommand:go.test.explorer.runAll",
     "onCommand:go.test.workspace",
     "onCommand:go.test.file",
     "onCommand:go.test.cursor",
@@ -117,6 +122,31 @@
       {
         "command": "go.test.explorer",
         "title": "Pick a Go Test",
+        "category": "Go"
+      },
+      {
+        "command": "go.test.explorer.show",
+        "title": "Show Go Test Explorer",
+        "category": "Go"
+      },
+      {
+        "command": "go.test.explorer.refresh",
+        "title": "Refresh Go Test Explorer",
+        "category": "Go"
+      },
+      {
+        "command": "go.test.explorer.run",
+        "title": "Run Test Under Cursor in Go Test Explorer",
+        "category": "Go"
+      },
+      {
+        "command": "go.test.explorer.open",
+        "title": "Go to Test Under Cursor in Go Test Explorer",
+        "category": "Go"
+      },
+      {
+        "command": "go.test.explorer.runAll",
+        "title": "Run All Go Tests in Explorer",
         "category": "Go"
       },
       {
@@ -855,6 +885,11 @@
           },
           "default": null,
           "description": "Flags to pass to `go test`. If null, then buildFlags will be used. This is not propagated to the language server."
+        },
+        "go.testExplorer.enable": {
+          "type": "boolean",
+          "default": true,
+          "description": "List Go tests in a tree view with `:CocCommand go.test.explorer.show`, run them individually, and show each test's pass or fail status."
         },
         "go.generateTestsFlags": {
           "type": "array",
