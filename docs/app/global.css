@@ -1,6 +1,8 @@
 @import 'tailwindcss';
 @import 'fumadocs-ui/css/neutral.css';
 @import 'fumadocs-ui/css/preset.css';
+/* After neutral.css so its grey palette is overridden. */
+@import './theme.css';
 
 html {
   scrollbar-gutter: stable;

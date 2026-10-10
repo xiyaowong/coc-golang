@@ -14,6 +14,9 @@ export async function GET(_req: Request, { params }: RouteContext<'/og/docs/[...
     title: page.data.title,
     description: page.data.description,
     site: appName,
+    // Match the docs theme (see app/theme.css); the default is magenta.
+    primaryColor: 'rgba(90, 201, 216, 0.35)',
+    primaryTextColor: 'rgb(140, 226, 236)',
   });
 }
 
