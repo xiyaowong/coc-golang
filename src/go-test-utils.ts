@@ -11,19 +11,16 @@ export interface TestFunction {
   line: number
 }
 
+const testNamePattern = /^(?:Test[A-Z0-9]\w*|Benchmark[A-Z0-9]\w*|Example(?:[A-Z]\w*|_[a-z]\w*)?|Fuzz[A-Z]\w*)$/
+
+export function isTestName(name: string): boolean {
+  return testNamePattern.test(name)
+}
+
 export function escapeRegExp(name: string): string {
   return name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
-// Names the `go test -list` command prints for tests, examples, and benchmarks.
-export function parseTestList(stdout: string): string[] {
-  return stdout.split(/\r?\n/).filter(name =>
-    /^(?:Test[A-Z0-9]\w*|Benchmark[A-Z0-9]\w*|Example(?:[A-Z]\w*|_[a-z]\w*)?)$/.test(name),
-  )
-}
-
-// Test functions declared in a file, with their 1-based line numbers. Only the
-// first function on a line is considered, matching the go test naming rules.
 export function testFunctions(lines: string[]): TestFunction[] {
   const found: TestFunction[] = []
   lines.forEach((line, index) => {
@@ -31,42 +28,6 @@ export function testFunctions(lines: string[]): TestFunction[] {
     if (name) found.push({ name, line: index + 1 })
   })
   return found
-}
-
-// Per-test results printed by `go test -v`. The indented log lines (and panic
-// traces) written while a test runs are attached to that test, so a failed test
-// can report the output that made it fail. Subtests appear with their
-// slash-separated name.
-export type TestOutcome = 'passed' | 'failed' | 'skipped'
-
-export interface TestResult {
-  name: string
-  outcome: TestOutcome
-  output: string[]
-}
-
-export function parseTestResults(output: string): TestResult[] {
-  const logs = new Map<string, string[]>()
-  const results = new Map<string, TestResult>()
-  let current: string | undefined
-  for (const line of output.split(/\r?\n/)) {
-    const run = /^===\s+(?:RUN|PAUSE|CONT)\s+(\S+)/.exec(line)
-    if (run) {
-      current = run[1]
-      if (!logs.has(current)) logs.set(current, [])
-      continue
-    }
-    const result = /^\s*---\s+(PASS|FAIL|SKIP):\s+(\S+)/.exec(line)
-    if (result) {
-      const name = result[2]
-      const outcome: TestOutcome = result[1] === 'PASS' ? 'passed' : result[1] === 'FAIL' ? 'failed' : 'skipped'
-      results.set(name, { name, outcome, output: logs.get(name) ?? [] })
-      continue
-    }
-    // Anything else while a test runs is its output; skip the terminal summary.
-    if (current && !/^(?:FAIL|PASS|ok)\b/.test(line.trim())) logs.get(current)!.push(line.trim())
-  }
-  return [...results.values()]
 }
 
 export function functionLineAtCursor(lines: string[]): string | undefined {

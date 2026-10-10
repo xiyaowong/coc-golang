@@ -3,7 +3,7 @@ import * as coc from 'coc.nvim'
 import { configValue, goTestFlags } from './config'
 import { parseEnvFile } from './go-config-utils'
 import { showOutput } from './output'
-import { runGoProcess } from './process'
+import { captureGo } from './process'
 import { runGoInTerminal } from './terminal'
 
 export interface PreviousTest {
@@ -15,6 +15,14 @@ export interface TestRunResult {
   code: number | null
   output: string
 }
+
+export interface TestPackage {
+  importPath: string
+  dir: string
+  testFiles: string[]
+}
+
+const listFormat = '{{.ImportPath}}\t{{.Dir}}\t{{join .TestGoFiles ","}}\t{{join .XTestGoFiles ","}}'
 
 let previousTest: PreviousTest | undefined
 
@@ -44,12 +52,34 @@ export async function runTests(args: string[], cwd: string): Promise<void> {
   showOutput()
 }
 
-// Runs `go test` and captures its output, for callers that need to parse
-// results (the test explorer) rather than read them in the terminal. Also
-// remembers the invocation like runTests.
-export async function runTestsCaptured(args: string[], cwd: string): Promise<TestRunResult> {
+// Runs `go test -json` and streams its output line by line, for callers that
+// parse results (the test explorer) as they are reported.
+export async function runTestsCaptured(
+  args: string[],
+  cwd: string,
+  onLine?: (line: string) => void,
+): Promise<TestRunResult> {
   previousTest = { args, cwd }
-  const effective = [...goTestFlags(), ...args]
-  const result = await runGoProcess('test', effective, { cwd, environment: testEnvironment() })
+  const result = await captureGo('test', ['-json', ...goTestFlags(), ...args], {
+    cwd,
+    environment: testEnvironment(),
+    onLine,
+  })
   return { code: result.code, output: result.output }
+}
+
+// The packages under `dir` that have test files, described by `go list` so build
+// constraints and the module graph are respected.
+export async function listTestPackages(dir: string): Promise<TestPackage[]> {
+  const result = await captureGo('list', ['-f', listFormat, './...'], { cwd: dir })
+  if (result.code !== 0) return []
+
+  const packages: TestPackage[] = []
+  for (const line of result.stdout.split(/\r?\n/)) {
+    const [importPath, packageDir, internal, external] = line.split('\t')
+    if (!importPath || !packageDir) continue
+    const testFiles = [...(internal?.split(',') ?? []), ...(external?.split(',') ?? [])].filter(Boolean)
+    if (testFiles.length) packages.push({ importPath, dir: packageDir, testFiles })
+  }
+  return packages
 }
