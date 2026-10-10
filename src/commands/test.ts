@@ -1,10 +1,6 @@
 import type { ExtensionContext } from 'coc.nvim'
-import { readFileSync } from 'node:fs'
 import * as coc from 'coc.nvim'
-import { configValue, goTestFlags } from '../config'
-import { parseEnvFile } from '../go-config-utils'
-import { escapeRegExp, testArgumentsAtCursor, testArgumentsForFile, testNameAtCursor } from '../go-test-utils'
-import { runGoInTerminal, runGoProcess, showOutput, terminal } from '../process'
+import { configValue } from '../config'
 import {
   activeDirectory,
   activeGoFile,
@@ -14,33 +10,14 @@ import {
   linesToCursor,
   wordAtCursor,
   workspaceDirectories,
-} from './editor'
+} from '../editor'
+import { escapeRegExp, testArgumentsAtCursor, testArgumentsForFile, testNameAtCursor } from '../go-test-utils'
+import { runGoProcess } from '../process'
+import { getPreviousTest, runTests } from '../run-tests'
+import { terminal } from '../terminal'
 import { registerCommand } from './index'
 
-interface PreviousTest {
-  args: string[]
-  cwd: string
-}
-
-let previousTest: PreviousTest | undefined
-
 const benchmarkFlags = (): string[] => configValue<string[]>('benchmarkFlags', [])
-
-export async function runTests(args: string[], cwd: string): Promise<void> {
-  previousTest = { args, cwd }
-  const envFile = configValue('testEnvFile', '')
-  let variables: Record<string, string> = {}
-  if (envFile) {
-    try {
-      variables = parseEnvFile(readFileSync(envFile, 'utf8'))
-    } catch (error) {
-      coc.window.showWarningMessage(`Unable to read go.testEnvFile ${envFile}: ${String(error)}`)
-    }
-  }
-  const environment = { ...variables, ...configValue<Record<string, string>>('testEnvVars', {}) }
-  await runGoInTerminal('test', [...goTestFlags(), ...args], { cwd, environment })
-  showOutput()
-}
 
 async function listAndRunTest(): Promise<void> {
   const directory = await activeDirectory()
@@ -102,11 +79,12 @@ export function registerTestCommands(context: ExtensionContext): void {
     await runTests(['-run', `^${escapeRegExp(testName)}$/${escapeRegExp(subtestName)}$`], await activeDirectory())
   })
   registerCommand(context, 'go.test.previous', async () => {
-    if (!previousTest) {
+    const previous = getPreviousTest()
+    if (!previous) {
       coc.window.showWarningMessage('No previous Go test command.')
       return
     }
-    await runTests(previousTest.args, previousTest.cwd)
+    await runTests(previous.args, previous.cwd)
   })
   registerCommand(context, 'go.test.coverage', async () => runTests(['-cover'], await activeDirectory()))
   registerCommand(context, 'go.toggle.test.file', async () => {

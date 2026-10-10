@@ -4,7 +4,8 @@ import { dirname, extname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import * as coc from 'coc.nvim'
 import { goEnvironment } from './environment'
-import { appendOutput, runProcess, showCommandOutput, showOutput } from './process'
+import { appendOutput, showCommandOutput, showOutput } from './output'
+import { runProcess } from './process'
 
 interface VulncheckReport {
   Entries?: Record<string, unknown>

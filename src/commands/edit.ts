@@ -2,10 +2,10 @@ import type { ExtensionContext } from 'coc.nvim'
 import { dirname } from 'node:path'
 import * as coc from 'coc.nvim'
 import { configValue } from '../config'
+import { activeDirectory, activeFile, activeGoFile, fileUri, linesToCursor } from '../editor'
 import { functionNameAtCursor, testArgumentsAtCursor } from '../go-test-utils'
 import { getClient } from '../language-server'
 import { runTool } from '../tools'
-import { activeDirectory, activeFile, activeGoFile, fileUri, linesToCursor } from './editor'
 import { registerCommand } from './index'
 
 const gotestsArguments = (...args: string[]): string[] => [

@@ -1,21 +1,22 @@
 import type { ExtensionContext } from 'coc.nvim'
-import type { CheckScope } from './commands/check'
+import type { CheckScope } from './check'
 import { dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import * as coc from 'coc.nvim'
+import { runCheck } from './check'
 import { registerCommands } from './commands'
-import { runCheck } from './commands/check'
-import { runTests } from './commands/test'
 import { configValue, restartSettings } from './config'
 import { activateTerminalEnvironment } from './environment'
 import { disposeFormatProvider, refreshFormatProvider } from './format'
+import { checkGoplsUpdate } from './gopls-update'
 import {
-  checkGoplsUpdate,
   replaceLanguageClient,
   startLanguageClient,
   stopLanguageClient,
 } from './language-server'
-import { createOutputChannel, disposeOutputChannel, killAllProcesses } from './process'
+import { createOutputChannel, disposeOutputChannel } from './output'
+import { killAllProcesses } from './process'
+import { runTests } from './run-tests'
 import { createStatusBar, updateStatusBar } from './status-bar'
 
 function registerConfigurationHandler(context: ExtensionContext): void {

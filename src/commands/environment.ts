@@ -1,9 +1,11 @@
 import type { ExtensionContext } from 'coc.nvim'
 import * as coc from 'coc.nvim'
 import { configValue, goCommand } from '../config'
-import { goEnvironment, resolveExecutable } from '../environment'
+import { goEnvironment } from '../environment'
+import { resolveExecutable } from '../executable'
 import { replaceLanguageClient, restartClient } from '../language-server'
-import { appendOutput, runGoProcess, runProcess, showCommandOutput, showOutput } from '../process'
+import { appendOutput, showCommandOutput, showOutput } from '../output'
+import { runGoProcess, runProcess } from '../process'
 import { installTool, toolExecutable, tools } from '../tools'
 import { registerCommand } from './index'
 

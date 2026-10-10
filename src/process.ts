@@ -4,7 +4,7 @@ import { execFile, spawn } from 'node:child_process'
 import * as coc from 'coc.nvim'
 import { goCommand } from './config'
 import { goEnvironment } from './environment'
-import { shellCommandLine, shellKind } from './shell-utils'
+import { appendOutputText, showCommandOutput } from './output'
 
 export interface ProcessResult {
   code: number | null
@@ -28,91 +28,15 @@ export interface GoRunOptions {
   environment?: NodeJS.ProcessEnv
 }
 
-export interface TerminalRunOptions extends GoRunOptions {
-  focus?: boolean
-}
-
 const runningProcesses = new Set<ChildProcess>()
-let goTerminal: coc.Terminal | undefined
-let outputChannel: coc.OutputChannel | undefined
-let outputVisibilityCheck: Promise<void> | undefined
-
-export function terminal(): coc.Terminal | undefined {
-  return goTerminal
-}
-
-export function createOutputChannel(): coc.OutputChannel {
-  outputChannel = coc.window.createOutputChannel('Go')
-  return outputChannel
-}
-
-export function disposeOutputChannel(): void {
-  outputChannel?.dispose()
-  outputChannel = undefined
-}
-
-export function appendOutput(text: string): void {
-  outputChannel?.appendLine(text)
-}
-
-export function showCommandOutput(title: string): void {
-  outputChannel?.appendLine(`\n> ${title}`)
-}
-
-export function showOutput(): void {
-  const channel = outputChannel
-  if (!channel || outputVisibilityCheck) return
-
-  outputVisibilityCheck = (async () => {
-    const buffer = await coc.workspace.nvim.call('bufnr', [`output:///${encodeURI(channel.name)}`])
-    if (typeof buffer !== 'number') throw new Error('Could not find the Go output buffer.')
-    if (buffer < 0) {
-      if (outputChannel === channel) channel.show()
-      return
-    }
-    const windows = await coc.workspace.nvim.call('win_findbuf', [buffer])
-    if (!Array.isArray(windows)) throw new Error('Could not determine whether the Go output is visible.')
-    if (outputChannel === channel && windows.length === 0) channel.show()
-  })().catch((error: unknown) => {
-    coc.window.showMessage(`Failed to show Go output: ${String(error)}`, 'error')
-  }).finally(() => {
-    outputVisibilityCheck = undefined
-  })
-}
 
 export function killAllProcesses(): void {
   for (const process of runningProcesses) process.kill()
   runningProcesses.clear()
 }
 
-function disposeTerminal(): void {
-  goTerminal?.dispose()
-  goTerminal = undefined
-}
-
-export async function runGoInTerminal(
-  subcommand: string,
-  args: string[],
-  options: TerminalRunOptions,
-): Promise<void> {
-  const { cwd, environment = {}, focus = false } = options
-  disposeTerminal()
-  try {
-    const shell = await coc.workspace.nvim.eval('&shell')
-    const line = shellCommandLine(goCommand(), [subcommand, ...args], shellKind(String(shell)))
-    const env: Record<string, string> = {}
-    for (const [key, value] of Object.entries({ ...goEnvironment(), ...environment })) {
-      if (value !== undefined) env[key] = value
-    }
-    const terminal = await coc.window.createTerminal({ name: 'Go', cwd, env })
-    goTerminal = terminal
-    terminal.sendText(line)
-    await terminal.show(!focus)
-  } catch (error) {
-    coc.window.showErrorMessage(`Failed to run go ${subcommand}: ${String(error)}`)
-  }
-}
-
+// Spawns a command and collects its output. Unless stdin is fed, stdout is also
+// streamed to the Go output channel.
 export function runProcess(command: string, args: string[], options: ProcessOptions): Promise<ProcessResult> {
   const { cwd, env = process.env, input } = options
   return new Promise((resolvePromise, reject) => {
@@ -129,12 +53,12 @@ export function runProcess(command: string, args: string[], options: ProcessOpti
       const value = chunk.toString()
       stdout += value
       output += value
-      if (input === undefined) outputChannel?.append(value)
+      if (input === undefined) appendOutputText(value)
     })
     child.stderr?.on('data', (chunk: Buffer) => {
       const value = chunk.toString()
       output += value
-      outputChannel?.append(value)
+      appendOutputText(value)
     })
     child.once('error', (error) => {
       runningProcesses.delete(child)
