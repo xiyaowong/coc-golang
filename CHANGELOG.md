@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.7.0](https://github.com/xiyaowong/coc-golang/compare/coc-golang-v0.6.0...coc-golang-v0.7.0) (2026-10-10)
+
+
+### Features
+
+* add a Go test explorer tree view ([#44](https://github.com/xiyaowong/coc-golang/issues/44)) ([9f46fc9](https://github.com/xiyaowong/coc-golang/commit/9f46fc9fd01e999293040e216cfeb8b1eca5dda4))
+* add go.convert.jsonToGo command ([#40](https://github.com/xiyaowong/coc-golang/issues/40)) ([409b2a1](https://github.com/xiyaowong/coc-golang/commit/409b2a1bb9bce10fa4065f7f8ea0fb681c896073))
+
 ## [0.6.0](https://github.com/xiyaowong/coc-golang/compare/coc-golang-v0.5.0...coc-golang-v0.6.0) (2026-10-09)
 
 
