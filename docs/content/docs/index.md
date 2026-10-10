@@ -26,6 +26,8 @@ tasks.
 
 - [Getting started](./getting-started) — install the extension and run your
   first command.
+- [Test explorer](./test-explorer) — browse and run tests from a tree view.
+- [Converters](./convert) — generate Go types from JSON or a JSON Schema.
 - [Keybindings and recipes](./keybindings) — handy mappings for common actions.
 - [Troubleshooting](./troubleshooting) — fix common issues.
 - [Reference](./reference/commands) — every command, setting, and tool.
