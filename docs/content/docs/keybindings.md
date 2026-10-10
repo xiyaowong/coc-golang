@@ -77,6 +77,10 @@ nnoremap <leader>gr :CocCommand go.test.explorer.run<CR>
 nnoremap <leader>go :CocCommand go.test.explorer.open<CR>
 ```
 
+The tree is a normal coc.nvim tree buffer, so its built-in keys work — in
+particular `f` filters the tree by fuzzy-matching test names, and `<cr>` runs
+the selected test. See `:h coc-tree` and `:h coc-tree-filter` for the full list.
+
 ## See the list of commands
 
 `:CocList commands` shows every command coc.nvim knows about, including all

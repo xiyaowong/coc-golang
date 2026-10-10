@@ -317,7 +317,7 @@ let view: coc.TreeView<Node> | undefined
 
 function ensureView(context: ExtensionContext): coc.TreeView<Node> {
   if (!view) {
-    view = coc.window.createTreeView('go-test-explorer', { treeDataProvider: provider, bufhidden: 'hide' })
+    view = coc.window.createTreeView('go-test-explorer', { treeDataProvider: provider, bufhidden: 'hide', enableFilter: true })
     view.title = 'Go Tests'
     context.subscriptions.push(view)
   }

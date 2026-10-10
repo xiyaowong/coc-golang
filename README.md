@@ -80,7 +80,7 @@ Some commands need an extra tool: test generation uses `gotests`, struct tags us
 
 ### 🌳 Test explorer
 
-`go.test.explorer.show` opens a **Go Tests** tree view of the tests and benchmarks in your workspace. From it you can run a test, package, or folder, see each test's pass or fail status, and jump to the file a test is defined in. `go.test.explorer` remains as the quick-pick alternative.
+`go.test.explorer.show` opens a **Go Tests** tree view of the tests and benchmarks in your workspace. From it you can run a test, package, or folder, see each test's pass or fail status, and jump to the file a test is defined in. Press `f` to filter the tree by name. `go.test.explorer` remains as the quick-pick alternative.
 
 ### 🔄 Converters
 
