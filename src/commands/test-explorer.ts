@@ -315,6 +315,38 @@ class TestDataProvider implements coc.TreeDataProvider<Node> {
 const provider = new TestDataProvider()
 let view: coc.TreeView<Node> | undefined
 
+// Discovery shells out to `go list` and `go test -list`, which compile the
+// workspace and can take a while, so the view is shown first and the tree fills
+// in when discovery finishes. Concurrent requests collapse into one run, and a
+// request that arrives mid-run schedules another pass so it still sees the
+// latest files.
+let discovery: Promise<void> | undefined
+let rediscover = false
+
+function scheduleDiscovery(): Promise<void> {
+  if (discovery) {
+    rediscover = true
+    return discovery
+  }
+  if (view) view.message = 'Loading Go tests…'
+  discovery = (async () => {
+    do {
+      rediscover = false
+      try {
+        await discoverTests()
+      } catch (error) {
+        coc.window.showErrorMessage(`Failed to discover Go tests: ${String(error)}`)
+        return
+      }
+      provider.refresh()
+    } while (rediscover)
+  })().finally(() => {
+    discovery = undefined
+    if (view) view.message = ''
+  })
+  return discovery
+}
+
 function ensureView(context: ExtensionContext): coc.TreeView<Node> {
   if (!view) {
     view = coc.window.createTreeView('go-test-explorer', { treeDataProvider: provider, bufhidden: 'hide', enableFilter: true })
@@ -486,16 +518,16 @@ async function ensureHighlights(): Promise<void> {
 export function registerTestExplorerCommands(context: ExtensionContext): void {
   registerCommand(context, 'go.test.explorer.show', async () => {
     await ensureHighlights()
-    await discoverTests()
     const created = ensureView(context)
     await created.show()
-    provider.refresh()
+    // Open the view immediately and discover in the background; the tree fills
+    // in once `go list` and `go test -list` have run.
+    void scheduleDiscovery()
   })
 
   registerCommand(context, 'go.test.explorer.refresh', async () => {
     if (!view) return
-    await discoverTests()
-    provider.refresh()
+    await scheduleDiscovery()
   })
 
   registerCommand(context, 'go.test.explorer.run', async (node?: Node) => {
@@ -513,14 +545,13 @@ export function registerTestExplorerCommands(context: ExtensionContext): void {
   })
 
   registerCommand(context, 'go.test.explorer.runAll', async () => {
-    await discoverTests()
+    await scheduleDiscovery()
     for (const node of topLevel) await runNode(node)
     provider.refresh()
   })
 
   context.subscriptions.push(coc.workspace.onDidSaveTextDocument(async (document) => {
     if (!view || !document.uri.endsWith('_test.go')) return
-    await discoverTests()
-    provider.refresh()
+    void scheduleDiscovery()
   }))
 }
