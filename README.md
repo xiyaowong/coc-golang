@@ -60,66 +60,23 @@ Run commands with `:CocCommand`, for example:
 :CocCommand go.test.package
 ```
 
-### 🧪 Tests and benchmarks
+The ones you'll reach for most:
 
-- `go.test.package` Run tests in the current package.
-- `go.test.workspace` Run tests across the workspace.
-- `go.test.file` Run tests and examples in the current file.
-- `go.test.cursor` Run the test, benchmark, or example at the cursor.
-- `go.subtest.cursor` Run the subtest at the cursor.
-- `go.test.explorer` Choose tests to run from a quick pick.
-- `go.test.cursorOrPrevious` Run the test at the cursor, or repeat the previous test.
-- `go.test.previous` Repeat the previous test command.
-- `go.test.coverage` Run package tests with coverage.
-- `go.test.cancel` Cancel the current test run.
-- `go.test.showOutput` Show the Go terminal.
-- `go.toggle.test.file` Open the corresponding test or source file.
-- `go.benchmark.package` Run benchmarks in the current package.
-- `go.benchmark.file` Run benchmarks in the current file.
-- `go.benchmark.cursor` Run the benchmark at the cursor.
-- `go.test.generate.file` Generate tests for functions in the current file.
-- `go.test.generate.package` Generate tests for functions in the current package.
-- `go.test.generate.function` Generate a test for the function at the cursor.
+| Task | Command |
+| --- | --- |
+| Run tests in the current package | `go.test.package` |
+| Run the test at the cursor | `go.test.cursor` |
+| Run the tests in the current file | `go.test.file` |
+| Build the current package | `go.build.package` |
+| Vet the current package | `go.vet.package` |
+| Format the current package | `go.fmt.package` |
+| Organize imports | `go.import.organize` |
+| Show the Go environment | `go.env` |
+| Install a Go tool | `go.tools.install` |
 
-Test generation requires `gotests`. The test explorer is a coc.nvim quick-pick selector; persistent VS Code test explorer UI is not included.
+Every `go.*` command — all 76, grouped by area — is in the [command reference](https://xiyaowong.github.io/coc-golang/docs/reference/commands).
 
-### 🔨 Build, checks, and code
-
-- `go.build.package` Build the current package.
-- `go.build.workspace` Build packages across the workspace.
-- `go.run` Run a Go package or file.
-- `go.generate.package` Run `go generate` in the current package.
-- `go.vet.package` Run `go vet` on the current package.
-- `go.vet.workspace` Run `go vet` across the workspace.
-- `go.lint.package` Lint the current package.
-- `go.lint.workspace` Lint packages across the workspace.
-- `go.vulncheck.toggle` Toggle `gopls` vulnerability diagnostics.
-- `go.fmt.package` Format the current package with `gofmt`.
-- `go.import.organize` Organize imports in the current file.
-- `go.import.add` Add an import to the current file.
-- `go.mod.init` Initialize a Go module.
-- `go.mod.tidy` Tidy the current module dependencies.
-- `go.mod.vendor` Copy module dependencies into the vendor directory.
-- `go.mod.download` Download module dependencies into the module cache.
-- `go.mod.verify` Verify that module dependencies are unmodified.
-- `go.mod.why` Explain why a package or module is a dependency.
-- `go.mod.graph` Show the module requirement graph.
-- `go.mod.edit.require` Add a requirement to `go.mod`.
-- `go.mod.edit.replace` Replace a module in `go.mod`.
-- `go.mod.edit.droprequire` Drop a requirement from `go.mod`.
-- `go.work.init` Initialize a Go workspace.
-- `go.work.use` Add a module to the Go workspace.
-- `go.work.sync` Sync workspace dependencies.
-- `go.get.package` Add or update a module or package dependency.
-- `go.get.upgrade` Upgrade the current module dependencies.
-- `go.install.package` Install a Go package.
-- `go.browse.packages` Browse Go packages.
-- `go.tags.add` Add struct tags.
-- `go.tags.remove` Remove struct tags.
-- `go.tags.clear` Clear struct tags.
-- `go.impl.cursor` Generate an interface implementation.
-
-`gomodifytags` is required for struct tags, and `impl` for interface implementation generation. Vulnerability analysis is provided by `gopls`.
+Some commands need an extra tool: test generation uses `gotests`, struct tags use `gomodifytags`, and interface generation uses `impl`. Vulnerability analysis is provided by `gopls`.
 
 ### 🔄 Converters
 
