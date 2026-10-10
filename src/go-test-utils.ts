@@ -1,5 +1,5 @@
 const testFunctionPattern
-  = /^\s*func\s+(Test(?:[A-Z]\w*)?|Benchmark(?:[A-Z]\w*)?|Example(?:[A-Z]\w*|_[a-z]\w*)?)\s*\(/
+  = /^\s*func\s+(Test(?:[A-Z]\w*)?|Benchmark(?:[A-Z]\w*)?|Example(?:[A-Z]\w*|_[a-z]\w*)?|Fuzz(?:[A-Z]\w*)?)(?:\[[^\]]*\])?\s*\(/
 const functionDeclarationPattern = /^\s*func\s+(?:\([^)]*\)\s*)?([A-Za-z_]\w*)\s*\(/
 
 export interface TestSelectionOptions {

@@ -191,6 +191,7 @@ async function discoverTests(): Promise<void> {
       const locations = await testLocations(info)
       const names = listedNames.get(info.importPath) ?? [...locations.keys()]
       const folder = folderFor(info.dir)
+      const fallbackFile = info.testFiles[0] ? join(info.dir, info.testFiles[0]) : ''
       const pkg = cached(packageNodes, packageKey(info.importPath), () => ({
         kind: 'package' as const,
         dir: info.dir,
@@ -206,7 +207,7 @@ async function discoverTests(): Promise<void> {
         const test = cached(testNodes, id, () => ({
           kind: 'test' as const,
           name,
-          file: location?.file ?? '',
+          file: location?.file ?? fallbackFile,
           line: location?.line ?? 1,
           dir: info.dir,
           importPath: info.importPath,
@@ -420,7 +421,7 @@ function testTooltip(node: TestNode | SubtestNode): MarkupContent {
   const test = node.kind === 'test' ? node : topTest(node)
   const status = node.kind === 'test' ? testStatus(node) : subtestStatus(node)
   const result = resultOf(node)
-  const lines = [`\`${test.file}:${test.line}\``]
+  const lines = [test.file ? `\`${test.file}:${test.line}\`` : 'Location unknown.']
   if (status === 'running') lines.push('Running…')
   else if (result) lines.push(`${status} in ${result.elapsed.toFixed(2)}s`)
   if (result?.output.length) lines.push(`\`\`\`\n${result.output.join('\n')}\n\`\`\``)
@@ -433,6 +434,10 @@ async function openNode(node: Node): Promise<void> {
     return
   }
   const test = node.kind === 'test' ? node : topTest(node)
+  if (!test.file) {
+    coc.window.showWarningMessage(`Could not locate ${test.name}.`)
+    return
+  }
   let line = test.line
   if (node.kind === 'subtest') line = await subtestLine(node) ?? line
   await leaveTreeWindow()
