@@ -307,7 +307,7 @@ class TestDataProvider implements coc.TreeDataProvider<Node> {
       }
       case 'package': {
         const label = relative(element.folder, element.dir).replace(/\\/g, '/') || '.'
-        const item = new coc.TreeItem(label, coc.TreeItemCollapsibleState.Collapsed)
+        const item = new coc.TreeItem(label, coc.TreeItemCollapsibleState.Expanded)
         item.tooltip = element.dir
         item.description = summary(element.tests.map(testStatus))
         applyStatus(item, packageStatus(element))
@@ -315,7 +315,7 @@ class TestDataProvider implements coc.TreeDataProvider<Node> {
       }
       case 'test': {
         const children = subtestChildren(element.dir, element.name, element)
-        const item = new coc.TreeItem(element.name, children.length ? coc.TreeItemCollapsibleState.Collapsed : coc.TreeItemCollapsibleState.None)
+        const item = new coc.TreeItem(element.name, children.length ? coc.TreeItemCollapsibleState.Expanded : coc.TreeItemCollapsibleState.None)
         item.tooltip = `${element.file}:${element.line}`
         applyStatus(item, testStatus(element))
         item.command = { title: 'Run Go Test', command: 'go.test.explorer.run', arguments: [element] }
@@ -323,7 +323,7 @@ class TestDataProvider implements coc.TreeDataProvider<Node> {
       }
       case 'subtest': {
         const children = subtestChildren(element.dir, element.path, element)
-        const item = new coc.TreeItem(element.name, children.length ? coc.TreeItemCollapsibleState.Collapsed : coc.TreeItemCollapsibleState.None)
+        const item = new coc.TreeItem(element.name, children.length ? coc.TreeItemCollapsibleState.Expanded : coc.TreeItemCollapsibleState.None)
         applyStatus(item, subtestStatus(element))
         item.command = { title: 'Run Go Subtest', command: 'go.test.explorer.run', arguments: [element] }
         return item
