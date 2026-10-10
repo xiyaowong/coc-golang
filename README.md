@@ -89,6 +89,8 @@ Some commands need an extra tool: test generation uses `gotests`, struct tags us
 
 `go.test.explorer` remains as the quick-pick alternative.
 
+See [Test explorer](https://xiyaowong.github.io/coc-golang/docs/test-explorer) in the docs.
+
 ### 🔄 Converters
 
 - `go.convert.jsonSchema` Generate Go types from a JSON Schema.
@@ -105,6 +107,8 @@ Some commands need an extra tool: test generation uses `gotests`, struct tags us
 Closing either buffer's window ends the session.
 
 The generated Go matches the defaults of [`mholt/json-to-go`](https://github.com/mholt/json-to-go) and needs no extra tool.
+
+See [Converters](https://xiyaowong.github.io/coc-golang/docs/convert) in the docs.
 
 ### 🔖 Struct tags
 

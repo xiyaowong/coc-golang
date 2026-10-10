@@ -11,8 +11,8 @@ This app is self-contained and is not part of the published npm package.
 Documentation pages live in `content/docs/` and are plain Markdown, so they
 render on GitHub as well as on the site.
 
-- `index.md`, `getting-started.md`, `keybindings.md`, `troubleshooting.md` are
-  hand-written.
+- `index.md`, `getting-started.md`, `test-explorer.md`, `convert.md`,
+  `keybindings.md`, `troubleshooting.md` are hand-written.
 - `reference/` is **generated** from the extension's `package.json` (commands
   and settings) and `src/tools.ts` (tools).
 - `changelog.md` is **generated** from the repository's `CHANGELOG.md`, and
