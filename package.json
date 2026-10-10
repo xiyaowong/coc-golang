@@ -104,6 +104,7 @@
     "onCommand:go.tools.install.gofumpt",
     "onCommand:go.tools.install.goformat",
     "onCommand:go.convert.jsonSchema",
+    "onCommand:go.convert.jsonToGo",
     "onCommand:go.tools.install.go-jsonschema"
   ],
   "contributes": {
@@ -476,6 +477,11 @@
       {
         "command": "go.convert.jsonSchema",
         "title": "Generate Go Types from JSON Schema",
+        "category": "Go"
+      },
+      {
+        "command": "go.convert.jsonToGo",
+        "title": "Generate Go Types from JSON",
         "category": "Go"
       },
       {

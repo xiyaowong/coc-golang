@@ -47,7 +47,7 @@ Open a Go file to activate the extension. If `gopls` is not installed, coc-golan
 - **Build and checks:** build, run, vet, lint, and scan packages or workspaces for known vulnerabilities.
 - **Tests and benchmarks:** run tests at package, workspace, file, or cursor scope; repeat the previous run; collect coverage; and run benchmarks.
 - **Project workflows:** manage modules and workspaces, install Go tools, generate code or tests, edit struct tags, and generate interface implementations.
-- **Converters:** generate Go types from a JSON Schema.
+- **Converters:** generate Go types from a JSON Schema or from JSON.
 - **Go environment:** inspect Go settings and configure environments for `gopls`, Go commands, and installed tools.
 
 `gopls` handles language features. `go run`, `go test`, benchmarks, `go doc`, `go get`, `go install` and `go mod init` run in a coc.nvim terminal named **Go**; other command output is shown in the **Go** output channel.
@@ -124,8 +124,17 @@ Test generation requires `gotests`. The test explorer is a coc.nvim quick-pick s
 ### Converters
 
 - `go.convert.jsonSchema` Generate Go types from a JSON Schema.
+- `go.convert.jsonToGo` Generate Go types from JSON.
 
 `go.convert.jsonSchema` runs `go-jsonschema` on the active JSON Schema file (or a schema you pick from the workspace), prompting for the package name and the output file. Schemas that use the `date` or `date-time` formats make the generated code import `github.com/atombender/go-jsonschema/pkg/types`.
+
+`go.convert.jsonToGo` asks where the JSON comes from:
+
+- **From clipboard:** converts the system clipboard contents.
+- **From a JSON file:** pick a `.json` file from the workspace, or type a path.
+- **From live editing:** opens a scratch JSON buffer and a scratch Go buffer side by side; the Go types are regenerated as you type, and JSON parse errors appear in the output buffer.
+
+The generated Go matches the defaults of [`mholt/json-to-go`](https://github.com/mholt/json-to-go) and needs no extra tool.
 
 ### Struct tags
 
