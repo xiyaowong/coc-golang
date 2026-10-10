@@ -128,11 +128,13 @@ Test generation requires `gotests`. The test explorer is a coc.nvim quick-pick s
 
 `go.convert.jsonSchema` runs `go-jsonschema` on the active JSON Schema file (or a schema you pick from the workspace), prompting for the package name and the output file. Schemas that use the `date` or `date-time` formats make the generated code import `github.com/atombender/go-jsonschema/pkg/types`.
 
-`go.convert.jsonToGo` asks where the JSON comes from:
+`go.convert.jsonToGo` opens a scratch JSON buffer and a scratch Go buffer side by side, regenerating the Go types as you type; parse errors appear in the output buffer. The JSON starts from one of:
 
-- **From clipboard:** converts the system clipboard contents.
-- **From a JSON file:** pick a `.json` file from the workspace, or type a path.
-- **From live editing:** opens a scratch JSON buffer and a scratch Go buffer side by side; the Go types are regenerated as you type, and JSON parse errors appear in the output buffer.
+- **From clipboard:** the system clipboard contents.
+- **From a JSON file:** a `.json` file picked from the workspace, or a path you type.
+- **From scratch:** an empty buffer.
+
+Closing either buffer's window ends the session.
 
 The generated Go matches the defaults of [`mholt/json-to-go`](https://github.com/mholt/json-to-go) and needs no extra tool.
 

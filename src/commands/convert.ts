@@ -12,6 +12,14 @@ const goFileSuffix = '.go'
 const jsonInputBuffer = 'json-to-go://input'
 const jsonOutputBuffer = 'json-to-go://output'
 
+interface LiveSession {
+  source: number
+  output: number
+  sourceWindow: number
+  outputWindow: number
+  disposables: coc.Disposable[]
+}
+
 function packageNameFor(file: string): string {
   return basename(dirname(file))
     .toLowerCase()
@@ -62,9 +70,9 @@ async function confirmOverwrite(outputPath: string): Promise<boolean> {
   return coc.window.showPrompt(`${basename(outputPath)} already exists. Overwrite it?`)
 }
 
-// A scratch buffer the extension owns, reused across invocations by name.
-// coc.nvim is disabled for it so the language server never attaches and the
-// generated code is shown as-is rather than as a file with errors.
+// A scratch buffer the extension owns. coc.nvim is disabled for it so the
+// language server never attaches and the generated code is shown as-is rather
+// than as a file with errors.
 async function scratchBuffer(name: string, filetype: string): Promise<number> {
   const bufnr = await coc.workspace.nvim.call('bufadd', [name]) as number
   await coc.workspace.nvim.call('setbufvar', [bufnr, '&buftype', 'nofile'])
@@ -76,6 +84,7 @@ async function scratchBuffer(name: string, filetype: string): Promise<number> {
 }
 
 async function setBufferLines(bufnr: number, lines: string[], readonly = false): Promise<void> {
+  lines = lines.flatMap(line => line.split(/\r?\n/)).flat()
   const buffer = coc.workspace.nvim.createBuffer(bufnr)
   await buffer.setOption('modifiable', true)
   await buffer.setLines(lines.length ? lines : [''], { start: 0, end: -1, strictIndexing: false })
@@ -93,17 +102,6 @@ function writeOutput(bufnr: number, lines: string[]): Promise<void> {
   return next
 }
 
-async function revealBuffer(bufnr: number): Promise<void> {
-  const windows = await coc.workspace.nvim.call('win_findbuf', [bufnr]) as number[]
-  if (Array.isArray(windows) && windows.length > 0) {
-    await coc.workspace.nvim.call('win_gotoid', [windows[0]])
-    return
-  }
-  // Split first so a modified buffer in the current window is never unloaded.
-  await coc.workspace.nvim.command('rightbelow vsplit')
-  await coc.workspace.nvim.command(`buffer ${bufnr}`)
-}
-
 function generatedLines(source: string): string[] {
   if (!source.trim()) return ['']
   const result = jsonToGo(source)
@@ -111,26 +109,62 @@ function generatedLines(source: string): string[] {
   return result.go.replace(/\n$/, '').split('\n')
 }
 
-async function showGenerated(source: string): Promise<void> {
-  const output = await scratchBuffer(jsonOutputBuffer, 'go')
-  await writeOutput(output, generatedLines(source))
-  await revealBuffer(output)
+async function closeWindow(winid: number): Promise<void> {
+  if (winid <= 0) return
+  try {
+    // Close in the target window's context so the cursor does not jump.
+    await coc.workspace.nvim.call('win_execute', [winid, 'close'])
+  } catch {
+    // The window may already be gone.
+  }
 }
 
-let liveAutocmds: coc.Disposable[] = []
-
-function clearLiveSession(): void {
-  for (const disposable of liveAutocmds) disposable.dispose()
-  liveAutocmds = []
+async function wipeBuffer(bufnr: number): Promise<void> {
+  const exists = await coc.workspace.nvim.call('bufexists', [bufnr]) as number
+  if (!exists) return
+  try {
+    await coc.workspace.nvim.command(`bwipeout! ${bufnr}`)
+  } catch {
+    // The buffer may already be gone.
+  }
 }
 
-async function editLive(): Promise<void> {
-  clearLiveSession()
+let liveSession: LiveSession | undefined
+
+// Ends the session: closes both scratch windows and wipes both buffers. Closing
+// either window triggers this, so the session never outlives what it owns.
+async function clearLiveSession(): Promise<void> {
+  const session = liveSession
+  if (!session) return
+  liveSession = undefined
+  for (const disposable of session.disposables) disposable.dispose()
+  await closeWindow(session.sourceWindow)
+  await closeWindow(session.outputWindow)
+  await wipeBuffer(session.source)
+  await wipeBuffer(session.output)
+}
+
+async function openScratchWindow(bufnr: number): Promise<number> {
+  await coc.workspace.nvim.command('rightbelow vsplit')
+  await coc.workspace.nvim.command(`buffer ${bufnr}`)
+  return await coc.workspace.nvim.call('win_getid', []) as number
+}
+
+// Seeds the JSON buffer and clears the modified flag.
+async function writeSource(bufnr: number, json: string): Promise<void> {
+  await setBufferLines(bufnr, json.trim() ? [json.replace(/\n$/, '')] : [''])
+  await coc.workspace.nvim.createBuffer(bufnr).setOption('modified', false)
+}
+
+// Replaces any previous session so every mode starts from a clean pair seeded
+// with `json`.
+async function editLive(json: string): Promise<void> {
+  await clearLiveSession()
 
   const source = await scratchBuffer(jsonInputBuffer, 'json')
   const output = await scratchBuffer(jsonOutputBuffer, 'go')
-  await setBufferLines(source, [''])
-  await setBufferLines(output, [''])
+  await writeSource(source, json)
+  await writeOutput(output, generatedLines(json))
 
   const refresh = async (): Promise<void> => {
     const lines = await coc.workspace.nvim.call('getbufline', [source, 1, '$']) as string[]
@@ -139,24 +173,33 @@ async function editLive(): Promise<void> {
 
   // The current window keeps its buffer; the scratch buffers open as new
   // splits, so a modified buffer in any of them is never unloaded.
-  await coc.workspace.nvim.command('vsplit')
-  await coc.workspace.nvim.command(`buffer ${source}`)
-  await coc.workspace.nvim.command('vsplit')
-  await coc.workspace.nvim.command(`buffer ${output}`)
+  const sourceWindow = await openScratchWindow(source)
+  const outputWindow = await openScratchWindow(output)
+  await coc.workspace.nvim.call('win_gotoid', [sourceWindow])
 
-  const sourceWindows = await coc.workspace.nvim.call('win_findbuf', [source]) as number[]
-  if (sourceWindows.length > 0) await coc.workspace.nvim.call('win_gotoid', [sourceWindows[0]])
-
-  liveAutocmds.push(coc.workspace.registerAutocmd({
-    event: ['TextChanged', 'TextChangedI'],
-    buffer: source,
-    callback: () => void refresh(),
-  }))
-  liveAutocmds.push(coc.workspace.registerAutocmd({
-    event: 'BufWipeout',
-    buffer: source,
-    callback: () => clearLiveSession(),
-  }))
+  const disposables: coc.Disposable[] = [
+    coc.workspace.registerAutocmd({
+      event: ['TextChanged', 'TextChangedI'],
+      buffer: source,
+      callback: () => void refresh(),
+    }),
+  ]
+  // Closing either scratch window (or wiping its buffer) ends the session.
+  for (const winid of [sourceWindow, outputWindow]) {
+    disposables.push(coc.workspace.registerAutocmd({
+      event: 'WinClosed',
+      pattern: String(winid),
+      callback: () => void clearLiveSession(),
+    }))
+  }
+  for (const bufnr of [source, output]) {
+    disposables.push(coc.workspace.registerAutocmd({
+      event: 'BufWipeout',
+      buffer: bufnr,
+      callback: () => void clearLiveSession(),
+    }))
+  }
+  liveSession = { source, output, sourceWindow, outputWindow, disposables }
 }
 
 async function clipboardText(): Promise<string> {
@@ -210,21 +253,22 @@ export function registerConvertCommands(context: ExtensionContext): void {
     const modes = [
       'From clipboard',
       'From a JSON file',
-      'From live editing',
+      'From scratch',
     ]
     const mode = await coc.window.showQuickPick(modes, {
       title: 'Convert JSON to Go',
-      placeHolder: 'Choose where the JSON comes from',
+      placeHolder: 'Choose the JSON to start from',
     })
     if (!mode) return
 
+    // Every mode opens the same session, seeded with a different JSON.
     if (mode === modes[0]) {
       const json = await clipboardText()
       if (!json.trim()) {
         coc.window.showWarningMessage('The clipboard is empty.')
         return
       }
-      await showGenerated(json)
+      await editLive(json)
       return
     }
 
@@ -235,10 +279,10 @@ export function registerConvertCommands(context: ExtensionContext): void {
         coc.window.showWarningMessage(`${file} does not exist.`)
         return
       }
-      await showGenerated(readFileSync(file, 'utf8'))
+      await editLive(readFileSync(file, 'utf8'))
       return
     }
 
-    await editLive()
+    await editLive('')
   })
 }
