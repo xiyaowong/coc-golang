@@ -18,7 +18,10 @@ export const metadata = {
 export default function Layout({ children }: LayoutProps<'/'>) {
   return (
     <html lang="en" className={inter.className} suppressHydrationWarning>
-      <body className="flex flex-col min-h-screen">
+      {/* suppressHydrationWarning also covers <body>: browser extensions (e.g.
+          Grammarly) stamp attributes onto it before React hydrates, which
+          would otherwise be reported as a mismatch. */}
+      <body className="flex flex-col min-h-screen" suppressHydrationWarning>
         <Provider>{children}</Provider>
       </body>
     </html>

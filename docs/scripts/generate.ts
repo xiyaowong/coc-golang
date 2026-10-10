@@ -339,6 +339,15 @@ function indentHeadings(markdown: string): string {
   return markdown.replace(/^(#{1,6})(\s)/gm, '##$1$2')
 }
 
+// release-please links the version in a release heading to its compare URL.
+// fumadocs wraps every heading's content in an anchor of its own, so a link
+// there would nest one <a> inside another — invalid HTML that the browser
+// reparents, breaking hydration. Keep the version as plain text instead; the
+// GitHub copy of CHANGELOG.md still carries the compare links.
+function unlinkHeadings(markdown: string): string {
+  return markdown.replace(/^#{1,6} .*$/gm, line => line.replace(/\[([^\]]*)\]\([^)]*\)/g, '$1'))
+}
+
 // The changelog page is a copy of the repository's CHANGELOG.md (written by
 // release-please at the repo root, outside this Next.js app and so outside its
 // reach). The copy is generated on the fly and git-ignored, never committed.
@@ -347,7 +356,7 @@ function renderChangelogPage(): string {
   const releases = changelog.replace(/^# Changelog\s*/, '').trim()
   if (!releases) throw new Error('CHANGELOG.md has no releases')
   return frontmatter('Changelog', 'Release notes for coc-golang.', 'CHANGELOG.md')
-    + indentHeadings(releases) + '\n'
+    + indentHeadings(unlinkHeadings(releases)) + '\n'
 }
 
 // A Next.js build runs without the repo root, so an existing copy that differs
