@@ -173,7 +173,6 @@ function fileStatus(node: FileNode): Status | undefined {
   return aggregateStatus(node.tests.map(testStatus))
 }
 
-// Flattens the tests under a file, package, or folder node, for running them.
 function testsUnder(node: PackageNode | FileNode | FolderNode): TestNode[] {
   switch (node.kind) {
     case 'folder': return node.packages.flatMap(testsUnder)
@@ -230,8 +229,7 @@ async function discoverTests(): Promise<void> {
       pkg.dir = info.dir
       pkg.folder = folder
 
-      // Group the package's tests by the file they are defined in, keeping the
-      // tree's file order stable (internal test files before external ones).
+      // Group the package's tests by the file that defines them.
       const byFile = new Map<string, FileNode>()
       for (const name of names) {
         const location = locations.get(name)
@@ -380,11 +378,10 @@ class TestDataProvider implements coc.TreeDataProvider<Node> {
 const provider = new TestDataProvider()
 let view: coc.TreeView<Node> | undefined
 
-// Discovery shells out to `go list` and `go test -list`, which compile the
-// workspace and can take a while, so the view is shown first and the tree fills
-// in when discovery finishes. Concurrent requests collapse into one run, and a
-// request that arrives mid-run schedules another pass so it still sees the
-// latest files.
+// Discovery shells out to `go list` and `go test -list`, which can take a
+// while, so the view shows first and fills in when discovery finishes.
+// Concurrent requests collapse into one run; a request arriving mid-run
+// schedules another pass.
 let discovery: Promise<void> | undefined
 let rediscover = false
 
@@ -440,7 +437,7 @@ async function leaveTreeWindow(): Promise<void> {
 // ---------------------------------------------------------------------------
 
 // Coalesces the refreshes that streaming results would otherwise trigger once
-// per finished test, which would re-render the whole tree for each one.
+// per finished test.
 function debouncedRefresh(): () => void {
   let timer: ReturnType<typeof setTimeout> | undefined
   return () => {
@@ -457,8 +454,7 @@ async function executeRun(ids: string[], dir: string, args: string[]): Promise<b
   provider.refresh()
   const parser = new GoTestJsonParser()
   const refresh = debouncedRefresh()
-  // A finished test updates its status in the view as it happens, rather than
-  // all at once when the whole run ends.
+  // Update the view as each test finishes, rather than when the run ends.
   parser.onChange(() => {
     for (const result of parser.getTests()) {
       results.set(testKey(result.package, result.name), {
@@ -478,8 +474,7 @@ async function executeRun(ids: string[], dir: string, args: string[]): Promise<b
   }
 }
 
-// Splits names into `-run` targets and benchmarks, which need `-bench` (with
-// an empty `-run`) to actually execute.
+// Benchmarks need `-bench` with an empty `-run` to actually execute.
 function runArguments(names: string[]): string[] {
   const tests = names.filter(name => !isBenchmark(name)).map(escapeRegExp)
   const benchmarks = names.filter(isBenchmark).map(escapeRegExp)
@@ -615,8 +610,6 @@ export function registerTestExplorerCommands(context: ExtensionContext): void {
     await ensureHighlights()
     const created = ensureView(context)
     await created.show()
-    // Open the view immediately and discover in the background; the tree fills
-    // in once `go list` and `go test -list` have run.
     void scheduleDiscovery()
   })
 
