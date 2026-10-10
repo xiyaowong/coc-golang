@@ -4,6 +4,7 @@ import { registerBuildCommands } from './build'
 import { registerConvertCommands } from './convert'
 import { registerEditCommands } from './edit'
 import { registerEnvironmentCommands } from './environment'
+import { registerModuleCommands } from './mod'
 import { registerTagCommands } from './tags'
 import { registerTestCommands } from './test'
 
@@ -14,6 +15,7 @@ export function registerCommands(context: ExtensionContext): void {
   registerTagCommands(context)
   registerConvertCommands(context)
   registerEnvironmentCommands(context)
+  registerModuleCommands(context)
 }
 
 export function registerCommand(

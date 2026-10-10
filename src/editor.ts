@@ -1,10 +1,9 @@
-import { dirname, isAbsolute } from 'node:path'
+import { dirname } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import * as coc from 'coc.nvim'
 
 const goFileSuffix = '.go'
 const testFileSuffix = '_test.go'
-const schemaFileSuffixes = ['.json', '.yaml', '.yml']
 
 export async function activeFile(): Promise<string | undefined> {
   const { document } = await coc.workspace.getCurrentState()
@@ -71,21 +70,6 @@ export function counterpartGoFile(file: string): string | undefined {
     return `${file.slice(0, -testFileSuffix.length)}${goFileSuffix}`
   }
   return `${file.slice(0, -goFileSuffix.length)}${testFileSuffix}`
-}
-
-export function isSchemaFile(file: string): boolean {
-  return schemaFileSuffixes.some(suffix => file.endsWith(suffix))
-}
-
-// go-jsonschema parses its file argument as a URL, where a drive letter reads as a scheme.
-export function toolFilePath(file: string): string {
-  return process.platform === 'win32' && isAbsolute(file) ? `\\\\?\\${file}` : file
-}
-
-export async function activeSchemaFile(): Promise<string | undefined> {
-  const file = await activeFile()
-  if (!file || !isSchemaFile(file)) return undefined
-  return file
 }
 
 export function fileUri(file: string): string {
