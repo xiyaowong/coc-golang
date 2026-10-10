@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.1](https://github.com/xiyaowong/coc-golang/compare/coc-golang-v0.7.0...coc-golang-v0.7.1) (2026-10-10)
+
+
+### Bug Fixes
+
+* **docs:** stop the changelog page from failing hydration ([#47](https://github.com/xiyaowong/coc-golang/issues/47)) ([bef3054](https://github.com/xiyaowong/coc-golang/commit/bef3054438351b58a651f4a094a21fabc57eabde))
+
 ## [0.7.0](https://github.com/xiyaowong/coc-golang/compare/coc-golang-v0.6.0...coc-golang-v0.7.0) (2026-10-10)
 
 
