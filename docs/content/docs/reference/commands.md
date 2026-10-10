@@ -6,7 +6,7 @@ description: Every go.* command, grouped by area.
 <!-- Generated from package.json (and src/tools.ts). Do not edit by hand. -->
 ## Commands
 
-All 76 commands are run with `:CocCommand <id>`.
+All 81 commands are run with `:CocCommand <id>`.
 
 ### Tests & benchmarks
 
@@ -14,6 +14,11 @@ All 76 commands are run with `:CocCommand <id>`.
 | --- | --- |
 | `go.test.package` | Test Go Package |
 | `go.test.explorer` | Pick a Go Test |
+| `go.test.explorer.show` | Show Go Test Explorer |
+| `go.test.explorer.refresh` | Refresh Go Test Explorer |
+| `go.test.explorer.run` | Run Test Under Cursor in Go Test Explorer |
+| `go.test.explorer.open` | Go to Test Under Cursor in Go Test Explorer |
+| `go.test.explorer.runAll` | Run All Go Tests in Explorer |
 | `go.test.workspace` | Test Go Workspace |
 | `go.test.file` | Test Go File |
 | `go.test.cursor` | Test Go Function at Cursor |

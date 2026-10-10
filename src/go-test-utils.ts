@@ -1,13 +1,33 @@
 const testFunctionPattern
-  = /^\s*func\s+(Test(?:[A-Z]\w*)?|Benchmark(?:[A-Z]\w*)?|Example(?:[A-Z]\w*|_[a-z]\w*)?)\s*\(/
+  = /^\s*func\s+(Test(?:[A-Z]\w*)?|Benchmark(?:[A-Z]\w*)?|Example(?:[A-Z]\w*|_[a-z]\w*)?|Fuzz(?:[A-Z]\w*)?)(?:\[[^\]]*\])?\s*\(/
 const functionDeclarationPattern = /^\s*func\s+(?:\([^)]*\)\s*)?([A-Za-z_]\w*)\s*\(/
 
 export interface TestSelectionOptions {
   benchmarks?: boolean
 }
 
+export interface TestFunction {
+  name: string
+  line: number
+}
+
+const testNamePattern = /^(?:Test[A-Z0-9]\w*|Benchmark[A-Z0-9]\w*|Example(?:[A-Z]\w*|_[a-z]\w*)?|Fuzz[A-Z]\w*)$/
+
+export function isTestName(name: string): boolean {
+  return testNamePattern.test(name)
+}
+
 export function escapeRegExp(name: string): string {
   return name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+export function testFunctions(lines: string[]): TestFunction[] {
+  const found: TestFunction[] = []
+  lines.forEach((line, index) => {
+    const name = testFunctionPattern.exec(line)?.[1]
+    if (name) found.push({ name, line: index + 1 })
+  })
+  return found
 }
 
 export function functionLineAtCursor(lines: string[]): string | undefined {

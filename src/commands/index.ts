@@ -7,9 +7,11 @@ import { registerEnvironmentCommands } from './environment'
 import { registerModuleCommands } from './mod'
 import { registerTagCommands } from './tags'
 import { registerTestCommands } from './test'
+import { registerTestExplorerCommands } from './test-explorer'
 
 export function registerCommands(context: ExtensionContext): void {
   registerTestCommands(context)
+  registerTestExplorerCommands(context)
   registerBuildCommands(context)
   registerEditCommands(context)
   registerTagCommands(context)
