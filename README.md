@@ -168,7 +168,7 @@ The build writes the extension bundles to `lib/`.
 
 ### 🤖 AI-assisted
 
-Most of the code is AI-generated. Direction was manual.
+Most of the code is AI-generated. The direction follows [vscode-go](https://github.com/golang/vscode-go), with some features designed by me, and the code was tested manually.
 
 ## 📝 Changelog
 
