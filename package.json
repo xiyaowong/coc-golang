@@ -858,6 +858,11 @@
           "default": "default",
           "description": "When generating code coverage, the value for -covermode."
         },
+        "go.coverShowCounts": {
+          "type": "boolean",
+          "default": false,
+          "description": "When generating code coverage, should counts be shown as --374--."
+        },
         "go.generateTestsFlags": {
           "type": "array",
           "items": {

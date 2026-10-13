@@ -4,7 +4,7 @@ description: Configuration reference for the go.* settings.
 ---
 
 <!-- Generated from package.json (and src/go/tools.ts). Do not edit by hand. -->
-This page lists the 64 `go.*` settings. See [gopls settings](./gopls-settings) for language-server options.
+This page lists the 65 `go.*` settings. See [gopls settings](./gopls-settings) for language-server options.
 
 | Setting | Type | Default |
 | --- | --- | --- |
@@ -58,6 +58,7 @@ This page lists the 64 `go.*` settings. See [gopls settings](./gopls-settings) f
 | `go.testEnvFile` | `string` | `null` |
 | `go.testFlags` | `array | null` | `null` |
 | `go.coverMode` | `string` | `"default"` |
+| `go.coverShowCounts` | `boolean` | `false` |
 | `go.generateTestsFlags` | `string[]` | `[]` |
 | `go.inlayHints.assignVariableTypes` | `boolean` | `false` |
 | `go.inlayHints.compositeLiteralFields` | `boolean` | `false` |
@@ -434,6 +435,12 @@ When generating code coverage, the value for -covermode.
 - `set` — just reports whether each block was executed
 - `count` — counts the number of times each block was executed
 - `atomic` — like count, but with a lock, for accurate counts in parallel tests
+
+## `go.coverShowCounts`
+
+**Type:** `boolean` · **Default:** `false`
+
+When generating code coverage, should counts be shown as --374--.
 
 ## `go.generateTestsFlags`
 
