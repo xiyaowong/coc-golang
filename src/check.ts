@@ -1,8 +1,9 @@
 import type { Range as CocRange, Diagnostic, DiagnosticCollection } from 'coc.nvim'
 import type { Ctx } from './ctx'
+import { readFileSync } from 'node:fs'
 import { devNull } from 'node:os'
 import { resolve } from 'node:path'
-import { Diagnostic as CocDiagnostic, DiagnosticSeverity, languages, Range, window } from 'coc.nvim'
+import { Diagnostic as CocDiagnostic, DiagnosticSeverity, languages, Range, window, workspace } from 'coc.nvim'
 import { DisposableStore } from './disposable'
 import { fileUri } from './editor'
 import { toolFailure } from './go/tools'
@@ -18,7 +19,7 @@ export interface CheckOptions {
 interface Problem {
   file: string
   line: number
-  column: number
+  column?: number
   message: string
 }
 
@@ -28,7 +29,7 @@ function parseProblems(output: string, cwd: string): Problem[] {
   const problems: Problem[] = []
   for (const line of output.split(/\r?\n/)) {
     if (!line || line.startsWith('#')) continue
-    const diagnostic = line.startsWith('vet:') ? line.slice(4).trimStart() : line
+    const diagnostic = line.replace(/^vet(?:\.exe)?:\s*/, '')
     const match = problemPattern.exec(diagnostic)
     if (!match) continue
     const message = match[4].trimStart()
@@ -36,7 +37,7 @@ function parseProblems(output: string, cwd: string): Problem[] {
     problems.push({
       file: resolve(cwd, match[1]),
       line: Number(match[2]),
-      column: match[3] ? Number(match[3]) : 1,
+      column: match[3] ? Number(match[3]) : undefined,
       message,
     })
   }
@@ -45,6 +46,29 @@ function parseProblems(output: string, cwd: string): Problem[] {
 
 function lintArguments(tool: string, flags: string[], target: string): string[] {
   return tool.startsWith('golangci-lint') ? ['run', ...flags, target] : [...flags, target]
+}
+
+function linesOf(uri: string, file: string): string[] | undefined {
+  const document = workspace.getDocument(uri)
+  if (document) return document.getLines()
+  try {
+    return readFileSync(file, 'utf8').split(/\r?\n/)
+  } catch {
+    return undefined
+  }
+}
+
+function diagnosticRange(lines: string[] | undefined, problem: Problem): CocRange {
+  const line = problem.line - 1
+  const text = lines?.[line]
+  if (text === undefined) {
+    return Range.create(line, (problem.column ?? 1) - 1, line, problem.column ?? 1)
+  }
+  const end = text.trimEnd().length
+  if (end === 0) return Range.create(line, 0, line, text.length)
+  const reported = problem.column !== undefined ? problem.column - 1 : undefined
+  const start = reported === undefined || reported >= end ? text.search(/\S/) : reported
+  return Range.create(line, start, line, end)
 }
 
 // Runs go build, go vet and the configured lint tool, and publishes what they
@@ -105,11 +129,12 @@ export class Checker extends DisposableStore {
     }
     const severity = kind === 'build' ? DiagnosticSeverity.Error : DiagnosticSeverity.Warning
     const diagnostics = new Map<string, Diagnostic[]>()
+    const lines = new Map<string, string[] | undefined>()
     for (const problem of problems) {
       const uri = fileUri(problem.file)
-      const range: CocRange = Range.create(problem.line - 1, problem.column - 1, problem.line - 1, problem.column - 1)
+      if (!lines.has(problem.file)) lines.set(problem.file, linesOf(uri, problem.file))
       const list = diagnostics.get(uri) ?? []
-      list.push(CocDiagnostic.create(range, problem.message, severity, undefined, tool ?? `go ${kind}`))
+      list.push(CocDiagnostic.create(diagnosticRange(lines.get(problem.file), problem), problem.message, severity, undefined, tool ?? `go ${kind}`))
       diagnostics.set(uri, list)
     }
     collection.clear()
