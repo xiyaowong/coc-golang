@@ -60,6 +60,12 @@ coverage and highlights the result in your open Go buffers: covered code with
 command again, or save an edited Go file, to clear the highlights. Set
 `go.coverMode` to control `-covermode`.
 
+Turn on `go.coverShowCounts` to see how many times each covered block ran, as
+virtual text at the end of the block's first line. The counts come from the
+profile, so set `go.coverMode` to `count` or `atomic` to see real numbers;
+`set` mode only reports whether a block ran at all, which shows as `--1--`.
+Multiple blocks that start on one line are shown together, as `--3-- --1--`.
+
 Each run's profile is remembered, so `:CocCommand go.apply.coverprofile` can
 show coverage without rerunning the tests. `:CocCommand go.show.coverprofile`
 opens a profile — one of those runs, or a path of your own — in a buffer.

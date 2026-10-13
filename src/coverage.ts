@@ -107,6 +107,7 @@ export async function coverageFromProfile(
 // Draws coverage highlights into loaded Go buffers, on both vim and neovim.
 export class CoverageManager extends DisposableStore {
   private static readonly namespace = 'coc-go-coverage'
+  private static readonly countsNamespace = 'go-coverage-counts'
   private static readonly groups = {
     covered: 'CocCoverageCovered',
     uncovered: 'CocCoverageUncovered',
@@ -115,6 +116,7 @@ export class CoverageManager extends DisposableStore {
   private supported: boolean | undefined
   private groupsReady = false
   private applied = false
+  private countsId: number | undefined
 
   constructor(private readonly ctx: Ctx) {
     super()
@@ -150,6 +152,7 @@ export class CoverageManager extends DisposableStore {
     for (const document of workspace.documents) {
       if (document.languageId !== 'go') continue
       document.buffer.clearNamespace(CoverageManager.namespace)
+      if (this.countsId) document.buffer.clearNamespace(this.countsId)
     }
   }
 
@@ -165,6 +168,10 @@ export class CoverageManager extends DisposableStore {
       }
     }
     await this.ensureGroups()
+    const showCounts = this.ctx.config.get('coverShowCounts', false)
+    if (showCounts && !this.countsId) {
+      this.countsId = await workspace.nvim.createNamespace(CoverageManager.countsNamespace)
+    }
     let applied = false
     for (const document of workspace.documents) {
       const fileCoverage = fileCoverageFor(document, coverage)
@@ -184,9 +191,24 @@ export class CoverageManager extends DisposableStore {
           applied = true
         }
       }
+      if (showCounts && this.countsId) this.showCounts(document, this.countsId, fileCoverage)
     }
     this.applied = applied
     if (!applied) this.ctx.output.appendLine('Coverage profile matched no loaded Go buffers.')
+  }
+
+  // Annotates each covered block's first line with how often it ran. Only
+  // covered blocks have a count to show, as in vscode-go.
+  private showCounts(document: Document, srcId: number, coverage: FileCoverage): void {
+    const lines = new Map<number, string[]>()
+    for (const block of coverage.covered) {
+      const text = lines.get(block.startLine)
+      if (text) text.push(`--${block.count}--`)
+      else lines.set(block.startLine, [`--${block.count}--`])
+    }
+    for (const [line, text] of lines) {
+      document.buffer.setVirtualText(srcId, line, [[text.join(' '), CoverageManager.groups.covered]])
+    }
   }
 
   override dispose(): void {
