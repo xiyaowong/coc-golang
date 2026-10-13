@@ -2,7 +2,7 @@
   "name": "coc-golang",
   "type": "module",
   "version": "0.7.1",
-  "description": "Go language support for coc.nvim using gopls",
+  "description": "Rich Go Development for coc.nvim",
   "author": "wongxy <xiyao.wong@foxmail.com>",
   "license": "MIT",
   "repository": {
@@ -12,7 +12,11 @@
   "keywords": [
     "coc.nvim",
     "golang",
-    "gopls"
+    "go",
+    "gopls",
+    "neovim",
+    "vim",
+    "language-server"
   ],
   "main": "lib/index.js",
   "files": [
