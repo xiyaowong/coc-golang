@@ -113,7 +113,13 @@ export async function coverageFromProfile(
 // coc.nvim's Buffer API (textprops on vim, extmarks on neovim).
 export class CoverageManager extends DisposableStore {
   private static readonly namespace = 'coc-go-coverage'
+  private static readonly groups = {
+    covered: 'CocCoverageCovered',
+    uncovered: 'CocCoverageUncovered',
+  } as const
+
   private supported: boolean | undefined
+  private groupsReady = false
   private applied = false
 
   constructor(private readonly ctx: Ctx) {
@@ -126,6 +132,24 @@ export class CoverageManager extends DisposableStore {
 
   hasCoverage(): boolean {
     return this.applied
+  }
+
+  // Links the coverage groups to diff colors when the colorscheme has not
+  // defined them, so the highlights work out of the box.
+  private async ensureGroups(): Promise<void> {
+    if (this.groupsReady) return
+    const nvim = workspace.nvim
+    const defaults: [string, string][] = [
+      [CoverageManager.groups.covered, 'DiffAdd'],
+      [CoverageManager.groups.uncovered, 'DiffDelete'],
+    ]
+    for (const [group, target] of defaults) {
+      if (Number(await nvim.call('hlexists', [group]))) continue
+      if (Number(await nvim.call('hlexists', [target]))) {
+        await nvim.command(`highlight default link ${group} ${target}`)
+      }
+    }
+    this.groupsReady = true
   }
 
   clear(): void {
@@ -152,13 +176,14 @@ export class CoverageManager extends DisposableStore {
         return
       }
     }
+    await this.ensureGroups()
     let applied = false
     for (const document of workspace.documents) {
       const fileCoverage = fileCoverageFor(document, coverage)
       if (!fileCoverage) continue
       for (const [group, blocks] of [
-        ['CocCoverageCovered', fileCoverage.covered],
-        ['CocCoverageUncovered', fileCoverage.uncovered],
+        [CoverageManager.groups.covered, fileCoverage.covered],
+        [CoverageManager.groups.uncovered, fileCoverage.uncovered],
       ] as const) {
         const ranges = blocks.map(block => Range.create(
           block.startLine,
