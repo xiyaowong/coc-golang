@@ -1,6 +1,7 @@
 # Project preferences
 
 - Read `LESSONS.md` and follow it. It records mistakes from past sessions.
+- This project is worked on by several agents across several environments, each with its own memory, so keep `LESSONS.md` current: append a short entry whenever a session ends on a mistake worth not repeating. Keep it short and about the rule, not the incident.
 - Do not add backward-compatibility code paths, fallbacks, version gates, or compatibility-specific documentation unless explicitly requested. Prefer implementing the current intended behavior directly.
 - Run `npm run typecheck`, `npm run lint:fix`, and `npm test` after every change and keep all three green. Never run `npm run lint` on its own — always use the autofixing `lint:fix`.
 - After changing anything user-facing — commands, settings, Go tools, or behavior — check whether `README.md` and the docs site (`docs/`) need updating. `README.md` and `docs/content/docs/` (except `reference/`) are hand-written; the reference pages under `docs/content/docs/reference/` are generated from `package.json` and `src/go/tools.ts`, so regenerate them with `cd docs && npm run generate` and commit the result. The `docs-drift` CI job fails when they are stale.
