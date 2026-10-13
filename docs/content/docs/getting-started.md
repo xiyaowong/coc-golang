@@ -62,9 +62,6 @@ command again, or save an edited Go file, to clear the highlights.
 Already have a profile from a previous `go test -coverprofile` run? Apply it
 with `go.apply.coverprofile`. Set `go.coverMode` to control `-covermode`.
 
-The highlighting works on Neovim and on Vim builds with the `+textprop`
-feature (Vim 8.2 and later have it).
-
 ## Configure the extension
 
 Settings live in `coc-settings.json` (run `:CocConfig` to open it). For
