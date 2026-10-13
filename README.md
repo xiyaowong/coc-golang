@@ -45,7 +45,7 @@ Open a Go file to activate the extension. If `gopls` is not installed, coc-golan
 - 🧠 **Language intelligence:** completion, hover, signature help, diagnostics, navigation, references, rename, code actions, and document symbols through `gopls`.
 - 🧹 **Formatting and imports:** format Go code and add or organize imports.
 - 🏗️ **Build and checks:** build, run, vet, lint, and scan packages or workspaces for known vulnerabilities.
-- 🧪 **Tests and benchmarks:** run tests at package, workspace, file, or cursor scope; browse and run them from a tree view with pass/fail status; repeat the previous run; collect coverage; and run benchmarks.
+- 🧪 **Tests and benchmarks:** run tests at package, workspace, file, or cursor scope; browse and run them from a tree view with pass/fail status; repeat the previous run; collect and highlight coverage; and run benchmarks.
 - 📁 **Project workflows:** manage modules and workspaces, install Go tools, generate code or tests, edit struct tags, and generate interface implementations.
 - 🔄 **Converters:** generate Go types from a JSON Schema or from JSON.
 - 🌱 **Go environment:** inspect Go settings and configure environments for `gopls`, Go commands, and installed tools.
@@ -67,6 +67,7 @@ The ones you'll reach for most:
 | Run tests in the current package | `go.test.package` |
 | Run the test at the cursor | `go.test.cursor` |
 | Run the tests in the current file | `go.test.file` |
+| Toggle coverage for the current package | `go.test.coverage` |
 | Build the current package | `go.build.package` |
 | Vet the current package | `go.vet.package` |
 | Format the current package | `go.fmt.package` |
@@ -152,6 +153,7 @@ Some settings to know:
 - **Formatting:** `go.formatTool` supports `gofmt`, `goimports`, `goformat`, `gofumpt`, and `custom`. With `go.useLanguageServer: false`, the default formatter uses `goimports`.
 - **Checks:** build and vet on save run when `go.useLanguageServer` is `false`. Lint on save runs when `go.lintTool` is configured. Available lint tools are `staticcheck`, `golint`, `golangci-lint`, `golangci-lint-v2`, and `revive`; diagnostics are reported by coc.nvim.
 - **Tests:** `go.testFlags` and `go.testTags` fall back to `go.buildFlags` and `go.buildTags`. `go.testTimeout` supplies the test timeout, and `go.testEnvFile` is loaded before `go.testEnvVars`.
+- **Coverage:** `go.test.coverage` toggles coverage for the current package: it runs `go test -coverprofile`, then highlights covered code (`CocCoverageCovered`) and uncovered code (`CocCoverageUncovered`) in the loaded Go buffers. Running it again, or saving an edited Go file, clears the highlights. `go.apply.coverprofile` highlights from an existing profile file, and `go.coverMode` sets `-covermode`. The highlighting needs neovim, or vim with the `+textprop` feature.
 - **Language server:** set `go.useLanguageServer` to `false` to disable `gopls` and use Go commands and formatters directly.
 
 ## 🚧 Development
@@ -176,4 +178,4 @@ See [CHANGELOG.md](CHANGELOG.md).
 
 ## 🎯 Scope
 
-The VS Code test explorer's run/debug gutter and status-bar widgets, the Delve debug adapter UI, survey and telemetry, coverage overlays, and rich diagnostic visualization are not included. Update checks cover `gopls` only.
+The VS Code test explorer's run/debug gutter and status-bar widgets, the Delve debug adapter UI, survey and telemetry, and rich diagnostic visualization are not included. Update checks cover `gopls` only. Coverage highlighting is simpler than vscode-go's: covered and uncovered line ranges with no gutter icons, execution counts, or per-block style settings.

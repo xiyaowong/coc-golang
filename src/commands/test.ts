@@ -79,7 +79,6 @@ export function registerTestCommands(ctx: Ctx): void {
     }
     await ctx.tests.run(previous.args, previous.cwd)
   })
-  ctx.commands.handle('go.test.coverage', async () => ctx.tests.run(['-cover'], await activeDirectory()))
   ctx.commands.handle('go.toggle.test.file', async () => {
     const file = await activeGoFile()
     const target = file ? counterpartGoFile(file) : undefined
