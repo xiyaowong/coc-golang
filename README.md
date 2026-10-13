@@ -75,7 +75,7 @@ The ones you'll reach for most:
 | Show the Go environment | `go.env` |
 | Install a Go tool | `go.tools.install` |
 
-Every `go.*` command — all 82, grouped by area — is in the [command reference](https://xiyaowong.github.io/coc-golang/docs/reference/commands).
+Every `go.*` command — all 83, grouped by area — is in the [command reference](https://xiyaowong.github.io/coc-golang/docs/reference/commands).
 
 Some commands need an extra tool: test generation uses `gotests`, struct tags use `gomodifytags`, and interface generation uses `impl`. Vulnerability analysis is provided by `gopls`.
 

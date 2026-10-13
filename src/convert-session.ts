@@ -1,6 +1,7 @@
 import type { Disposable } from 'coc.nvim'
 import { workspace } from 'coc.nvim'
 import { DisposableStore } from './disposable'
+import { scratchBuffer, setBufferLines } from './editor'
 import { jsonToGo } from './json-to-go'
 
 const jsonInputBuffer = 'json-to-go://input'
@@ -12,27 +13,6 @@ interface LiveSession {
   sourceWindow: number
   outputWindow: number
   disposables: Disposable[]
-}
-
-// A scratch buffer the extension owns. coc.nvim is disabled for it so the
-// language server never attaches and the generated code is shown as-is rather
-// than as a file with errors.
-async function scratchBuffer(name: string, filetype: string): Promise<number> {
-  const bufnr = await workspace.nvim.call('bufadd', [name]) as number
-  await workspace.nvim.call('setbufvar', [bufnr, '&buftype', 'nofile'])
-  await workspace.nvim.call('setbufvar', [bufnr, '&bufhidden', 'hide'])
-  await workspace.nvim.call('setbufvar', [bufnr, '&swapfile', 0])
-  await workspace.nvim.call('setbufvar', [bufnr, '&filetype', filetype])
-  await workspace.nvim.call('setbufvar', [bufnr, 'coc_enabled', 0])
-  return bufnr
-}
-
-async function setBufferLines(bufnr: number, lines: string[], readonly = false): Promise<void> {
-  lines = lines.flatMap(line => line.split(/\r?\n/)).flat()
-  const buffer = workspace.nvim.createBuffer(bufnr)
-  await buffer.setOption('modifiable', true)
-  await buffer.setLines(lines.length ? lines : [''], { start: 0, end: -1, strictIndexing: false })
-  await buffer.setOption('modifiable', !readonly)
 }
 
 function generatedLines(source: string): string[] {

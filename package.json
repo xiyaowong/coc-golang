@@ -102,6 +102,7 @@
     "onCommand:go.tools.install.impl",
     "onCommand:go.tools.install.gopls",
     "onCommand:go.version",
+    "onCommand:go.showChangeLog",
     "onCommand:go.env",
     "onCommand:go.locate.tools",
     "onCommand:go.tools.install.golint",
@@ -254,6 +255,11 @@
       {
         "command": "go.version",
         "title": "Show Go Version",
+        "category": "Go"
+      },
+      {
+        "command": "go.showChangeLog",
+        "title": "Show Changelog",
         "category": "Go"
       },
       {
