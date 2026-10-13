@@ -48,10 +48,6 @@ export function parseCoverProfile(content: string): CoverageBlock[] {
   return blocks
 }
 
-// TEMP DEBUG: remove after coverage highlight is verified.
-let debugOutput: ((message: string) => void) | undefined
-const debug = (message: string): void => debugOutput?.(message)
-
 // Maps the package paths named in the profile to their directories with
 // `go list`, so profile entries like `example.com/pkg/file.go` resolve to real
 // files.
@@ -70,11 +66,9 @@ async function packageDirectories(ctx: Ctx, blocks: CoverageBlock[], dir: string
     ['-f', '{{.ImportPath}}\t{{.Dir}}', ...packagePaths],
     { cwd: dir },
   )
-  debug(`go list code=${result.code} stdout=${JSON.stringify(result.stdout)}`)
   if (result.code !== 0) return mapping
   for (const line of result.stdout.split(/\r?\n/)) {
     const [importPath, packageDir] = line.split('\t')
-    debug(`go list line=${JSON.stringify(line)} importPath=${JSON.stringify(importPath)} packageDir=${JSON.stringify(packageDir)}`)
     if (importPath && packageDir) mapping.set(importPath, packageDir)
   }
   return mapping
@@ -88,9 +82,7 @@ export async function coverageFromProfile(
   dir: string,
 ): Promise<Map<string, FileCoverage>> {
   const blocks = parseCoverProfile(readFileSync(profilePath, 'utf8'))
-  debug(`parsed ${blocks.length} blocks from ${profilePath}`)
   const directories = await packageDirectories(ctx, blocks, dir)
-  debug(`go list mapping: ${JSON.stringify([...directories.entries()])}`)
 
   const coverage = new Map<string, FileCoverage>()
   for (const block of blocks) {
@@ -106,7 +98,6 @@ export async function coverageFromProfile(
     }
     // The go tool prefixes paths outside the current directory with `_`.
     if (file.startsWith('_')) file = file.slice(1)
-    debug(`resolved profile entry ${block.name} -> ${file} (count=${block.count})`)
     let entry = coverage.get(file)
     if (!entry) {
       entry = { covered: [], uncovered: [] }
@@ -114,7 +105,6 @@ export async function coverageFromProfile(
     }
     ;(block.count > 0 ? entry.covered : entry.uncovered).push(block)
   }
-  debug(`coverage files: ${JSON.stringify([...coverage.keys()])}`)
   return coverage
 }
 
@@ -134,7 +124,6 @@ export class CoverageManager extends DisposableStore {
 
   constructor(private readonly ctx: Ctx) {
     super()
-    debugOutput = (message: string) => this.ctx.output.appendLine(`[coverage] ${message}`)
     this.track(workspace.onDidSaveTextDocument((document): void => {
       // Highlights describe the tested code; saving an edit makes them stale.
       if (this.applied && document.languageId === 'go') this.clear()
@@ -164,7 +153,6 @@ export class CoverageManager extends DisposableStore {
   }
 
   clear(): void {
-    debug('clear')
     this.applied = false
     if (this.supported === false) return
     for (const document of workspace.documents) {
@@ -177,12 +165,10 @@ export class CoverageManager extends DisposableStore {
   // mentions.
   async apply(coverage: Map<string, FileCoverage>): Promise<void> {
     this.clear()
-    debug(`apply: coverage files=${JSON.stringify([...coverage.keys()])}`)
     if (this.supported === undefined) {
       // Buffer highlights are extmarks on neovim, textprops on vim8 (+textprop,
       // built in since 8.2).
       this.supported = workspace.isNvim || (workspace.isVim && workspace.env.textprop === true)
-      debug(`editor support: isNvim=${workspace.isNvim} isVim=${workspace.isVim} textprop=${workspace.env.textprop} -> supported=${this.supported}`)
       if (!this.supported) {
         window.showWarningMessage(
           'Coverage highlighting needs neovim, or vim compiled with the +textprop feature.',
@@ -191,11 +177,9 @@ export class CoverageManager extends DisposableStore {
       }
     }
     await this.ensureGroups()
-    debug(`loaded documents: ${workspace.documents.map(document => `${document.bufnr}:${document.uri}:${document.languageId}`).join(', ') || '(none)'}`)
     let applied = false
     for (const document of workspace.documents) {
       const fileCoverage = fileCoverageFor(document, coverage)
-      debug(`match ${document.uri} -> ${fileCoverage ? `${fileCoverage.covered.length} covered, ${fileCoverage.uncovered.length} uncovered` : 'none'}`)
       if (!fileCoverage) continue
       for (const [group, blocks] of [
         [CoverageManager.groups.covered, fileCoverage.covered],
@@ -208,15 +192,12 @@ export class CoverageManager extends DisposableStore {
           block.endCharacter,
         ))
         if (ranges.length) {
-          debug(`highlightRanges bufnr=${document.bufnr} group=${group} ranges=${JSON.stringify(ranges.slice(0, 3))}${ranges.length > 3 ? ` (+${ranges.length - 3} more)` : ''}`)
           document.buffer.highlightRanges(CoverageManager.namespace, group, ranges)
           applied = true
         }
       }
     }
     this.applied = applied
-    debug(`done, applied=${applied}`)
-    this.ctx.output.show()
     if (!applied) this.ctx.output.appendLine('Coverage profile matched no loaded Go buffers.')
   }
 
@@ -229,11 +210,8 @@ export class CoverageManager extends DisposableStore {
 function fileCoverageFor(document: Document, coverage: Map<string, FileCoverage>): FileCoverage | undefined {
   if (document.languageId !== 'go' || !document.uri.startsWith('file:')) return undefined
   try {
-    const file = fileURLToPath(document.uri)
-    debug(`document ${document.uri} -> ${file}`)
-    return coverage.get(file)
-  } catch (error) {
-    debug(`document ${document.uri} -> fileURLToPath failed: ${String(error)}`)
+    return coverage.get(fileURLToPath(document.uri))
+  } catch {
     return undefined
   }
 }
