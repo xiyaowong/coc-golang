@@ -7,7 +7,7 @@ import { Range, window, workspace } from 'coc.nvim'
 import { DisposableStore } from './disposable'
 
 export interface CoverageBlock {
-  // The profile's file name: either a real path or `import/path/file.go`.
+  // A real path or `import/path/file.go`, as written in the profile.
   name: string
   startLine: number
   startCharacter: number
@@ -21,7 +21,7 @@ export interface FileCoverage {
   uncovered: CoverageBlock[]
 }
 
-// A parsed `go test -coverprofile` file, minus the `mode:` header line.
+// Parses a `go test -coverprofile` file, minus the `mode:` header line.
 export function parseCoverProfile(content: string): CoverageBlock[] {
   const blocks: CoverageBlock[] = []
   let header = false
@@ -33,8 +33,7 @@ export function parseCoverProfile(content: string): CoverageBlock[] {
     const match = /^(\S+):(\d+)\.(\d+),(\d+)\.(\d+) (\d+) (\d+)/.exec(line)
     if (!match) continue
     const [startLine, startCharacter, endLine, endCharacter] = [2, 3, 4, 5].map(index => Number(match[index]))
-    // Line directives produce bogus positions; anything below the first line
-    // or column cannot be a real source position.
+    // Line directives produce bogus positions.
     if (startLine < 1 || startCharacter < 1 || endLine < 1 || endCharacter < 1) continue
     blocks.push({
       name: match[1],
@@ -48,9 +47,7 @@ export function parseCoverProfile(content: string): CoverageBlock[] {
   return blocks
 }
 
-// Maps the package paths named in the profile to their directories with
-// `go list`, so profile entries like `example.com/pkg/file.go` resolve to real
-// files.
+// Maps the import paths named in the profile to their directories with `go list`.
 async function packageDirectories(ctx: Ctx, blocks: CoverageBlock[], dir: string): Promise<Map<string, string>> {
   const packagePaths = new Set<string>()
   for (const { name } of blocks) {
@@ -74,8 +71,7 @@ async function packageDirectories(ctx: Ctx, blocks: CoverageBlock[], dir: string
   return mapping
 }
 
-// Resolves each profile entry to a real file path, falling back to `dir` for
-// packages that `go list` did not report.
+// Resolves each profile entry to a real file path.
 export async function coverageFromProfile(
   ctx: Ctx,
   profilePath: string,
@@ -108,9 +104,7 @@ export async function coverageFromProfile(
   return coverage
 }
 
-// Holds the coverage highlights of the last run and draws them into every
-// loaded Go buffer the profile mentions. Works on both vim and neovim through
-// coc.nvim's Buffer API (textprops on vim, extmarks on neovim).
+// Draws coverage highlights into loaded Go buffers, on both vim and neovim.
 export class CoverageManager extends DisposableStore {
   private static readonly namespace = 'coc-go-coverage'
   private static readonly groups = {
@@ -125,7 +119,6 @@ export class CoverageManager extends DisposableStore {
   constructor(private readonly ctx: Ctx) {
     super()
     this.track(workspace.onDidSaveTextDocument((document): void => {
-      // Highlights describe the tested code; saving an edit makes them stale.
       if (this.applied && document.languageId === 'go') this.clear()
     }))
   }
@@ -134,8 +127,7 @@ export class CoverageManager extends DisposableStore {
     return this.applied
   }
 
-  // Links the coverage groups to diff colors when the colorscheme has not
-  // defined them, so the highlights work out of the box.
+  // Links the coverage groups to diff colors unless the colorscheme defines them.
   private async ensureGroups(): Promise<void> {
     if (this.groupsReady) return
     const nvim = workspace.nvim
@@ -161,13 +153,9 @@ export class CoverageManager extends DisposableStore {
     }
   }
 
-  // Applies coverage highlights to every loaded Go buffer that the profile
-  // mentions.
   async apply(coverage: Map<string, FileCoverage>): Promise<void> {
     this.clear()
     if (this.supported === undefined) {
-      // Buffer highlights are extmarks on neovim, textprops on vim8 (+textprop,
-      // built in since 8.2).
       this.supported = workspace.isNvim || (workspace.isVim && workspace.env.textprop === true)
       if (!this.supported) {
         window.showWarningMessage(

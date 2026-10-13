@@ -5,11 +5,9 @@ import { window, workspace } from 'coc.nvim'
 import { coverageFromProfile } from '../coverage'
 import { activeDirectory, activeGoFile } from '../editor'
 
-// Coverage commands. `go.test.coverage` toggles coverage for the current
+// Coverage commands: `go.test.coverage` toggles coverage for the current
 // package; `go.apply.coverprofile` applies an existing profile file.
 export function registerCoverageCommands(ctx: Ctx): void {
-  // A failing run still gets applied, since the profile shows what the tests
-  // reached before the failure.
   const runWithCoverage = async (): Promise<void> => {
     const directory = await activeDirectory()
     const profile = join(tmpdir(), `go-code-cover-${Date.now()}`)
