@@ -57,10 +57,11 @@ See the [command reference](./reference/commands) for all of them.
 `:CocCommand go.test.coverage` runs the tests of the current package with
 coverage and highlights the result in your open Go buffers: covered code with
 `CocCoverageCovered`, uncovered code with `CocCoverageUncovered`. Run the
-command again, or save an edited Go file, to clear the highlights.
+command again, or save an edited Go file, to clear the highlights. Set
+`go.coverMode` to control `-covermode`.
 
-Already have a profile from a previous `go test -coverprofile` run? Apply it
-with `go.apply.coverprofile`. Set `go.coverMode` to control `-covermode`.
+Each run's profile is remembered, so `:CocCommand go.apply.coverprofile` can
+show coverage without rerunning the tests.
 
 ## Configure the extension
 
