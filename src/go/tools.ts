@@ -5,6 +5,7 @@ import { homedir, platform } from 'node:os'
 import { delimiter, isAbsolute, join } from 'node:path'
 import { window, workspace } from 'coc.nvim'
 import { DisposableStore } from '../disposable'
+import { pathKey } from './config-utils'
 
 interface ToolDefinition {
   module: string
@@ -96,8 +97,7 @@ export function resolveExecutable(command: string, env: NodeJS.ProcessEnv = proc
       return undefined
     }
   }
-  const pathKey = Object.keys(env).find(key => key.toLowerCase() === 'path') ?? 'PATH'
-  return findExecutable((env[pathKey] || '').split(delimiter), expanded)
+  return findExecutable((env[pathKey(env)] || '').split(delimiter), expanded)
 }
 
 export class ToolManager extends DisposableStore {
