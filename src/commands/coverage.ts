@@ -1,13 +1,42 @@
 import type { Ctx } from '../ctx'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { window, workspace } from 'coc.nvim'
+import { window } from 'coc.nvim'
 import { coverageFromProfile } from '../coverage'
 import { activeDirectory, activeGoFile } from '../editor'
+
+interface RecordedProfile {
+  file: string
+  directory: string
+  summary: string
+}
 
 // Coverage commands: `go.test.coverage` toggles coverage for the current
 // package; `go.apply.coverprofile` applies an existing profile file.
 export function registerCoverageCommands(ctx: Ctx): void {
+  // `go test` writes the profile into the temporary directory, where the user
+  // cannot find it, so the profiles of this session are remembered here.
+  const recorded: RecordedProfile[] = []
+
+  // The recorded profiles, newest first, above an action that takes a path of
+  // the user's own.
+  const pickProfile = async (directory: string): Promise<string | undefined> => {
+    const input = 'Path to the coverage profile'
+    if (!recorded.length) return window.requestInput(input, directory)
+    const action = { label: 'Enter a profile path', file: '' }
+    const picked = await window.showQuickPick([action, ...recorded.map(profile => ({
+      label: profile.file,
+      description: [profile.directory, profile.summary].filter(Boolean).join(' · '),
+      file: profile.file,
+    }))], {
+      title: 'Select a coverage profile',
+      placeHolder: 'Type to filter the profiles of previous runs',
+      matchOnDescription: true,
+    })
+    if (!picked) return undefined
+    return picked.file || window.requestInput(input, directory)
+  }
+
   const runWithCoverage = async (): Promise<void> => {
     const directory = await activeDirectory()
     const profile = join(tmpdir(), `go-code-cover-${Date.now()}`)
@@ -30,6 +59,7 @@ export function registerCoverageCommands(ctx: Ctx): void {
       window.showWarningMessage('No Go tests, examples, or benchmarks found in this package.')
       return
     }
+    recorded.unshift({ file: profile, directory, summary: /coverage: (\S+)/.exec(result.output)?.[1] ?? '' })
     await ctx.coverage.apply(coverage)
   }
 
@@ -44,12 +74,13 @@ export function registerCoverageCommands(ctx: Ctx): void {
   ctx.commands.handle('go.apply.coverprofile', async (profilePath?: string) => {
     const file = await activeGoFile()
     if (!file) return
-    profilePath ??= await window.requestInput('Path to the coverage profile', workspace.cwd)
+    const directory = await activeDirectory()
+    profilePath ??= await pickProfile(directory)
     profilePath = profilePath?.trim()
     if (!profilePath) return
     let coverage
     try {
-      coverage = await coverageFromProfile(ctx, profilePath, await activeDirectory())
+      coverage = await coverageFromProfile(ctx, profilePath, directory)
     } catch (error) {
       window.showErrorMessage(`Cannot read the coverage profile ${profilePath}: ${String(error)}`)
       return
