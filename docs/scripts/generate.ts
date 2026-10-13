@@ -169,7 +169,7 @@ function readPackage() {
 }
 
 const commandGroups: Array<{ title: string, match: (id: string) => boolean }> = [
-  { title: 'Tests & benchmarks', match: id => /^go\.(test|subtest|toggle\.test|benchmark)\./.test(id) || id === 'go.test.coverage' || id === 'go.apply.coverprofile' },
+  { title: 'Tests & benchmarks', match: id => /^go\.(test|subtest|toggle\.test|benchmark)\./.test(id) || ['go.test.coverage', 'go.apply.coverprofile', 'go.show.coverprofile'].includes(id) },
   { title: 'Build, vet, lint, run', match: id => /^go\.(build|vet|lint|generate)\./.test(id) || id === 'go.run' || id === 'go.vulncheck.toggle' },
   { title: 'Formatting & imports', match: id => /^go\.(fmt|import)\./.test(id) },
   { title: 'Modules', match: id => /^go\.mod\./.test(id) },

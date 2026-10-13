@@ -75,7 +75,7 @@ The ones you'll reach for most:
 | Show the Go environment | `go.env` |
 | Install a Go tool | `go.tools.install` |
 
-Every `go.*` command — all 81, grouped by area — is in the [command reference](https://xiyaowong.github.io/coc-golang/docs/reference/commands).
+Every `go.*` command — all 82, grouped by area — is in the [command reference](https://xiyaowong.github.io/coc-golang/docs/reference/commands).
 
 Some commands need an extra tool: test generation uses `gotests`, struct tags use `gomodifytags`, and interface generation uses `impl`. Vulnerability analysis is provided by `gopls`.
 
@@ -143,7 +143,7 @@ Some settings to know:
 - **Formatting:** `go.formatTool` supports `gofmt`, `goimports`, `goformat`, `gofumpt`, and `custom`. With `go.useLanguageServer: false`, the default formatter uses `goimports`.
 - **Checks:** build and vet on save run when `go.useLanguageServer` is `false`. Lint on save runs when `go.lintTool` is configured. Available lint tools are `staticcheck`, `golint`, `golangci-lint`, `golangci-lint-v2`, and `revive`; diagnostics are reported by coc.nvim.
 - **Tests:** `go.testFlags` and `go.testTags` fall back to `go.buildFlags` and `go.buildTags`. `go.testTimeout` supplies the test timeout, and `go.testEnvFile` is loaded before `go.testEnvVars`.
-- **Coverage:** `go.test.coverage` toggles coverage for the current package: it runs `go test -coverprofile`, then highlights covered code (`CocCoverageCovered`) and uncovered code (`CocCoverageUncovered`) in the loaded Go buffers. Running it again, or saving an edited Go file, clears the highlights. `go.apply.coverprofile` highlights from an existing profile: it offers the profiles of previous runs, or takes a path of your own. `go.coverMode` sets `-covermode`.
+- **Coverage:** `go.test.coverage` toggles coverage for the current package: it runs `go test -coverprofile`, then highlights covered code (`CocCoverageCovered`) and uncovered code (`CocCoverageUncovered`) in the loaded Go buffers. Running it again, or saving an edited Go file, clears the highlights. `go.apply.coverprofile` highlights from an existing profile: it offers the profiles of previous runs, or takes a path of your own. `go.show.coverprofile` opens a profile — one of those runs, or a path of your own — in a buffer. `go.coverMode` sets `-covermode`.
 - **Language server:** set `go.useLanguageServer` to `false` to disable `gopls` and use Go commands and formatters directly.
 
 ## 🚧 Development
