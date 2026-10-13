@@ -6,13 +6,10 @@ import { coverageFromProfile } from '../coverage'
 import { activeDirectory, activeGoFile } from '../editor'
 
 // Coverage commands. `go.test.coverage` toggles coverage for the current
-// package: applying it runs `go test -coverprofile` and highlights the loaded
-// buffers; applying again (or saving an edited Go file) clears the highlights.
-// `go.apply.coverprofile` applies an existing profile file.
+// package; `go.apply.coverprofile` applies an existing profile file.
 export function registerCoverageCommands(ctx: Ctx): void {
-  // Runs the tests of the current package with coverage and highlights the
-  // result. The profile of a failing run is still applied, since it shows what
-  // the tests reached before the failure.
+  // A failing run still gets applied, since the profile shows what the tests
+  // reached before the failure.
   const runWithCoverage = async (): Promise<void> => {
     const directory = await activeDirectory()
     const profile = join(tmpdir(), `go-code-cover-${Date.now()}`)

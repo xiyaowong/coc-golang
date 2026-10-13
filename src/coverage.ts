@@ -9,7 +9,6 @@ import { DisposableStore } from './disposable'
 export interface CoverageBlock {
   // The profile's file name: either a real path or `import/path/file.go`.
   name: string
-  // Zero-based line and character bounds, as written in the profile.
   startLine: number
   startCharacter: number
   endLine: number
@@ -22,8 +21,7 @@ export interface FileCoverage {
   uncovered: CoverageBlock[]
 }
 
-// A parsed `go test -coverprofile` file. The first line is `mode: <mode>`; each
-// following line is `name.go:startLine.startCol,endLine.endCol hits coverCount`.
+// A parsed `go test -coverprofile` file, minus the `mode:` header line.
 export function parseCoverProfile(content: string): CoverageBlock[] {
   const blocks: CoverageBlock[] = []
   let header = false
@@ -35,8 +33,8 @@ export function parseCoverProfile(content: string): CoverageBlock[] {
     const match = /^(\S+):(\d+)\.(\d+),(\d+)\.(\d+) (\d+) (\d+)/.exec(line)
     if (!match) continue
     const [startLine, startCharacter, endLine, endCharacter] = [2, 3, 4, 5].map(index => Number(match[index]))
-    // Line directives produce bogus positions; anything below the first line or
-    // column cannot be a real source position (vscode-go does the same).
+    // Line directives produce bogus positions; anything below the first line
+    // or column cannot be a real source position.
     if (startLine < 1 || startCharacter < 1 || endLine < 1 || endCharacter < 1) continue
     blocks.push({
       name: match[1],
@@ -76,8 +74,8 @@ async function packageDirectories(ctx: Ctx, blocks: CoverageBlock[], dir: string
   return mapping
 }
 
-// Resolves each profile entry to a real file path and groups its blocks into
-// covered and uncovered sets.
+// Resolves each profile entry to a real file path, falling back to `dir` for
+// packages that `go list` did not report.
 export async function coverageFromProfile(
   ctx: Ctx,
   profilePath: string,
@@ -140,14 +138,12 @@ export class CoverageManager extends DisposableStore {
   }
 
   // Applies coverage highlights to every loaded Go buffer that the profile
-  // mentions. Highlight groups are `CocCoverageCovered` and
-  // `CocCoverageUncovered`.
+  // mentions.
   async apply(coverage: Map<string, FileCoverage>): Promise<void> {
     this.clear()
     if (this.supported === undefined) {
-      // Buffer highlight support: extmarks on neovim, textprops on vim8
-      // (requires +textprop, built in since 8.2). Everything else is out of
-      // luck; tell the user instead of erroring.
+      // Buffer highlights are extmarks on neovim, textprops on vim8 (+textprop,
+      // built in since 8.2).
       this.supported = workspace.isNvim || (workspace.isVim && workspace.env.textprop === true)
       if (!this.supported) {
         window.showWarningMessage(
