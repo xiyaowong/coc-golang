@@ -7,9 +7,8 @@ Two commands generate Go types for you.
 
 ## From a JSON Schema
 
-`go.convert.jsonSchema` runs `go-jsonschema` on the JSON Schema you have open,
-or on one you pick from the workspace. It prompts for the package name and the
-output file, then writes the generated Go and opens it.
+`go.convert.jsonSchema` runs `go-jsonschema` on the JSON Schema you have open
+and opens the generated Go.
 
 ```vim
 :CocCommand go.convert.jsonSchema
@@ -33,15 +32,7 @@ by side, and regenerates the Go types as you type.
 :CocCommand go.convert.jsonToGo
 ```
 
-Choose where the JSON starts from:
-
-- **From clipboard** — the system clipboard contents.
-- **From a JSON file** — a `.json` file picked from the workspace, or a path
-  you type.
-- **From scratch** — an empty buffer.
-
-Parse errors appear in the output buffer. Closing either window ends the
-session.
+The JSON can start from the clipboard, from a file, or from an empty buffer.
 
 The output matches the defaults of
 [`mholt/json-to-go`](https://github.com/mholt/json-to-go) and needs no extra
