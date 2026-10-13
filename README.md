@@ -50,7 +50,7 @@ Open a Go file to activate the extension. If `gopls` is not installed, coc-golan
 - 🔄 **Converters:** generate Go types from a JSON Schema or from JSON.
 - 🌱 **Go environment:** inspect Go settings and configure environments for `gopls`, Go commands, and installed tools.
 
-`gopls` handles language features. `go run`, `go test`, benchmarks, `go doc`, `go get`, `go install` and `go mod init` run in a coc.nvim terminal named **Go**; other command output is shown in the **Go** output channel.
+`gopls` handles language features. The commands below run either in a coc.nvim terminal named **Go** (`go run`, `go test`, benchmarks, `go doc`, `go get`, `go install`, `go mod init`) or in the **Go** output channel (everything else).
 
 ## 💻 Commands
 
@@ -90,7 +90,7 @@ Some commands need an extra tool: test generation uses `gotests`, struct tags us
 
 `go.test.explorer` remains as the quick-pick alternative.
 
-See [Test explorer](https://xiyaowong.github.io/coc-golang/docs/test-explorer) in the docs.
+See [Test explorer](https://xiyaowong.github.io/coc-golang/docs/test-explorer) for the details.
 
 ### 🔄 Converters
 
@@ -103,7 +103,7 @@ See [Test explorer](https://xiyaowong.github.io/coc-golang/docs/test-explorer) i
 
 The generated Go matches the defaults of [`mholt/json-to-go`](https://github.com/mholt/json-to-go) and needs no extra tool.
 
-See [Converters](https://xiyaowong.github.io/coc-golang/docs/convert) in the docs.
+See [Converters](https://xiyaowong.github.io/coc-golang/docs/convert) for the details.
 
 ### 🔖 Struct tags
 
@@ -111,9 +111,15 @@ See [Converters](https://xiyaowong.github.io/coc-golang/docs/convert) in the doc
 
 ### 🌱 Go environment and tools
 
-Use `go.env`, `go.gopath`, `go.goroot`, `go.version`, and `go.environment.choose` to inspect or select the Go environment. Use `go.locate.tools` to locate installed tools, `go.tools.install` to choose tools to install, or `go.tools.install.<tool>` to install a specific tool. `go.gopls.install` installs `gopls`, and `go.languageserver.restart` restarts it.
+Commands for the Go environment and tools:
 
-Optional tools include `dlv`, `goimports`, `staticcheck`, `gomodifytags`, `gotests`, `impl`, `golint`, `golangci-lint`, `golangci-lint-v2`, `revive`, `gofumpt`, `goformat`, and `go-jsonschema`. Delve can be used with external DAP clients; coc-golang does not provide a debug adapter UI.
+- `go.env`, `go.gopath`, `go.goroot`, `go.version`, `go.environment.choose` — inspect or select the Go environment.
+- `go.locate.tools` — locate installed tools.
+- `go.tools.install`, `go.tools.install.<tool>` — install tools.
+- `go.gopls.install` — install `gopls`.
+- `go.languageserver.restart` — restart `gopls`.
+
+Optional tools are `dlv`, `goimports`, `staticcheck`, `gomodifytags`, `gotests`, `impl`, `golint`, `golangci-lint`, `golangci-lint-v2`, `revive`, `gofumpt`, `goformat`, and `go-jsonschema`. Delve works with external DAP clients; coc-golang provides no debug adapter UI.
 
 ## 🔧 Configuration
 
@@ -135,7 +141,9 @@ Add settings to `coc-settings.json`. For example:
 }
 ```
 
-Setting names, types, and defaults follow [vscode-go](https://github.com/golang/vscode-go). The `gopls` setting accepts gopls options (including dotted keys). Go-specific settings such as build flags, build tags, inlay hints, vulnerability checks, and code lenses are forwarded to gopls unless explicitly set there. Vulnerability analysis uses gopls' import-based diagnostics and built-in `govulncheck` code lens/quick fix; use `go.vulncheck.toggle` to enable or disable import-based diagnostics.
+Setting names, types, and defaults follow [vscode-go](https://github.com/golang/vscode-go). The `gopls` setting accepts gopls options, including dotted keys.
+
+Go-specific settings such as build flags, build tags, inlay hints, vulnerability checks, and code lenses are forwarded to gopls unless explicitly set there. Vulnerability analysis uses gopls' import-based diagnostics and built-in `govulncheck` code lens/quick fix; `go.vulncheck.toggle` enables or disables the import-based diagnostics.
 
 Some settings to know:
 
@@ -168,4 +176,11 @@ See [CHANGELOG.md](CHANGELOG.md).
 
 ## 🎯 Scope
 
-The VS Code test explorer's run/debug gutter and status-bar widgets, the Delve debug adapter UI, survey and telemetry, and rich diagnostic visualization are not included. Update checks cover `gopls` only. Coverage highlighting is simpler than vscode-go's: covered and uncovered line ranges with no gutter icons, execution counts, or per-block style settings.
+Not included:
+
+- The VS Code test explorer's run/debug gutter and status-bar widgets.
+- The Delve debug adapter UI.
+- Survey and telemetry.
+- Rich diagnostic visualization.
+
+Update checks cover `gopls` only. Coverage highlighting is simpler than vscode-go's: covered and uncovered line ranges, with no gutter icons, execution counts, or per-block style settings.
