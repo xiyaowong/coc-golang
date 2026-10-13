@@ -1,33 +1,30 @@
 import type { Disposable, ExtensionContext } from 'coc.nvim'
-import type { CheckScope } from './check/check'
+import type { CheckScope } from './check'
 import { dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { workspace } from 'coc.nvim'
-import { Checker } from './check/check'
-import { BuildCommands } from './commands/build'
-import { ConvertCommands } from './commands/convert'
-import { EditCommands } from './commands/edit'
-import { EnvironmentCommands } from './commands/environment'
+import { Checker } from './check'
+import { registerBuildCommands } from './commands/build'
+import { registerEditCommands } from './commands/edit'
+import { registerEnvironmentCommands } from './commands/environment'
 import { CommandManager } from './commands/index'
-import { LspCommands } from './commands/lsp'
-import { ModuleCommands } from './commands/mod'
-import { TagCommands } from './commands/tags'
-import { TestCommands } from './commands/test'
-import { TestExplorer, TestExplorerCommands } from './commands/test-explorer'
-import { Converter } from './convert/convert'
-import { ConvertSession } from './convert/session'
+import { registerModuleCommands } from './commands/mod'
+import { registerTagCommands } from './commands/tags'
+import { registerTestCommands } from './commands/test'
+import { Converter, registerConvertCommands } from './convert'
+import { ConvertSession } from './convert-session'
 import { DisposableStore } from './disposable'
-import { OutputChannel } from './editor/output'
-import { ProcessRunner } from './editor/process'
-import { TerminalManager } from './editor/terminal'
 import { ConfigManager } from './go/config'
 import { GoEnvironment } from './go/environment'
+import { OutputChannel } from './go/output'
+import { ProcessRunner } from './go/process'
+import { TerminalManager } from './go/terminal'
 import { ToolManager } from './go/tools'
 import { Formatter } from './lsp/format'
-import { checkGoplsUpdate } from './lsp/gopls-update'
-import { LanguageServer } from './lsp/language-server'
+import { checkGoplsUpdate, LanguageServer, registerLspCommands } from './lsp/language-server'
 import { StatusBar } from './lsp/status-bar'
-import { TestRunner } from './test/run-tests'
+import { registerTestExplorerCommands, TestExplorer } from './test-explorer'
+import { TestRunner } from './test/runner'
 
 // Converts a document URI to a path, or leaves it undefined for non-file documents.
 function filePath(uri: string): string | undefined {
@@ -39,29 +36,25 @@ function filePath(uri: string): string | undefined {
 }
 
 // Runs the configured checks and tests when a Go file is saved.
-class SaveHandler {
-  constructor(private readonly ctx: Ctx) {}
-
-  register(): void {
-    this.ctx.watch(workspace.onDidSaveTextDocument(async (document) => {
-      if (document.languageId !== 'go' || !document.uri.startsWith('file:')) return
-      const file = filePath(document.uri)
-      if (!file) return
-      const directory = dirname(file)
-      const config = this.ctx.config
-      if (!config.get('useLanguageServer', true)) {
-        const build = config.get<string>('buildOnSave', 'package')
-        if (build !== 'off') await this.ctx.checker.run('build', build as CheckScope, { cwd: directory, file })
-        const vet = config.get<string>('vetOnSave', 'package')
-        if (vet !== 'off') await this.ctx.checker.run('vet', vet as CheckScope, { cwd: directory, file })
-      }
-      const lint = config.get<string>('lintOnSave', 'package')
-      if (lint !== 'off' && config.get('lintTool', '')) {
-        await this.ctx.checker.run('lint', lint as CheckScope, { cwd: directory, file })
-      }
-      if (config.get('testOnSave', false)) await this.ctx.tests.run([], directory)
-    }))
-  }
+function registerSaveWatcher(ctx: Ctx): void {
+  ctx.watch(workspace.onDidSaveTextDocument(async (document) => {
+    if (document.languageId !== 'go' || !document.uri.startsWith('file:')) return
+    const file = filePath(document.uri)
+    if (!file) return
+    const directory = dirname(file)
+    const config = ctx.config
+    if (!config.get('useLanguageServer', true)) {
+      const build = config.get<string>('buildOnSave', 'package')
+      if (build !== 'off') await ctx.checker.run('build', build as CheckScope, { cwd: directory, file })
+      const vet = config.get<string>('vetOnSave', 'package')
+      if (vet !== 'off') await ctx.checker.run('vet', vet as CheckScope, { cwd: directory, file })
+    }
+    const lint = config.get<string>('lintOnSave', 'package')
+    if (lint !== 'off' && config.get('lintTool', '')) {
+      await ctx.checker.run('lint', lint as CheckScope, { cwd: directory, file })
+    }
+    if (config.get('testOnSave', false)) await ctx.tests.run([], directory)
+  }))
 }
 
 // The extension's composition root. Every module is created here, wired to the
@@ -100,16 +93,16 @@ export class Ctx {
     this.converter = new Converter(this)
     this.commands = new CommandManager()
 
-    new TestCommands(this).register()
-    new TestExplorerCommands(this).register()
-    new BuildCommands(this).register()
-    new EditCommands(this).register()
-    new TagCommands(this).register()
-    new ConvertCommands(this).register()
-    new EnvironmentCommands(this).register()
-    new ModuleCommands(this).register()
-    new LspCommands(this).register()
-    new SaveHandler(this).register()
+    registerTestCommands(this)
+    registerTestExplorerCommands(this)
+    registerBuildCommands(this)
+    registerEditCommands(this)
+    registerTagCommands(this)
+    registerConvertCommands(this)
+    registerEnvironmentCommands(this)
+    registerModuleCommands(this)
+    registerLspCommands(this)
+    registerSaveWatcher(this)
   }
 
   // Registers a disposable that belongs to no single module. These are released

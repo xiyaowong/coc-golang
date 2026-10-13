@@ -1,6 +1,6 @@
 import type { Disposable } from 'coc.nvim'
 import { workspace } from 'coc.nvim'
-import { DisposableStore } from '../disposable'
+import { DisposableStore } from './disposable'
 import { jsonToGo } from './json-to-go'
 
 const jsonInputBuffer = 'json-to-go://input'

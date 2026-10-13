@@ -1,20 +1,17 @@
 import type { Ctx } from '../ctx'
 import { dirname } from 'node:path'
 import { window } from 'coc.nvim'
-import { activeDirectory, activeFile, activeGoFile, fileUri, linesToCursor } from '../editor/editor'
+import { activeDirectory, activeFile, activeGoFile, fileUri, linesToCursor } from '../editor'
 import { functionNameAtCursor, testArgumentsAtCursor } from '../test/utils'
 
-export class EditCommands {
-  constructor(private readonly ctx: Ctx) {}
+export function registerEditCommands(ctx: Ctx): void {
+  const gotestsArguments = (...args: string[]): string[] =>
+    [...ctx.config.get<string[]>('generateTestsFlags', []), ...args]
 
-  private gotestsArguments(...args: string[]): string[] {
-    return [...this.ctx.config.get<string[]>('generateTestsFlags', []), ...args]
-  }
-
-  private async addImport(importPath?: string): Promise<void> {
+  const addImport = async (importPath?: string): Promise<void> => {
     const file = await activeGoFile()
     if (!file) return
-    const client = this.ctx.languageServer.getClient()
+    const client = ctx.languageServer.getClient()
     if (!client) {
       window.showWarningMessage('gopls is not running.')
       return
@@ -51,7 +48,7 @@ export class EditCommands {
     }
   }
 
-  private async generateTestForFunction(): Promise<void> {
+  const generateTestForFunction = async (): Promise<void> => {
     const lines = await linesToCursor()
     const args = testArgumentsAtCursor(lines)
     if (!args || args.includes('-bench')) {
@@ -61,26 +58,24 @@ export class EditCommands {
     const functionName = functionNameAtCursor(lines)
     if (!functionName) return
     const file = await activeFile()
-    if (file) await this.ctx.tools.run('gotests', this.gotestsArguments('-w', '-only', `^${functionName}$`, file), { cwd: dirname(file) })
+    if (file) await ctx.tools.run('gotests', gotestsArguments('-w', '-only', `^${functionName}$`, file), { cwd: dirname(file) })
   }
 
-  register(): void {
-    this.ctx.commands.handle('go.import.add', (importPath?: string) => this.addImport(importPath))
+  ctx.commands.handle('go.import.add', (importPath?: string) => addImport(importPath))
 
-    this.ctx.commands.handle('go.test.generate.file', async () => {
-      const file = await activeGoFile()
-      if (!file) return
-      await this.ctx.tools.run('gotests', this.gotestsArguments('-w', '-all', file), { cwd: dirname(file) })
-    })
-    this.ctx.commands.handle('go.test.generate.package', async () =>
-      this.ctx.tools.run('gotests', this.gotestsArguments('-w', '-all', '.'), { cwd: await activeDirectory() }))
-    this.ctx.commands.handle('go.test.generate.function', () => this.generateTestForFunction())
+  ctx.commands.handle('go.test.generate.file', async () => {
+    const file = await activeGoFile()
+    if (!file) return
+    await ctx.tools.run('gotests', gotestsArguments('-w', '-all', file), { cwd: dirname(file) })
+  })
+  ctx.commands.handle('go.test.generate.package', async () =>
+    ctx.tools.run('gotests', gotestsArguments('-w', '-all', '.'), { cwd: await activeDirectory() }))
+  ctx.commands.handle('go.test.generate.function', () => generateTestForFunction())
 
-    this.ctx.commands.handle('go.impl.cursor', async (implementation?: string) => {
-      const file = await activeFile()
-      implementation ??= await window.requestInput('Receiver and interface (e.g. *MyReader io.Reader)')
-      if (!file || !implementation) return
-      await this.ctx.tools.run('impl', ['-dir', dirname(file), ...implementation.trim().split(/\s+/)], { cwd: dirname(file) })
-    })
-  }
+  ctx.commands.handle('go.impl.cursor', async (implementation?: string) => {
+    const file = await activeFile()
+    implementation ??= await window.requestInput('Receiver and interface (e.g. *MyReader io.Reader)')
+    if (!file || !implementation) return
+    await ctx.tools.run('impl', ['-dir', dirname(file), ...implementation.trim().split(/\s+/)], { cwd: dirname(file) })
+  })
 }
