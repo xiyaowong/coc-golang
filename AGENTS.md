@@ -1,7 +1,7 @@
 # Project preferences
 
+- Read `LESSONS.md` and follow it. It records mistakes from past sessions.
 - Do not add backward-compatibility code paths, fallbacks, version gates, or compatibility-specific documentation unless explicitly requested. Prefer implementing the current intended behavior directly.
-- Do not use `Document.dirty` to tell whether a buffer has unsaved changes; it is unreliable. Read the buffer's `modified` option instead (`doc.buffer.getOption('modified')`).
 - Run `npm run typecheck`, `npm run lint:fix`, and `npm test` after every change and keep all three green. Never run `npm run lint` on its own — always use the autofixing `lint:fix`.
 - After changing anything user-facing — commands, settings, Go tools, or behavior — check whether `README.md` and the docs site (`docs/`) need updating. `README.md` and `docs/content/docs/` (except `reference/`) are hand-written; the reference pages under `docs/content/docs/reference/` are generated from `package.json` and `src/go/tools.ts`, so regenerate them with `cd docs && npm run generate` and commit the result. The `docs-drift` CI job fails when they are stale.
 - `npm test` runs `test:pure` and then `test:integration`. Integration tests (`test/integration/`) run the real extension through `coc-test` in a real nvim with real coc.nvim and real Go (via `test/integration.ts`, which isolates nvim config with `XDG_*`). They invoke `go.*` commands and assert user-visible results (output, diagnostics, files); do not mock `coc.nvim` or assert argv. Every `go.*` command should have at least one integration test where practical.
