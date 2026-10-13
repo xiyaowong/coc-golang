@@ -1,30 +1,28 @@
-import type { CheckKind, CheckScope } from '../check/check'
+import type { CheckKind, CheckScope } from '../check'
 import type { Ctx } from '../ctx'
 import * as coc from 'coc.nvim'
 import { window, workspace } from 'coc.nvim'
-import { activeDirectory, workspaceDirectories } from '../editor/editor'
+import { activeDirectory, workspaceDirectories } from '../editor'
 import { toolFailure } from '../go/tools'
 
-export class BuildCommands {
-  constructor(private readonly ctx: Ctx) {}
-
-  private checkCommand(id: string, kind: CheckKind, scope: CheckScope): void {
-    this.ctx.commands.handle(id, async () => {
+export function registerBuildCommands(ctx: Ctx): void {
+  const checkCommand = (id: string, kind: CheckKind, scope: CheckScope): void => {
+    ctx.commands.handle(id, async () => {
       const directories = scope === 'workspace' ? workspaceDirectories() : [await activeDirectory()]
-      for (const directory of directories) await this.ctx.checker.run(kind, scope, { cwd: directory })
+      for (const directory of directories) await ctx.checker.run(kind, scope, { cwd: directory })
     })
   }
 
-  private packageCommand(id: string, subcommand: string, args: string[] = ['.']): void {
-    this.ctx.commands.handle(id, async () => {
-      await this.ctx.process.go(subcommand, args, { cwd: await activeDirectory() })
+  const packageCommand = (id: string, subcommand: string, args: string[] = ['.']): void => {
+    ctx.commands.handle(id, async () => {
+      await ctx.process.go(subcommand, args, { cwd: await activeDirectory() })
     })
   }
 
-  private async browsePackages(): Promise<void> {
+  const browsePackages = async (): Promise<void> => {
     const directory = await activeDirectory()
     try {
-      const result = await this.ctx.process.goProcess('list', ['all'], { cwd: directory })
+      const result = await ctx.process.goProcess('list', ['all'], { cwd: directory })
       const packages = [...new Set(result.stdout.split(/\r?\n/).filter(Boolean))]
       if (result.code !== 0 || !packages.length) {
         await window.showNotification({
@@ -36,13 +34,13 @@ export class BuildCommands {
       }
       const selected = await window.showQuickPick(packages, { title: 'Select a Go package', placeHolder: 'Type to filter' })
       if (!selected) return
-      await this.ctx.terminal.runGo('doc', [selected], { cwd: directory })
+      await ctx.terminal.runGo('doc', [selected], { cwd: directory })
     } catch (error) {
       window.showErrorMessage(`Failed to list Go packages: ${String(error)}`)
     }
   }
 
-  private async toggleVulncheck(): Promise<void> {
+  const toggleVulncheck = async (): Promise<void> => {
     const { document } = await workspace.getCurrentState()
     const config = workspace.getConfiguration('go', document.uri)
     const inspect = config.inspect<string>('diagnostic.vulncheck')
@@ -67,33 +65,31 @@ export class BuildCommands {
     await window.showNotification({ kind: 'info', title: 'gopls vulncheck', content: vulncheck })
   }
 
-  register(): void {
-    for (const [id, kind, scope] of [
-      ['go.build.package', 'build', 'package'],
-      ['go.vet.package', 'vet', 'package'],
-      ['go.lint.package', 'lint', 'package'],
-      ['go.build.workspace', 'build', 'workspace'],
-      ['go.vet.workspace', 'vet', 'workspace'],
-    ] as const) {
-      this.checkCommand(id, kind, scope)
-    }
-
-    this.ctx.commands.handle('go.lint.workspace', async () => {
-      await Promise.all(workspaceDirectories().map(
-        directory => this.ctx.checker.run('lint', 'workspace', { cwd: directory }),
-      ))
-    })
-
-    this.packageCommand('go.generate.package', 'generate')
-    this.packageCommand('go.fmt.package', 'fmt')
-
-    this.ctx.commands.handle('go.run', async (target?: string) =>
-      this.ctx.terminal.runGo('run', [...this.ctx.config.buildFlags(), target || '.'], {
-        cwd: await activeDirectory(),
-        focus: true,
-      }))
-
-    this.ctx.commands.handle('go.vulncheck.toggle', () => this.toggleVulncheck())
-    this.ctx.commands.handle('go.browse.packages', () => this.browsePackages())
+  for (const [id, kind, scope] of [
+    ['go.build.package', 'build', 'package'],
+    ['go.vet.package', 'vet', 'package'],
+    ['go.lint.package', 'lint', 'package'],
+    ['go.build.workspace', 'build', 'workspace'],
+    ['go.vet.workspace', 'vet', 'workspace'],
+  ] as const) {
+    checkCommand(id, kind, scope)
   }
+
+  ctx.commands.handle('go.lint.workspace', async () => {
+    await Promise.all(workspaceDirectories().map(
+      directory => ctx.checker.run('lint', 'workspace', { cwd: directory }),
+    ))
+  })
+
+  packageCommand('go.generate.package', 'generate')
+  packageCommand('go.fmt.package', 'fmt')
+
+  ctx.commands.handle('go.run', async (target?: string) =>
+    ctx.terminal.runGo('run', [...ctx.config.buildFlags(), target || '.'], {
+      cwd: await activeDirectory(),
+      focus: true,
+    }))
+
+  ctx.commands.handle('go.vulncheck.toggle', () => toggleVulncheck())
+  ctx.commands.handle('go.browse.packages', () => browsePackages())
 }

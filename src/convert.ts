@@ -1,11 +1,11 @@
-import type { Ctx } from '../ctx'
+import type { Ctx } from './ctx'
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { basename, dirname, extname, isAbsolute, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { window, workspace } from 'coc.nvim'
-import { DisposableStore } from '../disposable'
-import { activeFile, fileUri } from '../editor/editor'
-import { toolFailure } from '../go/tools'
+import { DisposableStore } from './disposable'
+import { activeFile, fileUri } from './editor'
+import { toolFailure } from './go/tools'
 
 const goFileSuffix = '.go'
 const schemaFileSuffixes = ['.json', '.yaml', '.yml']
@@ -163,4 +163,9 @@ export class Converter extends DisposableStore {
 
     await this.ctx.convertSession.open('')
   }
+}
+
+export function registerConvertCommands(ctx: Ctx): void {
+  ctx.commands.handle('go.convert.jsonSchema', () => ctx.converter.fromJsonSchema())
+  ctx.commands.handle('go.convert.jsonToGo', () => ctx.converter.fromJson())
 }

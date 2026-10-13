@@ -1,9 +1,11 @@
 import type { Ctx } from '../ctx'
-import type { ProcessResult } from '../editor/process'
-import { delimiter, join } from 'node:path'
+import type { ProcessResult } from './process'
+import { accessSync, constants, existsSync } from 'node:fs'
+import { homedir, platform } from 'node:os'
+import { delimiter, isAbsolute, join } from 'node:path'
 import { window, workspace } from 'coc.nvim'
 import { DisposableStore } from '../disposable'
-import { findExecutable, resolveExecutable, toolsDirectories } from './executable'
+import { pathKey } from './config-utils'
 
 interface ToolDefinition {
   module: string
@@ -46,6 +48,56 @@ export const tools: Record<string, ToolDefinition> = {
 export function toolFailure(title: string, result: ProcessResult): string {
   const detail = result.output.trim().split(/\r?\n/).filter(Boolean).slice(-3).join('\n')
   return [title, detail].filter(Boolean).join('\n')
+}
+
+// Directories that may hold Go tool binaries: GOBIN, each GOPATH's bin, and the
+// configured `go.toolsGopath`, which is passed in rather than read from the
+// settings so this stays a pure helper.
+function toolsDirectories(environment: NodeJS.ProcessEnv, toolsGopath = ''): string[] {
+  const directories: (string | undefined)[] = [
+    environment.GOBIN,
+    ...(environment.GOPATH || '').split(delimiter).filter(Boolean).map(item => join(item, 'bin')),
+  ]
+  if (toolsGopath) directories.unshift(join(toolsGopath, 'bin'))
+  return directories.filter((directory): directory is string => !!directory)
+}
+
+function executableExtensions(): string[] {
+  return platform() === 'win32'
+    ? (process.env.PATHEXT || '.EXE;.CMD;.BAT').split(';')
+    : ['']
+}
+
+// Returns the first executable named `name` found in `directories`.
+function findExecutable(directories: string[], name: string): string | undefined {
+  for (const directory of directories) {
+    for (const extension of executableExtensions()) {
+      const candidate = join(directory, name + extension)
+      try {
+        accessSync(candidate, constants.X_OK)
+        return candidate
+      } catch {
+        continue
+      }
+    }
+  }
+}
+
+// Resolves a configured tool name or path to an absolute executable path. A bare
+// name is looked up on PATH; a path (absolute, relative or with a separator) is
+// resolved against the workspace.
+export function resolveExecutable(command: string, env: NodeJS.ProcessEnv = process.env): string | undefined {
+  const expanded = command.startsWith('~') ? join(homedir(), command.slice(1)) : command
+  if (isAbsolute(expanded) || expanded.includes('/') || expanded.includes('\\')) {
+    const file = isAbsolute(expanded) ? expanded : join(workspace.cwd, expanded)
+    try {
+      accessSync(file, constants.X_OK)
+      return existsSync(file) ? file : undefined
+    } catch {
+      return undefined
+    }
+  }
+  return findExecutable((env[pathKey(env)] || '').split(delimiter), expanded)
 }
 
 export class ToolManager extends DisposableStore {

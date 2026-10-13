@@ -1,6 +1,6 @@
 import type { MarkupContent, TreeDataProvider, TreeItem, TreeItemAction, TreeView } from 'coc.nvim'
-import type { Ctx } from '../ctx'
-import type { TestPackage } from '../test/run-tests'
+import type { Ctx } from './ctx'
+import type { TestPackage } from './test/runner'
 import { readFile } from 'node:fs/promises'
 import { basename, join, relative } from 'node:path'
 import {
@@ -13,10 +13,10 @@ import {
   window,
   workspace,
 } from 'coc.nvim'
-import { DisposableStore } from '../disposable'
-import { workspaceDirectories } from '../editor/editor'
-import { GoTestJsonParser, parseGoTestList } from '../test/json'
-import { escapeRegExp, isTestName, testFunctions } from '../test/utils'
+import { DisposableStore } from './disposable'
+import { workspaceDirectories } from './editor'
+import { GoTestJsonParser, parseGoTestList } from './test/json'
+import { escapeRegExp, isTestName, testFunctions } from './test/utils'
 
 type Outcome = 'passed' | 'failed' | 'skipped'
 type Status = Outcome | 'running'
@@ -652,31 +652,23 @@ export class TestExplorer extends DisposableStore implements TreeDataProvider<No
 }
 
 // Registers the test explorer's commands and its view.
-export class TestExplorerCommands {
-  constructor(private readonly ctx: Ctx) {}
-
-  private selection(): Node | undefined {
-    return this.ctx.explorer.selection()
-  }
-
-  register(): void {
-    this.ctx.commands.handle('go.test.explorer.show', () => this.ctx.explorer.showView())
-    this.ctx.commands.handle('go.test.explorer.refresh', () => {
-      if (!this.ctx.explorer.hasView()) return
-      void this.ctx.explorer.scheduleDiscovery()
-    })
-    this.ctx.commands.handle('go.test.explorer.run', async (node?: Node) => {
-      const target = node ?? this.selection()
-      if (!target) {
-        window.showWarningMessage('Select a test in the Go Tests view first.')
-        return
-      }
-      await this.ctx.explorer.runNode(target)
-    })
-    this.ctx.commands.handle('go.test.explorer.open', async (node?: Node) => {
-      const target = node ?? this.selection()
-      if (target) await this.ctx.explorer.openNode(target)
-    })
-    this.ctx.commands.handle('go.test.explorer.runAll', () => this.ctx.explorer.runAll())
-  }
+export function registerTestExplorerCommands(ctx: Ctx): void {
+  ctx.commands.handle('go.test.explorer.show', () => ctx.explorer.showView())
+  ctx.commands.handle('go.test.explorer.refresh', () => {
+    if (!ctx.explorer.hasView()) return
+    void ctx.explorer.scheduleDiscovery()
+  })
+  ctx.commands.handle('go.test.explorer.run', async (node?: Node) => {
+    const target = node ?? ctx.explorer.selection()
+    if (!target) {
+      window.showWarningMessage('Select a test in the Go Tests view first.')
+      return
+    }
+    await ctx.explorer.runNode(target)
+  })
+  ctx.commands.handle('go.test.explorer.open', async (node?: Node) => {
+    const target = node ?? ctx.explorer.selection()
+    if (target) await ctx.explorer.openNode(target)
+  })
+  ctx.commands.handle('go.test.explorer.runAll', () => ctx.explorer.runAll())
 }
