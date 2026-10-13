@@ -47,6 +47,7 @@
     "onCommand:go.benchmark.file",
     "onCommand:go.test.coverage",
     "onCommand:go.apply.coverprofile",
+    "onCommand:go.show.coverprofile",
     "onCommand:go.toggle.test.file",
     "onCommand:go.test.previous",
     "onCommand:go.build.package",
@@ -198,6 +199,11 @@
       {
         "command": "go.apply.coverprofile",
         "title": "Apply Existing Coverage Profile",
+        "category": "Go"
+      },
+      {
+        "command": "go.show.coverprofile",
+        "title": "Open Coverage Profile",
         "category": "Go"
       },
       {

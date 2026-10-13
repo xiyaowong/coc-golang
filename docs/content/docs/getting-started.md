@@ -61,7 +61,8 @@ command again, or save an edited Go file, to clear the highlights. Set
 `go.coverMode` to control `-covermode`.
 
 Each run's profile is remembered, so `:CocCommand go.apply.coverprofile` can
-show coverage without rerunning the tests.
+show coverage without rerunning the tests. `:CocCommand go.show.coverprofile`
+opens a profile — one of those runs, or a path of your own — in a buffer.
 
 ## Configure the extension
 

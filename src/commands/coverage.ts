@@ -1,9 +1,10 @@
 import type { Ctx } from '../ctx'
+import { existsSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { window } from 'coc.nvim'
+import { window, workspace } from 'coc.nvim'
 import { coverageFromProfile } from '../coverage'
-import { activeDirectory, activeGoFile } from '../editor'
+import { activeDirectory, activeGoFile, fileUri } from '../editor'
 
 interface RecordedProfile {
   file: string
@@ -35,6 +36,17 @@ export function registerCoverageCommands(ctx: Ctx): void {
     })
     if (!picked) return undefined
     return picked.file || window.requestInput(input, directory)
+  }
+
+  const openProfile = async (profilePath?: string): Promise<void> => {
+    const directory = await activeDirectory()
+    profilePath = (profilePath ?? await pickProfile(directory))?.trim()
+    if (!profilePath) return
+    if (!existsSync(profilePath)) {
+      window.showWarningMessage(`${profilePath} does not exist.`)
+      return
+    }
+    await workspace.openResource(fileUri(profilePath))
   }
 
   const runWithCoverage = async (): Promise<void> => {
@@ -91,4 +103,6 @@ export function registerCoverageCommands(ctx: Ctx): void {
     }
     await ctx.coverage.apply(coverage)
   })
+
+  ctx.commands.handle('go.show.coverprofile', async (profilePath?: string) => openProfile(profilePath))
 }
