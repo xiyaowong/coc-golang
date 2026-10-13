@@ -44,7 +44,7 @@ other commands print to the **Go** output channel.
 
 - `:CocCommand go.test.showOutput` shows the Go terminal.
 - `:CocCommand go.test.cancel` stops the running test.
-- In coc.nvim, `:CocList output` lists the output channels, including **Go**.
+- `:CocCommand workspace.showOutput` opens the output list; search for **Go**.
 
 ## Wrong Go version or GOROOT is used
 
