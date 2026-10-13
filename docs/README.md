@@ -14,7 +14,7 @@ render on GitHub as well as on the site.
 - `index.md`, `getting-started.md`, `test-explorer.md`, `convert.md`,
   `keybindings.md`, `troubleshooting.md` are hand-written.
 - `reference/` is **generated** from the extension's `package.json` (commands
-  and settings) and `src/tools.ts` (tools).
+  and settings) and `src/go/tools.ts` (tools).
 - `changelog.md` is **generated** from the repository's `CHANGELOG.md`, and
   `meta.json` is generated alongside it. Both are git-ignored: the copy only
   needs to exist while the site is built or served.
@@ -51,7 +51,7 @@ root build for local checks.
 
 ## Regenerating the generated pages
 
-`scripts/generate.ts` reads `../package.json` and `../src/tools.ts` and writes
+`scripts/generate.ts` reads `../package.json` and `../src/go/tools.ts` and writes
 `content/docs/reference/*.md` (plus `reference/meta.json`). It also turns the
 repository's `../CHANGELOG.md` into `content/docs/changelog.md`. It has no
 dependencies and runs on Node 22+ directly.

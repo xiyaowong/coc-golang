@@ -1,4 +1,4 @@
-import type { GoplsSettings } from '../../src/go-config-utils.ts'
+import type { GoplsSettings } from '../../src/go/config-utils.ts'
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import {
@@ -10,7 +10,7 @@ import {
   pathKey,
   prependPath,
   testFlagsFor,
-} from '../../src/go-config-utils.ts'
+} from '../../src/go/config-utils.ts'
 
 function settings(overrides: Partial<GoplsSettings> = {}): GoplsSettings {
   return {

@@ -3,7 +3,7 @@ title: Commands
 description: Every go.* command, grouped by area.
 ---
 
-<!-- Generated from package.json (and src/tools.ts). Do not edit by hand. -->
+<!-- Generated from package.json (and src/go/tools.ts). Do not edit by hand. -->
 ## Commands
 
 All 81 commands are run with `:CocCommand <id>`.

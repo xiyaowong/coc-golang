@@ -1,5 +1,5 @@
 // Generates the reference pages for the coc-golang docs site from the
-// extension's own metadata (package.json + src/tools.ts), so the command,
+// extension's own metadata (package.json + src/go/tools.ts), so the command,
 // settings and tools references can never drift from the code.
 //
 // Run from anywhere: `node docs/scripts/generate.ts`
@@ -279,9 +279,9 @@ function renderGoplsSettings(gopls: Schema): string {
 interface Tool { name: string, module: string, optional: boolean }
 
 function parseTools(): Tool[] {
-  const source = readFileSync(join(repoRoot, 'src', 'tools.ts'), 'utf8')
+  const source = readFileSync(join(repoRoot, 'src', 'go', 'tools.ts'), 'utf8')
   const marker = source.indexOf('export const tools')
-  if (marker === -1) throw new Error('Could not find `tools` in src/tools.ts')
+  if (marker === -1) throw new Error('Could not find `tools` in src/go/tools.ts')
 
   const start = source.indexOf('{', marker)
   let depth = 0
@@ -369,7 +369,7 @@ function sameContent(a: string | undefined, b: string): boolean {
 // Assembly
 // ---------------------------------------------------------------------------
 
-function frontmatter(title: string, description: string, source = 'package.json (and src/tools.ts)'): string {
+function frontmatter(title: string, description: string, source = 'package.json (and src/go/tools.ts)'): string {
   return [
     '---',
     `title: ${title}`,

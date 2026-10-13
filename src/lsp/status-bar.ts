@@ -1,10 +1,10 @@
 import type { Disposable } from 'coc.nvim'
 import * as coc from 'coc.nvim'
-import { configValue, goCommand } from './config'
-import { goEnvironment } from './environment'
+import { execFileText } from '../editor/process'
+import { configValue, goCommand } from '../go/config'
+import { goEnvironment } from '../go/environment'
+import { toolExecutable } from '../go/tools'
 import { getClient } from './language-server'
-import { execFileText } from './process'
-import { toolExecutable } from './tools'
 
 let item: coc.StatusBarItem | undefined
 let stateSubscription: Disposable | undefined

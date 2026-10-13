@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { resolve } from 'node:path'
 import { describe, it } from 'node:test'
-import { lintArguments, parseProblems } from '../../src/go-check-utils.ts'
+import { lintArguments, parseProblems } from '../../src/check/utils.ts'
 
 describe('parseProblems', () => {
   it('parses a diagnostic with a column', () => {

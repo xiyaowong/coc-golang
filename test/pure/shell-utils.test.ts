@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { quoteShellArg, shellCommandLine, shellKind } from '../../src/shell-utils.ts'
+import { quoteShellArg, shellCommandLine, shellKind } from '../../src/editor/shell-utils.ts'
 
 describe('shell utils', () => {
   it('detects the shell kind', () => {

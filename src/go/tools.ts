@@ -1,11 +1,11 @@
-import type { ProcessResult } from './process'
+import type { ProcessResult } from '../editor/process'
 import { delimiter, join } from 'node:path'
 import * as coc from 'coc.nvim'
+import { showCommandOutput } from '../editor/output'
+import { execFileText, runProcess } from '../editor/process'
 import { alternateTool, configValue, goCommand } from './config'
 import { goEnvironment } from './environment'
 import { findExecutable, resolveExecutable, toolsDirectories } from './executable'
-import { showCommandOutput } from './output'
-import { execFileText, runProcess } from './process'
 
 interface ToolDefinition {
   module: string

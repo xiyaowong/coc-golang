@@ -2,8 +2,8 @@ import type { Disposable, ExtensionContext } from 'coc.nvim'
 import { dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import * as coc from 'coc.nvim'
-import { configValue } from './config'
-import { runTool, toolFailure } from './tools'
+import { configValue } from '../go/config'
+import { runTool, toolFailure } from '../go/tools'
 
 let formatRegistration: Disposable | undefined
 

@@ -1,11 +1,11 @@
 import type { Disposable, ExtensionContext, LanguageClient } from 'coc.nvim'
-import type { GoplsOptions } from './go-config-utils'
+import type { GoplsOptions } from '../go/config-utils'
 import * as coc from 'coc.nvim'
-import { configValue } from './config'
-import { goEnvironment } from './environment'
-import { goplsConfiguration } from './go-config-utils'
+import { configValue } from '../go/config'
+import { goplsConfiguration } from '../go/config-utils'
+import { goEnvironment } from '../go/environment'
+import { installTool, toolExecutable } from '../go/tools'
 import { combineMiddleware, saveSyncMiddleware, workspaceConfigurationMiddleware } from './middleware'
-import { installTool, toolExecutable } from './tools'
 import { vulncheckMiddleware } from './vulncheck'
 
 let client: LanguageClient | undefined

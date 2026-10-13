@@ -1,5 +1,5 @@
 import * as coc from 'coc.nvim'
-import { jsonToGo } from '../json-to-go'
+import { jsonToGo } from './json-to-go'
 
 const jsonInputBuffer = 'json-to-go://input'
 const jsonOutputBuffer = 'json-to-go://output'

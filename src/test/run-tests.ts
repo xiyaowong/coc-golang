@@ -1,10 +1,10 @@
 import { readFileSync } from 'node:fs'
 import * as coc from 'coc.nvim'
-import { configValue, goTestFlags } from './config'
-import { parseEnvFile } from './go-config-utils'
-import { showOutput } from './output'
-import { captureGo } from './process'
-import { runGoInTerminal } from './terminal'
+import { showOutput } from '../editor/output'
+import { captureGo } from '../editor/process'
+import { runGoInTerminal } from '../editor/terminal'
+import { configValue, goTestFlags } from '../go/config'
+import { parseEnvFile } from '../go/config-utils'
 
 export interface PreviousTest {
   args: string[]

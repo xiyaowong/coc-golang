@@ -1,11 +1,11 @@
 import type { ExtensionContext } from 'coc.nvim'
 import { dirname } from 'node:path'
 import * as coc from 'coc.nvim'
-import { configValue } from '../config'
-import { activeDirectory, activeFile, activeGoFile, fileUri, linesToCursor } from '../editor'
-import { functionNameAtCursor, testArgumentsAtCursor } from '../go-test-utils'
-import { getClient } from '../language-server'
-import { runTool } from '../tools'
+import { activeDirectory, activeFile, activeGoFile, fileUri, linesToCursor } from '../editor/editor'
+import { configValue } from '../go/config'
+import { runTool } from '../go/tools'
+import { getClient } from '../lsp/language-server'
+import { functionNameAtCursor, testArgumentsAtCursor } from '../test/utils'
 import { registerCommand } from './index'
 
 const gotestsArguments = (...args: string[]): string[] => [

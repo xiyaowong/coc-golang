@@ -2,8 +2,8 @@ import type { Buffer } from 'node:buffer'
 import type { ChildProcess } from 'node:child_process'
 import { execFile, spawn } from 'node:child_process'
 import * as coc from 'coc.nvim'
-import { goCommand } from './config'
-import { goEnvironment } from './environment'
+import { goCommand } from '../go/config'
+import { goEnvironment } from '../go/environment'
 import { appendOutputText, showCommandOutput } from './output'
 
 export interface ProcessResult {

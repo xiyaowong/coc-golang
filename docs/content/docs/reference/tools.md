@@ -3,7 +3,7 @@ title: Go tools
 description: The Go tools coc-golang can install for you.
 ---
 
-<!-- Generated from package.json (and src/tools.ts). Do not edit by hand. -->
+<!-- Generated from package.json (and src/go/tools.ts). Do not edit by hand. -->
 coc-golang installs 14 Go tools with `go install`. Install one with its command, or run `:CocCommand go.tools.install` to pick from a list.
 
 | Tool | Module | Install command | Optional |

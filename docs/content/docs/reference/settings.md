@@ -3,7 +3,7 @@ title: Settings
 description: Configuration reference for the go.* settings.
 ---
 
-<!-- Generated from package.json (and src/tools.ts). Do not edit by hand. -->
+<!-- Generated from package.json (and src/go/tools.ts). Do not edit by hand. -->
 This page lists the 63 `go.*` settings. See [gopls settings](./gopls-settings) for language-server options.
 
 | Setting | Type | Default |

@@ -3,7 +3,7 @@ title: gopls settings
 description: Options passed to the gopls language server.
 ---
 
-<!-- Generated from package.json (and src/tools.ts). Do not edit by hand. -->
+<!-- Generated from package.json (and src/go/tools.ts). Do not edit by hand. -->
 These options configure `gopls` and are passed through as-is. See the
 [Analyzer reference](./gopls-analyses) for the bundled analyzers.
 

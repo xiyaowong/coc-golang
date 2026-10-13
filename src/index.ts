@@ -1,23 +1,23 @@
 import type { ExtensionContext } from 'coc.nvim'
-import type { CheckScope } from './check'
+import type { CheckScope } from './check/check'
 import { dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import * as coc from 'coc.nvim'
-import { runCheck } from './check'
+import { runCheck } from './check/check'
 import { registerCommands } from './commands'
-import { configValue, restartSettings } from './config'
-import { activateTerminalEnvironment } from './environment'
-import { disposeFormatProvider, refreshFormatProvider } from './format'
-import { checkGoplsUpdate } from './gopls-update'
+import { createOutputChannel, disposeOutputChannel } from './editor/output'
+import { killAllProcesses } from './editor/process'
+import { configValue, restartSettings } from './go/config'
+import { activateTerminalEnvironment } from './go/environment'
+import { disposeFormatProvider, refreshFormatProvider } from './lsp/format'
+import { checkGoplsUpdate } from './lsp/gopls-update'
 import {
   replaceLanguageClient,
   startLanguageClient,
   stopLanguageClient,
-} from './language-server'
-import { createOutputChannel, disposeOutputChannel } from './output'
-import { killAllProcesses } from './process'
-import { runTests } from './run-tests'
-import { createStatusBar, updateStatusBar } from './status-bar'
+} from './lsp/language-server'
+import { createStatusBar, updateStatusBar } from './lsp/status-bar'
+import { runTests } from './test/run-tests'
 
 function registerConfigurationHandler(context: ExtensionContext): void {
   context.subscriptions.push(coc.workspace.onDidChangeConfiguration(async (event) => {

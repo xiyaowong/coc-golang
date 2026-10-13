@@ -3,7 +3,7 @@ import { homedir, platform } from 'node:os'
 import { delimiter, isAbsolute, join } from 'node:path'
 import * as coc from 'coc.nvim'
 import { configValue } from './config'
-import { pathKey } from './go-config-utils'
+import { pathKey } from './config-utils'
 
 // Directories that may hold Go tool binaries: GOBIN, each GOPATH's bin, and the
 // configured go.toolsGopath.

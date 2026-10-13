@@ -1,6 +1,6 @@
 import * as coc from 'coc.nvim'
-import { goCommand } from './config'
-import { goEnvironment } from './environment'
+import { goCommand } from '../go/config'
+import { goEnvironment } from '../go/environment'
 import { shellCommandLine, shellKind } from './shell-utils'
 
 export interface TerminalRunOptions {

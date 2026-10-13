@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
-import { parseTagAndOptionInput } from '../../src/tag-utils.ts'
+import { parseTagAndOptionInput } from '../../src/commands/tag-utils.ts'
 
 describe('parseTagAndOptionInput', () => {
   it('parses single tag', () => {

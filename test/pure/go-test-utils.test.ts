@@ -7,7 +7,7 @@ import {
   testArgumentsForFile,
   testArgumentsForLine,
   testNameAtCursor,
-} from '../../src/go-test-utils.ts'
+} from '../../src/test/utils.ts'
 
 describe('testArgumentsForLine', () => {
   it('anchors the pattern to a single test', () => {

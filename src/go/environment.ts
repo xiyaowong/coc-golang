@@ -3,7 +3,7 @@ import { delimiter, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import * as coc from 'coc.nvim'
 import { configValue } from './config'
-import { inferGopath, prependPath } from './go-config-utils'
+import { inferGopath, prependPath } from './config-utils'
 
 export interface GoEnvironmentOptions {
   forToolInstall?: boolean

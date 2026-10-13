@@ -1,7 +1,7 @@
 import type { ExtensionContext } from 'coc.nvim'
 import * as coc from 'coc.nvim'
+import { registerConvertCommands } from '../convert/convert'
 import { registerBuildCommands } from './build'
-import { registerConvertCommands } from './convert'
 import { registerEditCommands } from './edit'
 import { registerEnvironmentCommands } from './environment'
 import { registerModuleCommands } from './mod'

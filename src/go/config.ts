@@ -1,5 +1,5 @@
 import * as coc from 'coc.nvim'
-import { buildFlagsWithTags, testFlagsFor } from './go-config-utils'
+import { buildFlagsWithTags, testFlagsFor } from './config-utils'
 
 export const restartSettings = [
   'go.useLanguageServer',

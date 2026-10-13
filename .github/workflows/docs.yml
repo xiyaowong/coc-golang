@@ -6,7 +6,7 @@ on:
     paths:
       - docs/**
       - package.json
-      - src/tools.ts
+      - src/go/tools.ts
       - .github/workflows/docs.yml
   workflow_dispatch:
 

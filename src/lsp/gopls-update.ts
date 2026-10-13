@@ -1,10 +1,10 @@
 import type { ExtensionContext } from 'coc.nvim'
 import * as coc from 'coc.nvim'
-import { configValue, goCommand } from './config'
-import { goEnvironment } from './environment'
+import { execFileText } from '../editor/process'
+import { configValue, goCommand } from '../go/config'
+import { goEnvironment } from '../go/environment'
+import { installTool, toolExecutable } from '../go/tools'
 import { replaceLanguageClient } from './language-server'
-import { execFileText } from './process'
-import { installTool, toolExecutable } from './tools'
 
 // Checks the module proxy for a newer gopls and offers to update it, unless
 // go.toolsManagement.checkForUpdates is off or local-only.

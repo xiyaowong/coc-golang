@@ -1,10 +1,10 @@
 import type { ExtensionContext } from 'coc.nvim'
 import * as coc from 'coc.nvim'
-import { goBuildFlags } from '../config'
-import { activeDirectory } from '../editor'
-import { showOutput } from '../output'
-import { runGo } from '../process'
-import { runGoInTerminal } from '../terminal'
+import { activeDirectory } from '../editor/editor'
+import { showOutput } from '../editor/output'
+import { runGo } from '../editor/process'
+import { runGoInTerminal } from '../editor/terminal'
+import { goBuildFlags } from '../go/config'
 import { registerCommand } from './index'
 
 // Commands that operate on go.mod / go.work and the module graph. They run in

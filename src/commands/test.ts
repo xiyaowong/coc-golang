@@ -1,6 +1,5 @@
 import type { ExtensionContext } from 'coc.nvim'
 import * as coc from 'coc.nvim'
-import { configValue } from '../config'
 import {
   activeDirectory,
   activeGoFile,
@@ -10,11 +9,12 @@ import {
   linesToCursor,
   wordAtCursor,
   workspaceDirectories,
-} from '../editor'
-import { escapeRegExp, isTestName, testArgumentsAtCursor, testArgumentsForFile, testNameAtCursor } from '../go-test-utils'
-import { runGoProcess } from '../process'
-import { getPreviousTest, runTests } from '../run-tests'
-import { terminal } from '../terminal'
+} from '../editor/editor'
+import { runGoProcess } from '../editor/process'
+import { terminal } from '../editor/terminal'
+import { configValue } from '../go/config'
+import { getPreviousTest, runTests } from '../test/run-tests'
+import { escapeRegExp, isTestName, testArgumentsAtCursor, testArgumentsForFile, testNameAtCursor } from '../test/utils'
 import { registerCommand } from './index'
 
 const benchmarkFlags = (): string[] => configValue<string[]>('benchmarkFlags', [])

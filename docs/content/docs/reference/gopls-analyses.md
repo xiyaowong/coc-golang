@@ -3,7 +3,7 @@ title: Analyzer reference
 description: The analyzers bundled with gopls.
 ---
 
-<!-- Generated from package.json (and src/tools.ts). Do not edit by hand. -->
+<!-- Generated from package.json (and src/go/tools.ts). Do not edit by hand. -->
 gopls bundles the analyzer suite below. Enable or disable one by setting it under `gopls.analyses`, for example `{"gopls": {"analyses": {"unusedwrite": false}}}`. There are 248 analyzers.
 
 | Analyzer | Default | Summary |
