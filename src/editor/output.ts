@@ -1,50 +1,44 @@
-import * as coc from 'coc.nvim'
+import type { OutputChannel as CocOutputChannel } from 'coc.nvim'
+import { window, workspace } from 'coc.nvim'
+import { DisposableStore } from '../disposable'
 
-let outputChannel: coc.OutputChannel | undefined
-let outputVisibilityCheck: Promise<void> | undefined
+export class OutputChannel extends DisposableStore {
+  private readonly channel: CocOutputChannel = this.track(window.createOutputChannel('Go'))
+  private visibilityCheck: Promise<void> | undefined
 
-export function createOutputChannel(): coc.OutputChannel {
-  outputChannel = coc.window.createOutputChannel('Go')
-  return outputChannel
-}
+  // Appends raw process output without adding a line break.
+  append(text: string): void {
+    this.channel.append(text)
+  }
 
-export function disposeOutputChannel(): void {
-  outputChannel?.dispose()
-  outputChannel = undefined
-}
+  // Appends a line to the output channel.
+  appendLine(text: string): void {
+    this.channel.appendLine(text)
+  }
 
-// Appends a line to the Go output channel.
-export function appendOutput(text: string): void {
-  outputChannel?.appendLine(text)
-}
+  // Reports the command about to run, as a `> command` header in the output.
+  header(title: string): void {
+    this.channel.appendLine(`\n> ${title}`)
+  }
 
-// Appends raw process output without adding a line break.
-export function appendOutputText(text: string): void {
-  outputChannel?.append(text)
-}
+  show(): void {
+    const channel = this.channel
+    if (this.visibilityCheck) return
 
-// Reports the command about to run, as a `> command` header in the output.
-export function showCommandOutput(title: string): void {
-  outputChannel?.appendLine(`\n> ${title}`)
-}
-
-export function showOutput(): void {
-  const channel = outputChannel
-  if (!channel || outputVisibilityCheck) return
-
-  outputVisibilityCheck = (async () => {
-    const buffer = await coc.workspace.nvim.call('bufnr', [`output:///${encodeURI(channel.name)}`])
-    if (typeof buffer !== 'number') throw new Error('Could not find the Go output buffer.')
-    if (buffer < 0) {
-      if (outputChannel === channel) channel.show()
-      return
-    }
-    const windows = await coc.workspace.nvim.call('win_findbuf', [buffer])
-    if (!Array.isArray(windows)) throw new Error('Could not determine whether the Go output is visible.')
-    if (outputChannel === channel && windows.length === 0) channel.show()
-  })().catch((error: unknown) => {
-    coc.window.showMessage(`Failed to show Go output: ${String(error)}`, 'error')
-  }).finally(() => {
-    outputVisibilityCheck = undefined
-  })
+    this.visibilityCheck = (async () => {
+      const buffer = await workspace.nvim.call('bufnr', [`output:///${encodeURI(channel.name)}`])
+      if (typeof buffer !== 'number') throw new Error('Could not find the Go output buffer.')
+      if (buffer < 0) {
+        channel.show()
+        return
+      }
+      const windows = await workspace.nvim.call('win_findbuf', [buffer])
+      if (!Array.isArray(windows)) throw new Error('Could not determine whether the Go output is visible.')
+      if (windows.length === 0) channel.show()
+    })().catch((error: unknown) => {
+      window.showMessage(`Failed to show Go output: ${String(error)}`, 'error')
+    }).finally(() => {
+      this.visibilityCheck = undefined
+    })
+  }
 }

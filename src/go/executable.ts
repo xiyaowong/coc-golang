@@ -2,17 +2,16 @@ import { accessSync, constants, existsSync } from 'node:fs'
 import { homedir, platform } from 'node:os'
 import { delimiter, isAbsolute, join } from 'node:path'
 import * as coc from 'coc.nvim'
-import { configValue } from './config'
 import { pathKey } from './config-utils'
 
 // Directories that may hold Go tool binaries: GOBIN, each GOPATH's bin, and the
-// configured go.toolsGopath.
-export function toolsDirectories(environment: NodeJS.ProcessEnv): string[] {
+// configured `go.toolsGopath`, which is passed in rather than read from the
+// settings so this stays a pure helper.
+export function toolsDirectories(environment: NodeJS.ProcessEnv, toolsGopath = ''): string[] {
   const directories: (string | undefined)[] = [
     environment.GOBIN,
     ...(environment.GOPATH || '').split(delimiter).filter(Boolean).map(item => join(item, 'bin')),
   ]
-  const toolsGopath = configValue('toolsGopath', '')
   if (toolsGopath) directories.unshift(join(toolsGopath, 'bin'))
   return directories.filter((directory): directory is string => !!directory)
 }
