@@ -1,6 +1,7 @@
-import * as coc from 'coc.nvim'
-import { goCommand } from '../go/config'
-import { goEnvironment } from '../go/environment'
+import type { Terminal } from 'coc.nvim'
+import type { Ctx } from '../ctx'
+import { window, workspace } from 'coc.nvim'
+import { DisposableStore } from '../disposable'
 import { shellCommandLine, shellKind } from './shell-utils'
 
 export interface TerminalRunOptions {
@@ -9,36 +10,47 @@ export interface TerminalRunOptions {
   focus?: boolean
 }
 
-let goTerminal: coc.Terminal | undefined
+export class TerminalManager extends DisposableStore {
+  private terminal: Terminal | undefined
 
-export function terminal(): coc.Terminal | undefined {
-  return goTerminal
-}
+  constructor(private readonly ctx: Ctx) {
+    super()
+  }
 
-export function disposeTerminal(): void {
-  goTerminal?.dispose()
-  goTerminal = undefined
-}
+  current(): Terminal | undefined {
+    return this.terminal
+  }
 
-export async function runGoInTerminal(
-  subcommand: string,
-  args: string[],
-  options: TerminalRunOptions,
-): Promise<void> {
-  const { cwd, environment = {}, focus = false } = options
-  disposeTerminal()
-  try {
-    const shell = await coc.workspace.nvim.eval('&shell')
-    const line = shellCommandLine(goCommand(), [subcommand, ...args], shellKind(String(shell)))
-    const env: Record<string, string> = {}
-    for (const [key, value] of Object.entries({ ...goEnvironment(), ...environment })) {
-      if (value !== undefined) env[key] = value
+  disposeTerminal(): void {
+    this.terminal?.dispose()
+    this.terminal = undefined
+  }
+
+  async runGo(
+    subcommand: string,
+    args: string[],
+    options: TerminalRunOptions,
+  ): Promise<void> {
+    const { cwd, environment = {}, focus = false } = options
+    this.disposeTerminal()
+    try {
+      const shell = await workspace.nvim.eval('&shell')
+      const line = shellCommandLine(this.ctx.config.goCommand(), [subcommand, ...args], shellKind(String(shell)))
+      const env: Record<string, string> = {}
+      for (const [key, value] of Object.entries({ ...this.ctx.environment.variables(), ...environment })) {
+        if (value !== undefined) env[key] = value
+      }
+      const created = await window.createTerminal({ name: 'Go', cwd, env })
+      this.terminal = created
+      created.sendText(line)
+      await created.show(!focus)
+    } catch (error) {
+      window.showErrorMessage(`Failed to run go ${subcommand}: ${String(error)}`)
     }
-    const created = await coc.window.createTerminal({ name: 'Go', cwd, env })
-    goTerminal = created
-    created.sendText(line)
-    await created.show(!focus)
-  } catch (error) {
-    coc.window.showErrorMessage(`Failed to run go ${subcommand}: ${String(error)}`)
+  }
+
+  override dispose(): void {
+    this.disposeTerminal()
+    super.dispose()
   }
 }

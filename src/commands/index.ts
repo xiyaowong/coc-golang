@@ -1,29 +1,15 @@
-import type { ExtensionContext } from 'coc.nvim'
-import * as coc from 'coc.nvim'
-import { registerConvertCommands } from '../convert/convert'
-import { registerBuildCommands } from './build'
-import { registerEditCommands } from './edit'
-import { registerEnvironmentCommands } from './environment'
-import { registerModuleCommands } from './mod'
-import { registerTagCommands } from './tags'
-import { registerTestCommands } from './test'
-import { registerTestExplorerCommands } from './test-explorer'
+import type { Disposable } from 'coc.nvim'
+import { commands } from 'coc.nvim'
+import { DisposableStore } from '../disposable'
 
-export function registerCommands(context: ExtensionContext): void {
-  registerTestCommands(context)
-  registerTestExplorerCommands(context)
-  registerBuildCommands(context)
-  registerEditCommands(context)
-  registerTagCommands(context)
-  registerConvertCommands(context)
-  registerEnvironmentCommands(context)
-  registerModuleCommands(context)
-}
+export class CommandManager extends DisposableStore {
+  private readonly registered = new Map<string, Disposable>()
 
-export function registerCommand(
-  context: ExtensionContext,
-  id: string,
-  callback: (...args: any[]) => unknown,
-): void {
-  context.subscriptions.push(coc.commands.registerCommand(id, callback))
+  handle = (id: string, callback: (...args: any[]) => unknown): Disposable => {
+    const existing = this.registered.get(id)
+    if (existing) return existing
+    const registration = this.track(commands.registerCommand(id, callback))
+    this.registered.set(id, registration)
+    return registration
+  }
 }

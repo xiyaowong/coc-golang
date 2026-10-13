@@ -1,10 +1,9 @@
 import type { Buffer } from 'node:buffer'
 import type { ChildProcess } from 'node:child_process'
+import type { Ctx } from '../ctx'
 import { execFile, spawn } from 'node:child_process'
-import * as coc from 'coc.nvim'
-import { goCommand } from '../go/config'
-import { goEnvironment } from '../go/environment'
-import { appendOutputText, showCommandOutput } from './output'
+import { window } from 'coc.nvim'
+import { DisposableStore } from '../disposable'
 
 export interface ProcessResult {
   code: number | null
@@ -34,109 +33,112 @@ export interface GoRunOptions {
   environment?: NodeJS.ProcessEnv
 }
 
-const runningProcesses = new Set<ChildProcess>()
+export class ProcessRunner extends DisposableStore {
+  private readonly running = new Set<ChildProcess>()
 
-export function killAllProcesses(): void {
-  for (const process of runningProcesses) process.kill()
-  runningProcesses.clear()
-}
-
-// Spawns a command and collects its output. Unless stdin is fed, stdout is also
-// streamed to the Go output channel.
-export function runProcess(command: string, args: string[], options: ProcessOptions): Promise<ProcessResult> {
-  const { cwd, env = process.env, input, quiet = false, onLine } = options
-  return new Promise((resolvePromise, reject) => {
-    const child = spawn(command, args, {
-      cwd,
-      env,
-      stdio: [input === undefined ? 'ignore' : 'pipe', 'pipe', 'pipe'],
-      windowsHide: true,
-    })
-    runningProcesses.add(child)
-    let stdout = ''
-    let output = ''
-    let pending = ''
-    child.stdout?.on('data', (chunk: Buffer) => {
-      const value = chunk.toString()
-      stdout += value
-      output += value
-      if (input === undefined && !quiet) appendOutputText(value)
-      if (!onLine) return
-      pending += value
-      const lines = pending.split(/\r?\n/)
-      pending = lines.pop() ?? ''
-      for (const line of lines) onLine(line)
-    })
-    child.stderr?.on('data', (chunk: Buffer) => {
-      const value = chunk.toString()
-      output += value
-      if (!quiet) appendOutputText(value)
-    })
-    child.once('error', (error) => {
-      runningProcesses.delete(child)
-      reject(error)
-    })
-    child.once('close', (code) => {
-      if (onLine && pending) onLine(pending)
-      runningProcesses.delete(child)
-      resolvePromise({ code, stdout, output })
-    })
-    if (input !== undefined) {
-      child.stdin?.on('error', () => undefined)
-      child.stdin?.end(input)
-    }
-  })
-}
-
-export function execFileText(command: string, args: string[], options: ExecFileOptions = {}): Promise<string> {
-  const { cwd, env } = options
-  return new Promise((resolvePromise, reject) => {
-    execFile(command, args, { cwd, env, windowsHide: true }, (error, stdout) => {
-      if (error) reject(error)
-      else resolvePromise(stdout)
-    })
-  })
-}
-
-export function runGoProcess(
-  subcommand: string,
-  args: string[],
-  options: GoRunOptions,
-): Promise<ProcessResult> {
-  const { cwd, environment = {} } = options
-  showCommandOutput(`${goCommand()} ${subcommand} ${args.join(' ')}`)
-  return runProcess(goCommand(), [subcommand, ...args], {
-    cwd,
-    env: { ...goEnvironment(), ...environment },
-  })
-}
-
-export async function runGo(
-  subcommand: string,
-  args: string[],
-  options: GoRunOptions,
-): Promise<ProcessResult | undefined> {
-  try {
-    const result = await runGoProcess(subcommand, args, options)
-    if (result.code !== 0) coc.window.showErrorMessage(`go ${subcommand} exited with code ${result.code}`)
-    return result
-  } catch (error) {
-    coc.window.showErrorMessage(`Failed to run go ${subcommand}: ${String(error)}`)
+  constructor(private readonly ctx: Ctx) {
+    super()
   }
-}
 
-// Runs a `go` subcommand and returns its captured stdout without echoing it to
-// the output channel, for machine-readable output such as `go list -json`.
-export async function captureGo(
-  subcommand: string,
-  args: string[],
-  options: GoRunOptions & { onLine?: (line: string) => void },
-): Promise<ProcessResult> {
-  const { cwd, environment = {}, onLine } = options
-  return runProcess(goCommand(), [subcommand, ...args], {
-    cwd,
-    env: { ...goEnvironment(), ...environment },
-    quiet: true,
-    onLine,
-  })
+  killAll(): void {
+    for (const process of this.running) process.kill()
+    this.running.clear()
+  }
+
+  // Spawns a command and collects its output. Unless stdin is fed, stdout is also
+  // streamed to the Go output channel.
+  run(command: string, args: string[], options: ProcessOptions): Promise<ProcessResult> {
+    const { cwd, env = process.env, input, quiet = false, onLine } = options
+    return new Promise((resolve, reject) => {
+      const child = spawn(command, args, {
+        cwd,
+        env,
+        stdio: [input === undefined ? 'ignore' : 'pipe', 'pipe', 'pipe'],
+        windowsHide: true,
+      })
+      this.running.add(child)
+      let stdout = ''
+      let output = ''
+      let pending = ''
+      child.stdout?.on('data', (chunk: Buffer) => {
+        const value = chunk.toString()
+        stdout += value
+        output += value
+        if (input === undefined && !quiet) this.ctx.output.append(value)
+        if (!onLine) return
+        pending += value
+        const lines = pending.split(/\r?\n/)
+        pending = lines.pop() ?? ''
+        for (const line of lines) onLine(line)
+      })
+      child.stderr?.on('data', (chunk: Buffer) => {
+        const value = chunk.toString()
+        output += value
+        if (!quiet) this.ctx.output.append(value)
+      })
+      child.once('error', (error) => {
+        this.running.delete(child)
+        reject(error)
+      })
+      child.once('close', (code) => {
+        if (onLine && pending) onLine(pending)
+        this.running.delete(child)
+        resolve({ code, stdout, output })
+      })
+      if (input !== undefined) {
+        child.stdin?.on('error', () => undefined)
+        child.stdin?.end(input)
+      }
+    })
+  }
+
+  execFileText(command: string, args: string[], options: ExecFileOptions = {}): Promise<string> {
+    const { cwd, env } = options
+    return new Promise((resolve, reject) => {
+      execFile(command, args, { cwd, env, windowsHide: true }, (error, stdout) => {
+        if (error) reject(error)
+        else resolve(stdout)
+      })
+    })
+  }
+
+  goProcess(subcommand: string, args: string[], options: GoRunOptions): Promise<ProcessResult> {
+    const { cwd, environment = {} } = options
+    this.ctx.output.header(`${this.ctx.config.goCommand()} ${subcommand} ${args.join(' ')}`)
+    return this.run(this.ctx.config.goCommand(), [subcommand, ...args], {
+      cwd,
+      env: { ...this.ctx.environment.variables(), ...environment },
+    })
+  }
+
+  async go(subcommand: string, args: string[], options: GoRunOptions): Promise<ProcessResult | undefined> {
+    try {
+      const result = await this.goProcess(subcommand, args, options)
+      if (result.code !== 0) window.showErrorMessage(`go ${subcommand} exited with code ${result.code}`)
+      return result
+    } catch (error) {
+      window.showErrorMessage(`Failed to run go ${subcommand}: ${String(error)}`)
+    }
+  }
+
+  // Runs a `go` subcommand and returns its captured stdout without echoing it to
+  // the output channel, for machine-readable output such as `go list -json`.
+  captureGo(
+    subcommand: string,
+    args: string[],
+    options: GoRunOptions & { onLine?: (line: string) => void },
+  ): Promise<ProcessResult> {
+    const { cwd, environment = {}, onLine } = options
+    return this.run(this.ctx.config.goCommand(), [subcommand, ...args], {
+      cwd,
+      env: { ...this.ctx.environment.variables(), ...environment },
+      quiet: true,
+      onLine,
+    })
+  }
+
+  override dispose(): void {
+    this.killAll()
+    super.dispose()
+  }
 }

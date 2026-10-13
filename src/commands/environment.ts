@@ -1,84 +1,90 @@
-import type { ExtensionContext } from 'coc.nvim'
-import * as coc from 'coc.nvim'
-import { appendOutput, showCommandOutput, showOutput } from '../editor/output'
-import { runGoProcess, runProcess } from '../editor/process'
-import { configValue, goCommand } from '../go/config'
-import { goEnvironment } from '../go/environment'
+import type { Ctx } from '../ctx'
+import { window, workspace } from 'coc.nvim'
 import { resolveExecutable } from '../go/executable'
-import { installTool, toolExecutable, tools } from '../go/tools'
-import { replaceLanguageClient, restartClient } from '../lsp/language-server'
-import { registerCommand } from './index'
+import { tools } from '../go/tools'
 
-async function showGoEnvironment(name?: string): Promise<void> {
-  const args = name ? [name] : []
-  try {
-    const result = await runGoProcess('env', args, { cwd: coc.workspace.cwd })
-    if (result.code !== 0) {
-      coc.window.showErrorMessage(`go env exited with code ${result.code}`)
-    } else if (name) {
-      await coc.window.showNotification({ kind: 'info', title: name, content: result.stdout.trim() })
-    } else {
-      showOutput()
+export class EnvironmentCommands {
+  constructor(private readonly ctx: Ctx) {}
+
+  private async showGoEnvironment(name?: string): Promise<void> {
+    const args = name ? [name] : []
+    try {
+      const result = await this.ctx.process.goProcess('env', args, { cwd: workspace.cwd })
+      if (result.code !== 0) {
+        window.showErrorMessage(`go env exited with code ${result.code}`)
+      } else if (name) {
+        await window.showNotification({ kind: 'info', title: name, content: result.stdout.trim() })
+      } else {
+        this.ctx.output.show()
+      }
+    } catch (error) {
+      window.showErrorMessage(`Failed to run go env: ${String(error)}`)
     }
-  } catch (error) {
-    coc.window.showErrorMessage(`Failed to run go env: ${String(error)}`)
   }
-}
 
-async function showVersions(): Promise<void> {
-  try {
-    const result = await runGoProcess('version', [], { cwd: coc.workspace.cwd })
-    const goplsPath = await toolExecutable('gopls')
-    let goplsVersion = 'not installed'
-    if (goplsPath) {
-      const goplsResult = await runProcess(goplsPath, ['version'], { cwd: coc.workspace.cwd, env: goEnvironment() })
-      goplsVersion = goplsResult.stdout.trim() || `exit code ${goplsResult.code}`
+  private async showVersions(): Promise<void> {
+    try {
+      const result = await this.ctx.process.goProcess('version', [], { cwd: workspace.cwd })
+      const goplsPath = await this.ctx.tools.executable('gopls')
+      let goplsVersion = 'not installed'
+      if (goplsPath) {
+        const goplsResult = await this.ctx.process.run(goplsPath, ['version'], {
+          cwd: workspace.cwd,
+          env: this.ctx.environment.variables(),
+        })
+        goplsVersion = goplsResult.stdout.trim() || `exit code ${goplsResult.code}`
+      }
+      await window.showNotification({
+        kind: result.code === 0 ? 'info' : 'error',
+        title: `Go ${result.stdout.trim()}`,
+        content: `gopls ${goplsVersion}`,
+      })
+    } catch (error) {
+      window.showErrorMessage(`Failed to run go version: ${String(error)}`)
     }
-    await coc.window.showNotification({ kind: result.code === 0 ? 'info' : 'error', title: `Go ${result.stdout.trim()}`, content: `gopls ${goplsVersion}` })
-  } catch (error) {
-    coc.window.showErrorMessage(`Failed to run go version: ${String(error)}`)
   }
-}
 
-async function locateTools(): Promise<void> {
-  showCommandOutput('go locate tools')
-  const lines = [`go: ${resolveExecutable(goCommand()) || 'not found'}`]
-  for (const name of Object.keys(tools)) {
-    const binary = await toolExecutable(name)
-    lines.push(`${name}: ${binary || 'not found'}`)
+  private async locateTools(): Promise<void> {
+    this.ctx.output.header('go locate tools')
+    const lines = [`go: ${resolveExecutable(this.ctx.config.goCommand()) || 'not found'}`]
+    for (const name of Object.keys(tools)) {
+      const binary = await this.ctx.tools.executable(name)
+      lines.push(`${name}: ${binary || 'not found'}`)
+    }
+    this.ctx.output.appendLine(lines.join('\n'))
+    this.ctx.output.show()
   }
-  appendOutput(lines.join('\n'))
-  showOutput()
-}
 
-export function registerEnvironmentCommands(context: ExtensionContext): void {
-  registerCommand(context, 'go.gopath', () => showGoEnvironment('GOPATH'))
-  registerCommand(context, 'go.goroot', () => showGoEnvironment('GOROOT'))
-  registerCommand(context, 'go.env', () => showGoEnvironment())
-  registerCommand(context, 'go.environment.choose', async () => {
-    const current = configValue('goroot', '')
-    const value = await coc.window.requestInput('GOROOT to use (empty to use Go default)', current)
+  private async chooseEnvironment(): Promise<void> {
+    const current = this.ctx.config.get('goroot', '')
+    const value = await window.requestInput('GOROOT to use (empty to use Go default)', current)
     if (value === undefined) return
     // coc.nvim's requestInput resolves '' from input() or null from the float
     // prompt on cancel instead of undefined, so cancel must not clear the value.
     if (!value) return
-    await coc.workspace.getConfiguration('go').update('goroot', value, true)
-  })
-  registerCommand(context, 'go.version', showVersions)
-  registerCommand(context, 'go.locate.tools', locateTools)
+    await workspace.getConfiguration('go').update('goroot', value, true)
+  }
 
-  registerCommand(context, 'go.tools.install', async () => {
+  register(): void {
+    this.ctx.commands.handle('go.gopath', () => this.showGoEnvironment('GOPATH'))
+    this.ctx.commands.handle('go.goroot', () => this.showGoEnvironment('GOROOT'))
+    this.ctx.commands.handle('go.env', () => this.showGoEnvironment())
+    this.ctx.commands.handle('go.environment.choose', () => this.chooseEnvironment())
+    this.ctx.commands.handle('go.version', () => this.showVersions())
+    this.ctx.commands.handle('go.locate.tools', () => this.locateTools())
+
+    this.ctx.commands.handle('go.tools.install', async () => {
+      for (const name of Object.keys(tools)) {
+        if (!tools[name].optional) await this.ctx.tools.install(name)
+      }
+    })
     for (const name of Object.keys(tools)) {
-      if (!tools[name].optional) await installTool(name)
+      this.ctx.commands.handle(`go.tools.install.${name}`, async () => {
+        if (await this.ctx.tools.install(name) && name === 'gopls') await this.ctx.languageServer.replace()
+      })
     }
-  })
-  for (const name of Object.keys(tools)) {
-    registerCommand(context, `go.tools.install.${name}`, async () => {
-      if (await installTool(name) && name === 'gopls') await replaceLanguageClient(context)
+    this.ctx.commands.handle('go.gopls.install', async () => {
+      if (await this.ctx.tools.install('gopls')) await this.ctx.languageServer.replace()
     })
   }
-  registerCommand(context, 'go.gopls.install', async () => {
-    if (await installTool('gopls')) await replaceLanguageClient(context)
-  })
-  registerCommand(context, 'go.languageserver.restart', restartClient)
 }

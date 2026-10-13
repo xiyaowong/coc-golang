@@ -1,56 +1,59 @@
-import type { Disposable } from 'coc.nvim'
-import * as coc from 'coc.nvim'
-import { execFileText } from '../editor/process'
-import { configValue, goCommand } from '../go/config'
-import { goEnvironment } from '../go/environment'
-import { toolExecutable } from '../go/tools'
-import { getClient } from './language-server'
+import type { Disposable, StatusBarItem } from 'coc.nvim'
+import type { Ctx } from '../ctx'
+import { window } from 'coc.nvim'
+import { DisposableStore } from '../disposable'
 
-let item: coc.StatusBarItem | undefined
-let stateSubscription: Disposable | undefined
-let version: string | undefined
+export class StatusBar extends DisposableStore {
+  private item: StatusBarItem | undefined
+  private stateSubscription: Disposable | undefined
+  private version: string | undefined
 
-function render(): void {
-  if (!item) return
-  const label = version ? ` ${version}` : ''
-  if (getClient()?.isRunning()) {
-    item.text = `gopls${label}`
-  } else {
-    item.text = getClient() ? 'gopls stopped' : 'gopls not found'
+  constructor(private readonly ctx: Ctx) {
+    super()
+    this.ctx.languageServer.onDidReplaceClient = () => this.update()
   }
-  item.show()
-}
 
-export function updateStatusBar(): void {
-  stateSubscription?.dispose()
-  stateSubscription = getClient()?.onDidChangeState(() => render())
-  render()
-}
-
-async function resolveVersion(): Promise<void> {
-  try {
-    const executable = await toolExecutable('gopls')
-    if (!executable) return
-    const output = await execFileText(goCommand(), ['version', '-m', executable], { env: goEnvironment() })
-    const match = /^\s*mod\s+\S+\s+(v\S+)/m.exec(output)
-    if (match) version = match[1]
-  } catch {
-    // gopls is unavailable or `go` failed; the item falls back to showing no version.
+  private render(): void {
+    if (!this.item) return
+    const client = this.ctx.languageServer.getClient()
+    const label = this.version ? ` ${this.version}` : ''
+    this.item.text = client?.isRunning() ? `gopls${label}` : client ? 'gopls stopped' : 'gopls not found'
+    this.item.show()
   }
-}
 
-export function createStatusBar(): Disposable {
-  if (!configValue('statusBar.enable', true)) return { dispose: () => undefined }
+  update(): void {
+    this.stateSubscription?.dispose()
+    this.stateSubscription = this.ctx.languageServer.getClient()?.onDidChangeState(() => this.render())
+    this.render()
+  }
 
-  item = coc.window.createStatusBarItem(0)
-  updateStatusBar()
-  void resolveVersion().then(render)
-  return {
-    dispose: () => {
-      stateSubscription?.dispose()
-      stateSubscription = undefined
-      item?.dispose()
-      item = undefined
-    },
+  private async resolveVersion(): Promise<void> {
+    try {
+      const executable = await this.ctx.tools.executable('gopls')
+      if (!executable) return
+      const output = await this.ctx.process.execFileText(
+        this.ctx.config.goCommand(),
+        ['version', '-m', executable],
+        { env: this.ctx.environment.variables() },
+      )
+      const match = /^\s*mod\s+\S+\s+(v\S+)/m.exec(output)
+      if (match) this.version = match[1]
+    } catch {
+      // gopls is unavailable or `go` failed; the item falls back to showing no version.
+    }
+  }
+
+  async start(): Promise<void> {
+    if (!this.ctx.config.get('statusBar.enable', true)) return
+    this.item = window.createStatusBarItem(0)
+    this.track(this.item)
+    this.update()
+    void this.resolveVersion().then(() => this.render())
+  }
+
+  override dispose(): void {
+    this.stateSubscription?.dispose()
+    this.stateSubscription = undefined
+    super.dispose()
   }
 }

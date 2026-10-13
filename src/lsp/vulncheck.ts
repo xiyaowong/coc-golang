@@ -1,11 +1,10 @@
 import type { ProgressToken } from 'coc.nvim'
+import type * as coc from 'coc.nvim'
+import type { Ctx } from '../ctx'
 import type { MiddlewareHooks } from './middleware'
 import { dirname, extname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import * as coc from 'coc.nvim'
-import { appendOutput, showCommandOutput, showOutput } from '../editor/output'
-import { runProcess } from '../editor/process'
-import { goEnvironment } from '../go/environment'
+import { window } from 'coc.nvim'
 
 interface VulncheckReport {
   Entries?: Record<string, unknown>
@@ -36,34 +35,31 @@ function reportInput(report: VulncheckReport): string {
   return records.map(item => JSON.stringify(item)).join('\n')
 }
 
-async function displayReport(gopls: string, report: VulncheckReport, uri: string): Promise<void> {
-  const result = await runProcess(
-    gopls,
-    ['vulncheck', '--', '-mode=convert', '-show=color'],
-    { cwd: directoryForUri(uri), env: goEnvironment(), input: reportInput(report) },
-  )
-  if (result.output) appendOutput(result.output)
-  showOutput()
-  if (result.code !== 0 && result.code !== 3) {
-    coc.window.showErrorMessage(`gopls vulncheck report conversion exited with code ${result.code}.`)
-  }
-}
-
 function tokenFrom(value: unknown): ProgressToken | undefined {
   const token = record(value)?.Token
   return typeof token === 'string' || typeof token === 'number' ? token : undefined
 }
 
-export function vulncheckMiddleware(
-  gopls: string,
-  getClient: () => coc.LanguageClient | undefined,
-): MiddlewareHooks {
+export function vulncheckMiddleware(ctx: Ctx, gopls: string): MiddlewareHooks {
   const runs = new Map<ProgressToken, string>()
   const earlyProgress = new Map<ProgressToken, WorkDoneProgress[]>()
   let activeUri: string | undefined
 
+  const displayReport = async (report: VulncheckReport, uri: string): Promise<void> => {
+    const result = await ctx.process.run(
+      gopls,
+      ['vulncheck', '--', '-mode=convert', '-show=color'],
+      { cwd: directoryForUri(uri), env: ctx.environment.variables(), input: reportInput(report) },
+    )
+    if (result.output) ctx.output.append(result.output)
+    ctx.output.show()
+    if (result.code !== 0 && result.code !== 3) {
+      window.showErrorMessage(`gopls vulncheck report conversion exited with code ${result.code}.`)
+    }
+  }
+
   const fetchReport = async (uri: string): Promise<void> => {
-    const client = getClient()
+    const client = ctx.languageServer.getClient()
     if (!client) throw new Error('gopls is not running.')
     const results = await client.sendRequest<Record<string, VulncheckReport>>('workspace/executeCommand', {
       command: 'gopls.fetch_vulncheck_result',
@@ -72,7 +68,7 @@ export function vulncheckMiddleware(
     const wantedPath = uriPath(uri)
     for (const [moduleUri, report] of Object.entries(results)) {
       if (uriPath(moduleUri) === wantedPath) {
-        await displayReport(gopls, report, uri)
+        await displayReport(report, uri)
         return
       }
     }
@@ -91,21 +87,21 @@ export function vulncheckMiddleware(
     }
 
     if (progress.kind === 'begin') {
-      appendOutput(`\n> govulncheck ${uri}\n${progress.title}`)
+      ctx.output.append(`\n> govulncheck ${uri}\n${progress.title}`)
     } else if (progress.kind === 'report' && progress.message) {
-      appendOutput(progress.message)
+      ctx.output.append(progress.message)
     } else if (progress.kind === 'end') {
       runs.delete(token)
       earlyProgress.clear()
       if (progress.message === 'completed') {
         void fetchReport(uri).catch((error: unknown) => {
-          coc.window.showErrorMessage(`Failed to retrieve govulncheck results: ${String(error)}`)
+          window.showErrorMessage(`Failed to retrieve govulncheck results: ${String(error)}`)
         }).finally(() => {
           activeUri = undefined
         })
       } else {
         activeUri = undefined
-        appendOutput(`govulncheck terminated without a result: ${progress.message ?? 'unknown status'}`)
+        ctx.output.append(`govulncheck terminated without a result: ${progress.message ?? 'unknown status'}`)
       }
     }
   }
@@ -117,18 +113,18 @@ export function vulncheckMiddleware(
 
       if (command === 'gopls.run_govulncheck' && typeof uri === 'string') {
         if (activeUri) {
-          coc.window.showWarningMessage('Cannot start vulncheck while another vulncheck is in progress.')
+          window.showWarningMessage('Cannot start vulncheck while another vulncheck is in progress.')
           return undefined
         }
         activeUri = uri
-        showCommandOutput(`govulncheck -C ${directoryForUri(uri)} ./...`)
+        ctx.output.header(`govulncheck -C ${directoryForUri(uri)} ./...`)
         try {
           const result = await next(command, args)
           const token = tokenFrom(result)
           if (token === undefined) {
             activeUri = undefined
             earlyProgress.clear()
-            coc.window.showErrorMessage('gopls did not return a progress token for govulncheck.')
+            window.showErrorMessage('gopls did not return a progress token for govulncheck.')
             return result
           }
           runs.set(token, uri)
@@ -138,7 +134,7 @@ export function vulncheckMiddleware(
         } catch (error) {
           activeUri = undefined
           earlyProgress.clear()
-          coc.window.showErrorMessage(`Failed to run govulncheck: ${String(error)}`)
+          window.showErrorMessage(`Failed to run govulncheck: ${String(error)}`)
           throw error
         }
       }
@@ -147,9 +143,9 @@ export function vulncheckMiddleware(
       if (command === 'gopls.vulncheck' && typeof uri === 'string') {
         const value = record(result)?.Result
         if (value && typeof value === 'object') {
-          showCommandOutput(`gopls vulncheck ${directoryForUri(uri)}`)
-          void displayReport(gopls, value as VulncheckReport, uri).catch((error: unknown) => {
-            coc.window.showErrorMessage(`Failed to format vulncheck results: ${String(error)}`)
+          ctx.output.header(`gopls vulncheck ${directoryForUri(uri)}`)
+          void displayReport(value as VulncheckReport, uri).catch((error: unknown) => {
+            window.showErrorMessage(`Failed to format vulncheck results: ${String(error)}`)
           })
         }
       }
