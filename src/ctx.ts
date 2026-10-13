@@ -126,8 +126,9 @@ export class Ctx {
     void checkGoplsUpdate(this)
   }
 
-  dispose(): void {
+  async dispose(): Promise<void> {
     this.watchers.dispose()
+    await this.languageServer.stop()
     this.convertSession.dispose()
     this.converter.dispose()
     this.explorer.dispose()

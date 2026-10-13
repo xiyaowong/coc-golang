@@ -645,6 +645,10 @@ export class TestExplorer extends DisposableStore implements TreeDataProvider<No
   selection(): Node | undefined {
     return this.view?.selection[0]
   }
+
+  hasView(): boolean {
+    return this.view !== undefined
+  }
 }
 
 // Registers the test explorer's commands and its view.
@@ -657,7 +661,10 @@ export class TestExplorerCommands {
 
   register(): void {
     this.ctx.commands.handle('go.test.explorer.show', () => this.ctx.explorer.showView())
-    this.ctx.commands.handle('go.test.explorer.refresh', () => this.ctx.explorer.scheduleDiscovery())
+    this.ctx.commands.handle('go.test.explorer.refresh', () => {
+      if (!this.ctx.explorer.hasView()) return
+      void this.ctx.explorer.scheduleDiscovery()
+    })
     this.ctx.commands.handle('go.test.explorer.run', async (node?: Node) => {
       const target = node ?? this.selection()
       if (!target) {

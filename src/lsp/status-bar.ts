@@ -10,6 +10,7 @@ export class StatusBar extends DisposableStore {
 
   constructor(private readonly ctx: Ctx) {
     super()
+    this.ctx.languageServer.onDidReplaceClient = () => this.update()
   }
 
   private render(): void {

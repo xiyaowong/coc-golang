@@ -13,23 +13,23 @@ export class ModuleCommands {
     return value?.trim() || undefined
   }
 
-  // Runs `go mod <args>` in the active directory, through the output channel.
-  private modInOutput(args: string[]): Promise<unknown> {
-    return activeDirectory().then(cwd => this.ctx.process.go('mod', args, { cwd }))
+  // Runs `go <subcommand> <args>` in the active directory, through the output channel.
+  private inOutput(subcommand: string, args: string[]): Promise<unknown> {
+    return activeDirectory().then(cwd => this.ctx.process.go(subcommand, args, { cwd }))
   }
 
   private modEditCommand(id: string, flag: string, prompt: string): void {
     this.ctx.commands.handle(id, async (value?: string) => {
       value ??= await this.requestInput(prompt)
       if (!value) return
-      await this.modInOutput(['edit', `${flag}=${value}`])
+      await this.inOutput('mod', ['edit', `${flag}=${value}`])
     })
   }
 
   register(): void {
-    this.ctx.commands.handle('go.mod.tidy', () => this.modInOutput(['tidy']))
-    this.ctx.commands.handle('go.mod.vendor', () => this.modInOutput(['vendor']))
-    this.ctx.commands.handle('go.mod.download', () => this.modInOutput(['download']))
+    this.ctx.commands.handle('go.mod.tidy', () => this.inOutput('mod', ['tidy']))
+    this.ctx.commands.handle('go.mod.vendor', () => this.inOutput('mod', ['vendor']))
+    this.ctx.commands.handle('go.mod.download', () => this.inOutput('mod', ['download']))
 
     this.ctx.commands.handle('go.mod.init', async (modulePath?: string) => {
       modulePath ??= await window.requestInput('Module path (e.g. example.com/project)')
@@ -38,19 +38,19 @@ export class ModuleCommands {
     })
 
     this.ctx.commands.handle('go.mod.verify', async () => {
-      await this.modInOutput(['verify'])
+      await this.inOutput('mod', ['verify'])
       this.ctx.output.show()
     })
 
     this.ctx.commands.handle('go.mod.why', async (target?: string) => {
       target ??= await this.requestInput('Package or module path')
       if (!target) return
-      await this.modInOutput(['why', ...target.split(/\s+/)])
+      await this.inOutput('mod', ['why', ...target.split(/\s+/)])
       this.ctx.output.show()
     })
 
     this.ctx.commands.handle('go.mod.graph', async () => {
-      await this.modInOutput(['graph'])
+      await this.inOutput('mod', ['graph'])
       this.ctx.output.show()
     })
 
@@ -65,7 +65,7 @@ export class ModuleCommands {
     this.ctx.commands.handle('go.work.use', async (directory?: string) => {
       directory ??= await this.requestInput('Module directory to add to the workspace', '.')
       if (!directory) return
-      await this.modInOutput(['use', directory])
+      await this.inOutput('work', ['use', directory])
     })
 
     this.ctx.commands.handle('go.get.package', async (packagePath?: string) => {

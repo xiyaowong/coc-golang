@@ -9,6 +9,6 @@ export async function activate(context: ExtensionContext): Promise<void> {
 }
 
 export async function deactivate(): Promise<void> {
-  ctx?.dispose()
+  await ctx?.dispose()
   ctx = undefined
 }

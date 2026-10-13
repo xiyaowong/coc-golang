@@ -10,6 +10,9 @@ export class LanguageServer extends DisposableStore {
   private client: LanguageClient | undefined
   private registration: Disposable | undefined
 
+  // Called after a new client is in place, so the status bar can track it.
+  onDidReplaceClient: () => void = () => undefined
+
   constructor(private readonly ctx: Ctx) {
     super()
     this.track(this.ctx.config.onDidChange((change) => {
@@ -103,6 +106,7 @@ export class LanguageServer extends DisposableStore {
     this.client = instance
     this.registration = services.registerLanguageClient(instance)
     this.track(this.registration)
+    this.onDidReplaceClient()
   }
 
   private async teardown(): Promise<void> {
