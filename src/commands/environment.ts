@@ -1,5 +1,7 @@
 import type { Ctx } from '../ctx'
+import { existsSync, readFileSync } from 'node:fs'
 import { window, workspace } from 'coc.nvim'
+import { scratchBuffer, setBufferLines, showScratchBuffer } from '../editor'
 import { resolveExecutable, tools } from '../go/tools'
 
 export function registerEnvironmentCommands(ctx: Ctx): void {
@@ -62,11 +64,23 @@ export function registerEnvironmentCommands(ctx: Ctx): void {
     await workspace.getConfiguration('go').update('goroot', value, true)
   }
 
+  const showChangeLog = async (): Promise<void> => {
+    const file = ctx.ext.asAbsolutePath('CHANGELOG.md')
+    if (!existsSync(file)) {
+      window.showErrorMessage(`The extension has no changelog at ${file}.`)
+      return
+    }
+    const bufnr = await scratchBuffer('coc-golang://changelog', 'markdown')
+    await setBufferLines(bufnr, readFileSync(file, 'utf8').split(/\r?\n/), true)
+    await showScratchBuffer(bufnr)
+  }
+
   ctx.commands.handle('go.gopath', () => showGoEnvironment('GOPATH'))
   ctx.commands.handle('go.goroot', () => showGoEnvironment('GOROOT'))
   ctx.commands.handle('go.env', () => showGoEnvironment())
   ctx.commands.handle('go.environment.choose', () => chooseEnvironment())
   ctx.commands.handle('go.version', () => showVersions())
+  ctx.commands.handle('go.showChangeLog', () => showChangeLog())
   ctx.commands.handle('go.locate.tools', () => locateTools())
 
   ctx.commands.handle('go.tools.install', async () => {

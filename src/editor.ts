@@ -75,3 +75,31 @@ export function counterpartGoFile(file: string): string | undefined {
 export function fileUri(file: string): string {
   return pathToFileURL(file).href
 }
+
+export async function scratchBuffer(name: string, filetype: string): Promise<number> {
+  const bufnr = await coc.workspace.nvim.call('bufadd', [name]) as number
+  await coc.workspace.nvim.call('setbufvar', [bufnr, '&buftype', 'nofile'])
+  await coc.workspace.nvim.call('setbufvar', [bufnr, '&bufhidden', 'hide'])
+  await coc.workspace.nvim.call('setbufvar', [bufnr, '&swapfile', 0])
+  await coc.workspace.nvim.call('setbufvar', [bufnr, '&filetype', filetype])
+  await coc.workspace.nvim.call('setbufvar', [bufnr, 'coc_enabled', 0])
+  return bufnr
+}
+
+export async function setBufferLines(bufnr: number, lines: string[], readonly = false): Promise<void> {
+  lines = lines.flatMap(line => line.split(/\r?\n/)).flat()
+  const buffer = coc.workspace.nvim.createBuffer(bufnr)
+  await buffer.setOption('modifiable', true)
+  await buffer.setLines(lines.length ? lines : [''], { start: 0, end: -1, strictIndexing: false })
+  await buffer.setOption('modifiable', !readonly)
+}
+
+export async function showScratchBuffer(bufnr: number): Promise<void> {
+  const windows = await coc.workspace.nvim.call('win_findbuf', [bufnr]) as number[]
+  if (windows.length) {
+    await coc.workspace.nvim.call('win_gotoid', [windows[0]])
+    return
+  }
+  await coc.workspace.nvim.command('vsplit')
+  await coc.workspace.nvim.command(`buffer ${bufnr}`)
+}

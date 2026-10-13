@@ -6,7 +6,7 @@ description: Every go.* command, grouped by area.
 <!-- Generated from package.json (and src/go/tools.ts). Do not edit by hand. -->
 ## Commands
 
-All 83 commands are run with `:CocCommand <id>`.
+All 84 commands are run with `:CocCommand <id>`.
 
 ### Tests & benchmarks
 
@@ -110,6 +110,7 @@ All 83 commands are run with `:CocCommand <id>`.
 | `go.goroot` | Show GOROOT |
 | `go.environment.choose` | Choose Go Environment |
 | `go.version` | Show Go Version |
+| `go.showChangeLog` | Show Changelog |
 | `go.tools.install` | Install Go Tools |
 | `go.locate.tools` | Locate Go Tools |
 | `go.languageserver.restart` | Restart gopls |
