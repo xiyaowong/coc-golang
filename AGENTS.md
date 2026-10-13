@@ -8,3 +8,4 @@
 - Ask before adding any test. Do not write a new test, or extend an existing one, without the user's agreement first — this includes tests that a change would otherwise call for.
 - Commit messages and PR titles must follow Conventional Commits (`feat:`, `fix:`, `perf:`, `docs:`, `refactor:`, `test:`, `chore:`, `ci:`; breaking changes use `!` or a `BREAKING CHANGE:` footer). release-please derives the version bump and CHANGELOG from them on `main`; do not bump versions or edit `CHANGELOG.md` by hand.
 - Files under `test/pure/` must also pass under a bare `node --test` with no hooks; they may only import modules that do not depend on `coc.nvim`.
+- Do not add explanatory comments to the code — the reasoning belongs in the reply or the commit message. Docs describe what a feature does, not the steps to operate it or the history of the change.
