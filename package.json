@@ -46,6 +46,7 @@
     "onCommand:go.benchmark.cursor",
     "onCommand:go.benchmark.file",
     "onCommand:go.test.coverage",
+    "onCommand:go.apply.coverprofile",
     "onCommand:go.toggle.test.file",
     "onCommand:go.test.previous",
     "onCommand:go.build.package",
@@ -192,6 +193,11 @@
       {
         "command": "go.test.coverage",
         "title": "Test Go Package with Coverage",
+        "category": "Go"
+      },
+      {
+        "command": "go.apply.coverprofile",
+        "title": "Apply Existing Coverage Profile",
         "category": "Go"
       },
       {
@@ -885,6 +891,23 @@
           },
           "default": null,
           "description": "Flags to pass to `go test`. If null, then buildFlags will be used. This is not propagated to the language server."
+        },
+        "go.coverMode": {
+          "type": "string",
+          "enum": [
+            "default",
+            "set",
+            "count",
+            "atomic"
+          ],
+          "enumDescriptions": [
+            "the default value chosen by 'go test' (set for package tests, atomic with -race)",
+            "just reports whether each block was executed",
+            "counts the number of times each block was executed",
+            "like count, but with a lock, for accurate counts in parallel tests"
+          ],
+          "default": "default",
+          "description": "When generating code coverage, the value for -covermode."
         },
         "go.generateTestsFlags": {
           "type": "array",

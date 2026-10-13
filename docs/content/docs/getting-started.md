@@ -52,6 +52,16 @@ Use `:CocCommand go.test.showOutput` to bring the Go terminal to the front.
 
 See the [command reference](./reference/commands) for all of them.
 
+## Show test coverage
+
+`:CocCommand go.test.coverage` runs the tests of the current package with
+coverage and highlights the result in your open Go buffers: covered code with
+`CocCoverageCovered`, uncovered code with `CocCoverageUncovered`. Run the
+command again, or save an edited Go file, to clear the highlights.
+
+Already have a profile from a previous `go test -coverprofile` run? Apply it
+with `go.apply.coverprofile`. Set `go.coverMode` to control `-covermode`.
+
 ## Configure the extension
 
 Settings live in `coc-settings.json` (run `:CocConfig` to open it). For

@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url'
 import { workspace } from 'coc.nvim'
 import { Checker } from './check'
 import { registerBuildCommands } from './commands/build'
+import { registerCoverageCommands } from './commands/coverage'
 import { registerEditCommands } from './commands/edit'
 import { registerEnvironmentCommands } from './commands/environment'
 import { CommandManager } from './commands/index'
@@ -13,6 +14,7 @@ import { registerTagCommands } from './commands/tags'
 import { registerTestCommands } from './commands/test'
 import { Converter, registerConvertCommands } from './convert'
 import { ConvertSession } from './convert-session'
+import { CoverageManager } from './coverage'
 import { DisposableStore } from './disposable'
 import { ConfigManager } from './go/config'
 import { GoEnvironment } from './go/environment'
@@ -71,6 +73,7 @@ export class Ctx {
   readonly formatter: Formatter
   readonly statusBar: StatusBar
   readonly checker: Checker
+  readonly coverage: CoverageManager
   readonly tests: TestRunner
   readonly explorer: TestExplorer
   readonly converter: Converter
@@ -88,6 +91,7 @@ export class Ctx {
     this.formatter = new Formatter(this)
     this.statusBar = new StatusBar(this)
     this.checker = new Checker(this)
+    this.coverage = new CoverageManager(this)
     this.tests = new TestRunner(this)
     this.explorer = new TestExplorer(this)
     this.converter = new Converter(this)
@@ -95,6 +99,7 @@ export class Ctx {
 
     registerTestCommands(this)
     registerTestExplorerCommands(this)
+    registerCoverageCommands(this)
     registerBuildCommands(this)
     registerEditCommands(this)
     registerTagCommands(this)
@@ -125,6 +130,7 @@ export class Ctx {
     this.convertSession.dispose()
     this.converter.dispose()
     this.explorer.dispose()
+    this.coverage.dispose()
     this.tests.dispose()
     this.checker.dispose()
     this.statusBar.dispose()

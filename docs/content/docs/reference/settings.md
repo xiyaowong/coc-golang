@@ -4,7 +4,7 @@ description: Configuration reference for the go.* settings.
 ---
 
 <!-- Generated from package.json (and src/go/tools.ts). Do not edit by hand. -->
-This page lists the 63 `go.*` settings. See [gopls settings](./gopls-settings) for language-server options.
+This page lists the 64 `go.*` settings. See [gopls settings](./gopls-settings) for language-server options.
 
 | Setting | Type | Default |
 | --- | --- | --- |
@@ -57,6 +57,7 @@ This page lists the 63 `go.*` settings. See [gopls settings](./gopls-settings) f
 | `go.testEnvVars` | `object` | `{}` |
 | `go.testEnvFile` | `string` | `null` |
 | `go.testFlags` | `array | null` | `null` |
+| `go.coverMode` | `string` | `"default"` |
 | `go.generateTestsFlags` | `string[]` | `[]` |
 | `go.inlayHints.assignVariableTypes` | `boolean` | `false` |
 | `go.inlayHints.compositeLiteralFields` | `boolean` | `false` |
@@ -420,6 +421,19 @@ Absolute path to a file containing environment variables definitions. File conte
 **Type:** `array | null` · **Default:** `null`
 
 Flags to pass to `go test`. If null, then buildFlags will be used. This is not propagated to the language server.
+
+## `go.coverMode`
+
+**Type:** `string` · **Default:** `"default"`
+
+When generating code coverage, the value for -covermode.
+
+**Options:**
+
+- `default` — the default value chosen by 'go test' (set for package tests, atomic with -race)
+- `set` — just reports whether each block was executed
+- `count` — counts the number of times each block was executed
+- `atomic` — like count, but with a lock, for accurate counts in parallel tests
 
 ## `go.generateTestsFlags`
 

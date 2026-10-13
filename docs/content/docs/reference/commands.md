@@ -6,7 +6,7 @@ description: Every go.* command, grouped by area.
 <!-- Generated from package.json (and src/go/tools.ts). Do not edit by hand. -->
 ## Commands
 
-All 81 commands are run with `:CocCommand <id>`.
+All 82 commands are run with `:CocCommand <id>`.
 
 ### Tests & benchmarks
 
@@ -28,6 +28,7 @@ All 81 commands are run with `:CocCommand <id>`.
 | `go.benchmark.cursor` | Benchmark Go Function at Cursor |
 | `go.benchmark.file` | Benchmark Go File |
 | `go.test.coverage` | Test Go Package with Coverage |
+| `go.apply.coverprofile` | Apply Existing Coverage Profile |
 | `go.toggle.test.file` | Toggle Go Test File |
 | `go.test.previous` | Repeat Previous Go Test |
 | `go.test.generate.file` | Generate Tests for Go File |
