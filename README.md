@@ -97,15 +97,9 @@ See [Test explorer](https://xiyaowong.github.io/coc-golang/docs/test-explorer) i
 - `go.convert.jsonSchema` Generate Go types from a JSON Schema.
 - `go.convert.jsonToGo` Generate Go types from JSON.
 
-`go.convert.jsonSchema` runs `go-jsonschema` on the active JSON Schema file (or a schema you pick from the workspace), prompting for the package name and the output file. Schemas that use the `date` or `date-time` formats make the generated code import `github.com/atombender/go-jsonschema/pkg/types`.
+`go.convert.jsonSchema` runs `go-jsonschema` on the active JSON Schema file and opens the generated Go. Schemas that use the `date` or `date-time` formats make the generated code import `github.com/atombender/go-jsonschema/pkg/types`.
 
-`go.convert.jsonToGo` opens a scratch JSON buffer and a scratch Go buffer side by side, regenerating the Go types as you type; parse errors appear in the output buffer. The JSON starts from one of:
-
-- **From clipboard:** the system clipboard contents.
-- **From a JSON file:** a `.json` file picked from the workspace, or a path you type.
-- **From scratch:** an empty buffer.
-
-Closing either buffer's window ends the session.
+`go.convert.jsonToGo` opens a scratch JSON buffer and a scratch Go buffer side by side, regenerating the Go types as you type. The JSON can come from the clipboard, from a file, or from an empty buffer.
 
 The generated Go matches the defaults of [`mholt/json-to-go`](https://github.com/mholt/json-to-go) and needs no extra tool.
 
@@ -113,11 +107,7 @@ See [Converters](https://xiyaowong.github.io/coc-golang/docs/convert) in the doc
 
 ### 🔖 Struct tags
 
-`go.tags.add`, `go.tags.remove`, and `go.tags.clear` run `gomodifytags` on the struct under the cursor:
-
-- **Whole struct:** the cursor is on the `type ... struct {` line, the closing `}`, or a field's indentation.
-- **Single field:** the cursor is on a field.
-- **Selected fields:** in visual mode, the selection.
+`go.tags.add`, `go.tags.remove`, and `go.tags.clear` run `gomodifytags` on the struct or field under the cursor, or on a visual selection.
 
 ### 🌱 Go environment and tools
 

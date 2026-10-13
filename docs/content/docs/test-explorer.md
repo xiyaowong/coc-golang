@@ -17,13 +17,11 @@ the status of the tests beneath it:
 
 - `✓` passed, `✗` failed, `●` running, `○` skipped.
 - Parent nodes show a summary such as `3 passed · 1 failed`.
-- Hover a test for its file and line, how long it took, and its captured output.
+- A test's tooltip has its file and line, how long it took, and its captured output.
 
 ## Run and jump
 
 Run any node — a test, file, package, or folder runs everything beneath it.
-Run the node under the cursor with `<cr>`, or `go.test.explorer.runAll` to run
-the whole workspace.
 
 | Task | Command |
 | --- | --- |
@@ -34,9 +32,8 @@ the whole workspace.
 | Re-scan the workspace | `go.test.explorer.refresh` |
 | Pick a single test from a list | `go.test.explorer` |
 
-The tree is a normal coc.nvim tree buffer, so its built-in keys work — `f`
-filters the tree by name, and `<cr>` runs the selected item. See `:h coc-tree`
-and `:h coc-tree-filter`.
+The tree is a normal coc.nvim tree buffer, so its built-in keys work. See
+`:h coc-tree` and `:h coc-tree-filter`.
 
 ## Keys
 
