@@ -188,3 +188,8 @@ Not included:
 - Survey and telemetry.
 
 Update checks cover `gopls` only. Coverage highlighting is simpler than vscode-go's: covered and uncovered line ranges, with no gutter icons or per-block style settings.
+
+## 🤖 For AI agents
+
+If you are an AI agent working on this repository, read and follow [`AGENTS.md`](AGENTS.md) in the repository root. It is the source of truth for the project's conventions, and it overrides any default behavior.
+
