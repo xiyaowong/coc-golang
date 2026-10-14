@@ -1,5 +1,32 @@
 # Changelog
 
+## [0.8.0](https://github.com/xiyaowong/coc-golang/compare/coc-golang-v0.7.1...coc-golang-v0.8.0) (2026-10-14)
+
+
+### Features
+
+* highlight code coverage from go.test.coverage ([#55](https://github.com/xiyaowong/coc-golang/issues/55)) ([2cf387c](https://github.com/xiyaowong/coc-golang/commit/2cf387cf58d3b3ef6ea360130b18825611884c47))
+* open a coverage profile with go.show.coverprofile ([#63](https://github.com/xiyaowong/coc-golang/issues/63)) ([1ff7db4](https://github.com/xiyaowong/coc-golang/commit/1ff7db436c62f45816d686348d59e0aa673970d6)), closes [#62](https://github.com/xiyaowong/coc-golang/issues/62)
+* parse build, vet and lint output as structured data ([#77](https://github.com/xiyaowong/coc-golang/issues/77)) ([18718e6](https://github.com/xiyaowong/coc-golang/commit/18718e60f29c36d647a87f60f39bf40e3a2c4d6d))
+* pick a recorded coverage profile in go.apply.coverprofile ([#58](https://github.com/xiyaowong/coc-golang/issues/58)) ([7b76edc](https://github.com/xiyaowong/coc-golang/commit/7b76edc9948206220b827a3419c1698d26ba0d39)), closes [#57](https://github.com/xiyaowong/coc-golang/issues/57)
+* pre-fill the impl receiver from the nearest struct ([#91](https://github.com/xiyaowong/coc-golang/issues/91)) ([0c03d87](https://github.com/xiyaowong/coc-golang/commit/0c03d87a126649497c3f0f0ceb93c9dfa1587e9f))
+* show coverage counts by default ([#83](https://github.com/xiyaowong/coc-golang/issues/83)) ([bba0264](https://github.com/xiyaowong/coc-golang/commit/bba0264768e8596b922c10e7e1090c8cf2f96d8b))
+* show coverage execution counts as virtual text ([#75](https://github.com/xiyaowong/coc-golang/issues/75)) ([1e16876](https://github.com/xiyaowong/coc-golang/commit/1e168763fc8ad2dd1d9e80749b4d8ce48735fa12)), closes [#68](https://github.com/xiyaowong/coc-golang/issues/68)
+* show long-running command state in the status bar ([#85](https://github.com/xiyaowong/coc-golang/issues/85)) ([cf34363](https://github.com/xiyaowong/coc-golang/commit/cf34363ccb3f5ec50fdf2c632332b22ff8a7b74e))
+* show the changelog with go.showChangeLog ([#64](https://github.com/xiyaowong/coc-golang/issues/64)) ([89139f7](https://github.com/xiyaowong/coc-golang/commit/89139f7576695fc0fbf262ebb98cbaddb999837d)), closes [#61](https://github.com/xiyaowong/coc-golang/issues/61)
+* suppress diagnostics the language server already reports ([#78](https://github.com/xiyaowong/coc-golang/issues/78)) ([3a5d4de](https://github.com/xiyaowong/coc-golang/commit/3a5d4de837d39b285f287b6d853c9fdc9ffe0973))
+
+
+### Bug Fixes
+
+* pass the impl receiver as one argument and insert its stubs ([#88](https://github.com/xiyaowong/coc-golang/issues/88)) ([61a5ad1](https://github.com/xiyaowong/coc-golang/commit/61a5ad121c34b15fc49c8405d0385d41174b488d))
+* widen build and vet diagnostics to cover the reported line ([#76](https://github.com/xiyaowong/coc-golang/issues/76)) ([0f1aae7](https://github.com/xiyaowong/coc-golang/commit/0f1aae75fceb076459eb595b2bdfa154ffbb9f53))
+
+
+### Performance Improvements
+
+* activate from the workspace instead of every command ([#70](https://github.com/xiyaowong/coc-golang/issues/70)) ([80b05c1](https://github.com/xiyaowong/coc-golang/commit/80b05c109c859cd82cd341d8a8cc6167a59d96cc)), closes [#65](https://github.com/xiyaowong/coc-golang/issues/65)
+
 ## [0.7.1](https://github.com/xiyaowong/coc-golang/compare/coc-golang-v0.7.0...coc-golang-v0.7.1) (2026-10-10)
 
 
