@@ -2651,6 +2651,9 @@
   "coc-test": {
     "entryFile": "src/index.ts",
     "target": "esm",
+    "externals": [
+      "node-fetch"
+    ],
     "user-settings": {
       "go.useLanguageServer": false,
       "go.terminal.activateEnvironment": false
