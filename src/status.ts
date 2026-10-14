@@ -18,6 +18,7 @@ export const taskLabels = {
   generate: 'generating',
   install: 'installing',
   modules: 'modules',
+  search: 'searching packages',
 }
 
 interface Task {

@@ -52,21 +52,28 @@ export class TerminalManager extends DisposableStore {
     args: string[],
     options: TerminalRunOptions,
   ): Promise<void> {
+    await this.runLines([[subcommand, ...args]], options)
+  }
+
+  // Sends several go invocations to the terminal at once, each on its own line,
+  // so a group of them runs in one shell instead of one shell per command.
+  async runLines(commands: string[][], options: TerminalRunOptions): Promise<void> {
     const { cwd, environment = {}, focus = false } = options
     this.disposeTerminal()
     try {
       const shell = await workspace.nvim.eval('&shell')
-      const line = shellCommandLine(this.ctx.config.goCommand(), [subcommand, ...args], shellKind(String(shell)))
+      const kind = shellKind(String(shell))
       const env: Record<string, string> = {}
       for (const [key, value] of Object.entries({ ...this.ctx.environment.variables(), ...environment })) {
         if (value !== undefined) env[key] = value
       }
       const created = await window.createTerminal({ name: 'Go', cwd, env })
       this.terminal = created
-      created.sendText(line)
+      const go = this.ctx.config.goCommand()
+      created.sendText(commands.map(args => shellCommandLine(go, args, kind)).join('\n'))
       await created.show(!focus)
     } catch (error) {
-      window.showErrorMessage(`Failed to run go ${subcommand}: ${String(error)}`)
+      window.showErrorMessage(`Failed to run go: ${String(error)}`)
     }
   }
 

@@ -54,6 +54,7 @@ Open a Go file to activate the extension. If `gopls` is not installed, coc-golan
 - 🔎 **Diagnostics:** errors and warnings from `gopls` and from build, vet, and lint runs, each carrying the analyzer or check code, a link to its documentation, and the range the tool pointed at.
 - 🧪 **Tests and benchmarks:** run tests at package, workspace, file, or cursor scope; browse and run them from a tree view with pass/fail status; repeat the previous run; collect coverage and show each block's execution count; and run benchmarks.
 - 📁 **Project workflows:** manage modules and workspaces, install Go tools, generate code or tests, edit struct tags, and generate interface implementations.
+- 🔍 **Package search:** search pkg.go.dev and `get`, `install`, or `download` what you find without leaving the editor.
 - 🔄 **Converters:** generate Go types from a JSON Schema or from JSON.
 - 🌱 **Go environment:** inspect Go settings and configure environments for `gopls`, Go commands, and installed tools.
 
@@ -81,10 +82,25 @@ The ones you'll reach for most:
 | Organize imports | `go.import.organize` |
 | Show the Go environment | `go.env` |
 | Install a Go tool | `go.tools.install` |
+| Search packages on pkg.go.dev | `go.pkg.search` |
 
 Every `go.*` command — all 83, grouped by area — is in the [command reference](https://xiyaowong.github.io/coc-golang/docs/reference/commands).
 
 Some commands need an extra tool: test generation uses `gotests`, struct tags use `gomodifytags`, and interface generation uses `impl`. Vulnerability analysis is provided by `gopls`.
+
+### 🔍 Package search
+
+`go.pkg.search` searches [pkg.go.dev](https://pkg.go.dev) for a package and acts on what it finds. Each action runs a go command:
+
+| Action | Command |
+| --- | --- |
+| `get` (default) | `go get <packagePath>` |
+| `install` | `go install <packagePath>` |
+| `download` | `go mod download <modulePath>` |
+
+Several packages can be picked at once.
+
+See [Package search](https://xiyaowong.github.io/coc-golang/docs/package-search) for the details.
 
 ### 🌳 Test explorer
 

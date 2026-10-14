@@ -340,6 +340,11 @@
         "category": "Go"
       },
       {
+        "command": "go.pkg.search",
+        "title": "Search Go Packages Online",
+        "category": "Go"
+      },
+      {
         "command": "go.test.generate.file",
         "title": "Generate Tests for Go File",
         "category": "Go"
@@ -2643,16 +2648,6 @@
     "prepare": "tsdown",
     "test:integration": "node test/integration.ts"
   },
-  "devDependencies": {
-    "@types/node": "^22.20.2",
-    "@wongxy/eslint-config": "^4.0.3",
-    "bumpp": "^12.3.0",
-    "coc-test": "^0.2.2",
-    "coc.nvim": "^0.0.83-next.27",
-    "jiti": "^2.7.0",
-    "tsdown": "^0.23.1",
-    "typescript": "^5.9.3"
-  },
   "coc-test": {
     "entryFile": "src/index.ts",
     "target": "esm",
@@ -2660,5 +2655,19 @@
       "go.useLanguageServer": false,
       "go.terminal.activateEnvironment": false
     }
+  },
+  "dependencies": {
+    "node-fetch": "2.7.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.2",
+    "@types/node-fetch": "^2.6.13",
+    "@wongxy/eslint-config": "^4.0.3",
+    "bumpp": "^12.3.0",
+    "coc-test": "^0.2.2",
+    "coc.nvim": "^0.0.83-next.27",
+    "jiti": "^2.7.0",
+    "tsdown": "^0.23.1",
+    "typescript": "^5.9.3"
   }
 }
