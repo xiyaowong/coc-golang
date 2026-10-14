@@ -15,6 +15,12 @@ Mistakes made in past sessions on this repo, kept short so they get read. Re-rea
 
 - Never write tests, even throwaway probes, without asking first.
 - Finish with `npm run build` so `lib/` matches the source.
+- Run integration tests through `node test/integration.ts` (or `npm test`), never `npx coc-test` directly: the script sets the `XDG_*` isolation the child needs, and without it nvim fails to initialize with a `coc#util#vim_info` timeout that looks like a real failure but is not.
+- Scope temporary env vars (e.g. `GOTOOLCHAIN`) to the command that needs them. Setting one for a whole shell can break an unrelated tool, and the resulting empty output reads as "the tool found nothing".
+
+## Git
+
+- Check a PR's state before amending its commit. Squash-merging rewrites the message and closes the PR; a later force-push only creates an orphaned branch and silently changes nothing on `main`.
 
 ## Docs
 
