@@ -1,7 +1,7 @@
-import type { Document } from 'coc.nvim'
+import type { Document, Position } from 'coc.nvim'
 import type { Ctx } from '../ctx'
 import { dirname } from 'node:path'
-import { Position, TextEdit, window } from 'coc.nvim'
+import { Range, TextEdit, window } from 'coc.nvim'
 import { activeDirectory, activeFile, activeGoFile, activeState, fileUri, isGoFile, linesToCursor } from '../editor'
 import { toolFailure } from '../go/tools'
 import { functionNameAtCursor, testArgumentsAtCursor } from '../test/utils'
@@ -30,13 +30,12 @@ export function splitImplInput(input: string): [string, string] | undefined {
   return receiver && iface ? [receiver, iface] : undefined
 }
 
-// The stubs are a declaration of their own, so they go on the lines under the
-// cursor rather than into the line the cursor is on. The cursor moves to the
-// end, where an inserted block leaves the typing position.
-export function implInsertPosition(document: Document): Position {
-  return document.lineCount === 0
-    ? Position.create(0, 0)
-    : Position.create(document.lineCount - 1, Number.MAX_SAFE_INTEGER)
+// The stubs are a declaration of their own, so they replace the line the cursor
+// is on, which leaves any text after that line — and the closing brace of the
+// block the cursor is in — untouched below the inserted stubs.
+export function implInsertRange(document: Document, cursor: Position): Range {
+  const line = Math.min(cursor.line, Math.max(0, document.lineCount - 1))
+  return Range.create(line, 0, line, document.getline(line).length)
 }
 
 export function registerEditCommands(ctx: Ctx): void {
@@ -134,7 +133,8 @@ export function registerEditCommands(ctx: Ctx): void {
       window.showWarningMessage('impl generated no stubs.')
       return
     }
-    await active.document.applyEdits([TextEdit.insert(implInsertPosition(active.document), `${stubs}\n`)])
+    const range = implInsertRange(active.document, active.position)
+    await active.document.applyEdits([TextEdit.replace(range, `${stubs}\n`)])
     await active.document.synchronize()
   })
 }
