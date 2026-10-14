@@ -31,6 +31,7 @@ export interface ExecFileOptions {
 export interface GoRunOptions {
   cwd: string
   environment?: NodeJS.ProcessEnv
+  quiet?: boolean
 }
 
 export class ProcessRunner extends DisposableStore {
@@ -103,11 +104,12 @@ export class ProcessRunner extends DisposableStore {
   }
 
   goProcess(subcommand: string, args: string[], options: GoRunOptions): Promise<ProcessResult> {
-    const { cwd, environment = {} } = options
+    const { cwd, environment = {}, quiet = false } = options
     this.ctx.output.header(`${this.ctx.config.goCommand()} ${subcommand} ${args.join(' ')}`)
     return this.run(this.ctx.config.goCommand(), [subcommand, ...args], {
       cwd,
       env: { ...this.ctx.environment.variables(), ...environment },
+      quiet,
     })
   }
 
