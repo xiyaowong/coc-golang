@@ -1,8 +1,33 @@
 import type { Ctx } from '../ctx'
 import { dirname } from 'node:path'
-import { window } from 'coc.nvim'
-import { activeDirectory, activeFile, activeGoFile, fileUri, linesToCursor } from '../editor'
+import { TextEdit, window } from 'coc.nvim'
+import { activeDirectory, activeFile, activeGoFile, activeState, fileUri, isGoFile, linesToCursor } from '../editor'
+import { toolFailure } from '../go/tools'
 import { functionNameAtCursor, testArgumentsAtCursor } from '../test/utils'
+
+function unquote(value: string): string {
+  const quoted = /^(['"])(.*)\1$/.exec(value)
+  return quoted ? quoted[2].trim() : value
+}
+
+// `impl` takes the receiver and the interface as two arguments, and the receiver
+// may be several words ("f *File"), so the input is cut at the last whitespace
+// that is outside a type-parameter list rather than at every one.
+export function splitImplInput(input: string): [string, string] | undefined {
+  input = input.trim()
+  let depth = 0
+  let split = -1
+  for (let index = 0; index < input.length; index++) {
+    const character = input[index]
+    if (character === '[') depth++
+    else if (character === ']') depth = Math.max(0, depth - 1)
+    else if (depth === 0 && /\s/.test(character)) split = index
+  }
+  if (split === -1) return undefined
+  const receiver = unquote(input.slice(0, split).trim())
+  const iface = unquote(input.slice(split + 1).trim())
+  return receiver && iface ? [receiver, iface] : undefined
+}
 
 export function registerEditCommands(ctx: Ctx): void {
   const gotestsArguments = (...args: string[]): string[] =>
@@ -73,9 +98,33 @@ export function registerEditCommands(ctx: Ctx): void {
   ctx.commands.handle('go.test.generate.function', () => generateTestForFunction())
 
   ctx.commands.handle('go.impl.cursor', async (implementation?: string) => {
-    const file = await activeFile()
-    implementation ??= await window.requestInput('Receiver and interface (e.g. *MyReader io.Reader)')
-    if (!file || !implementation) return
-    await ctx.tools.run('impl', ['-dir', dirname(file), ...implementation.trim().split(/\s+/)], { cwd: dirname(file) })
+    const active = await activeState()
+    if (!active || !isGoFile(active.file)) {
+      window.showWarningMessage('Open a Go file first.')
+      return
+    }
+    implementation ??= await window.requestInput('Receiver and interface (e.g. f *File io.Reader)')
+    if (!implementation) return
+
+    const args = splitImplInput(implementation)
+    if (!args) {
+      window.showWarningMessage('Enter a receiver and an interface, e.g. f *File io.Reader')
+      return
+    }
+
+    const directory = dirname(active.file)
+    const result = await ctx.tools.run('impl', ['-dir', directory, ...args], { cwd: directory, quiet: true })
+    if (!result) return
+    if (result.code !== 0) {
+      window.showErrorMessage(toolFailure('impl failed', result))
+      return
+    }
+    const stubs = result.stdout.trim()
+    if (!stubs) {
+      window.showWarningMessage('impl generated no stubs.')
+      return
+    }
+    await active.document.applyEdits([TextEdit.insert(active.position, `${stubs}\n`)])
+    await active.document.synchronize()
   })
 }
