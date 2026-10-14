@@ -24,7 +24,7 @@ import { TerminalManager } from './go/terminal'
 import { ToolManager } from './go/tools'
 import { Formatter } from './lsp/format'
 import { checkGoplsUpdate, LanguageServer, registerLspCommands } from './lsp/language-server'
-import { StatusBar } from './lsp/status-bar'
+import { StatusBar } from './status'
 import { registerTestExplorerCommands, TestExplorer } from './test-explorer'
 import { TestRunner } from './test/runner'
 

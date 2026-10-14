@@ -1,6 +1,7 @@
 import type { Ctx } from '../ctx'
 import { window } from 'coc.nvim'
 import { activeDirectory } from '../editor'
+import { taskLabels } from '../status'
 
 // Commands that operate on go.mod / go.work and the module graph. They run in
 // the terminal when they can prompt or modify state interactively, and through
@@ -13,7 +14,8 @@ export function registerModuleCommands(ctx: Ctx): void {
 
   // Runs `go <subcommand> <args>` in the active directory, through the output channel.
   const inOutput = (subcommand: string, args: string[]): Promise<unknown> =>
-    activeDirectory().then(cwd => ctx.process.go(subcommand, args, { cwd }))
+    activeDirectory().then(cwd =>
+      ctx.statusBar.during(taskLabels.modules, ctx.process.go(subcommand, args, { cwd })))
 
   const modEditCommand = (id: string, flag: string, prompt: string): void => {
     ctx.commands.handle(id, async (value?: string) => {

@@ -5,6 +5,7 @@ import { join } from 'node:path'
 import { window, workspace } from 'coc.nvim'
 import { coverageFromProfile } from '../coverage'
 import { activeDirectory, activeGoFile, fileUri } from '../editor'
+import { taskLabels } from '../status'
 
 interface RecordedProfile {
   file: string
@@ -57,7 +58,7 @@ export function registerCoverageCommands(ctx: Ctx): void {
     if (coverMode !== 'default') args.push('-covermode', coverMode)
     args.push(...ctx.config.testFlags(), './...')
 
-    const result = await ctx.process.goProcess('test', args, { cwd: directory })
+    const result = await ctx.statusBar.during(taskLabels.test, ctx.process.goProcess('test', args, { cwd: directory }))
     ctx.output.show()
     if (result.code !== 0) window.showErrorMessage(`go test exited with code ${result.code}`)
     let coverage

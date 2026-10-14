@@ -492,7 +492,7 @@
         "go.statusBar.enable": {
           "type": "boolean",
           "default": true,
-          "description": "Show the gopls status in the status bar."
+          "description": "Show the Go status in the status bar: the gopls state and the long-running commands while they run."
         },
         "go.trace.server": {
           "type": "string",

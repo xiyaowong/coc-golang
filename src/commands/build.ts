@@ -4,18 +4,24 @@ import * as coc from 'coc.nvim'
 import { window, workspace } from 'coc.nvim'
 import { activeDirectory, workspaceDirectories } from '../editor'
 import { toolFailure } from '../go/tools'
+import { taskLabels } from '../status'
 
 export function registerBuildCommands(ctx: Ctx): void {
   const checkCommand = (id: string, kind: CheckKind, scope: CheckScope): void => {
     ctx.commands.handle(id, async () => {
       const directories = scope === 'workspace' ? workspaceDirectories() : [await activeDirectory()]
-      for (const directory of directories) await ctx.checker.run(kind, scope, { cwd: directory })
+      const done = ctx.statusBar.begin(taskLabels[kind])
+      try {
+        for (const directory of directories) await ctx.checker.run(kind, scope, { cwd: directory })
+      } finally {
+        done()
+      }
     })
   }
 
-  const packageCommand = (id: string, subcommand: string, args: string[] = ['.']): void => {
+  const packageCommand = (id: string, subcommand: string, args: string[] = ['.'], label?: string): void => {
     ctx.commands.handle(id, async () => {
-      await ctx.process.go(subcommand, args, { cwd: await activeDirectory() })
+      await ctx.statusBar.during(label, ctx.process.go(subcommand, args, { cwd: await activeDirectory() }))
     })
   }
 
@@ -81,7 +87,7 @@ export function registerBuildCommands(ctx: Ctx): void {
     ))
   })
 
-  packageCommand('go.generate.package', 'generate')
+  packageCommand('go.generate.package', 'generate', ['.'], taskLabels.generate)
   packageCommand('go.fmt.package', 'fmt')
 
   ctx.commands.handle('go.run', async (target?: string) =>
