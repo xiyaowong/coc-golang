@@ -20,6 +20,12 @@ Go language support for [coc.nvim](https://github.com/neoclide/coc.nvim), powere
 
 `coc-golang` brings Go development features to Vim and Neovim through coc.nvim. It uses `gopls` for language intelligence and provides commands for testing, building, formatting, linting, vulnerability checks, and common Go project tasks.
 
+## 🤖 AI-assisted
+
+To be upfront: this project is vibe-coded, and most of the code is AI-generated.
+
+What it is not is AI slop. Every feature goes through repeated rounds of tweaking and is tested by hand before it lands — nothing is merged straight from a model's output. The direction follows [vscode-go](https://github.com/golang/vscode-go), with some features designed by me, and the polish took real effort. If vibe coding puts you off, this extension is not for you.
+
 ## 📦 Installation
 
 ### 📋 Requirements
@@ -166,14 +172,6 @@ npm run typecheck
 ```
 
 The build writes the extension bundles to `lib/`.
-
-### 🤖 AI-assisted
-
-To be upfront: this project is vibe-coded. Most of the code is AI-generated.
-
-What it is not is AI slop. Every feature goes through repeated rounds of tweaking and is tested by hand before it lands — nothing is merged straight from a model's output. The direction follows [vscode-go](https://github.com/golang/vscode-go), with some features designed by me, and the polish took real effort.
-
-If vibe coding puts you off, this extension is not for you.
 
 ## 📝 Changelog
 
