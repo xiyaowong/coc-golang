@@ -1,7 +1,7 @@
-import type { Document, Position } from 'coc.nvim'
+import type { Document } from 'coc.nvim'
 import type { Ctx } from '../ctx'
 import { dirname } from 'node:path'
-import { Range, TextEdit, window } from 'coc.nvim'
+import { Position, TextEdit, window } from 'coc.nvim'
 import { activeDirectory, activeFile, activeGoFile, activeState, fileUri, isGoFile, linesToCursor } from '../editor'
 import { toolFailure } from '../go/tools'
 import { functionNameAtCursor, testArgumentsAtCursor } from '../test/utils'
@@ -30,12 +30,74 @@ export function splitImplInput(input: string): [string, string] | undefined {
   return receiver && iface ? [receiver, iface] : undefined
 }
 
-// The stubs are a declaration of their own, so they replace the line the cursor
-// is on, which leaves any text after that line — and the closing brace of the
-// block the cursor is in — untouched below the inserted stubs.
-export function implInsertRange(document: Document, cursor: Position): Range {
-  const line = Math.min(cursor.line, Math.max(0, document.lineCount - 1))
-  return Range.create(line, 0, line, document.getline(line).length)
+// Maps every offset in Go source to the offset just past the top-level
+// declaration that offset belongs to, ignoring braces in comments and strings.
+export function declarationEnds(text: string): number[] {
+  const ends: number[] = []
+  for (let position = 0; position <= text.length; position++) {
+    ends.push(text.length)
+  }
+  let depth = 0
+  let start = 0
+  let end = -1
+  let index = 0
+  const fill = (upTo: number): void => {
+    const value = end === -1 ? text.length : end
+    for (let position = start; position <= upTo && position < ends.length; position++) {
+      ends[position] = value
+    }
+  }
+
+  while (index < text.length) {
+    const character = text[index]
+    if (character === '/' && text[index + 1] === '/') {
+      const newline = text.indexOf('\n', index)
+      index = newline === -1 ? text.length : newline
+      continue
+    }
+    if (character === '/' && text[index + 1] === '*') {
+      const comment = text.indexOf('*/', index + 2)
+      index = comment === -1 ? text.length : comment + 2
+      continue
+    }
+    if (character === '"' || character === '\'' || character === '`') {
+      index++
+      while (index < text.length) {
+        if (text[index] === '\\' && character !== '`') {
+          index += 2
+        } else if (text[index] === character) {
+          index++
+          break
+        } else {
+          index++
+        }
+      }
+      continue
+    }
+    if (character === '{') {
+      depth++
+    } else if (character === '}') {
+      depth = Math.max(0, depth - 1)
+      if (depth === 0) {
+        end = index + 1
+        fill(index)
+        start = index + 1
+        end = -1
+      }
+    }
+    index++
+  }
+  fill(text.length)
+  return ends
+}
+
+// The stubs are placed after the top-level declaration the cursor is in, so
+// they never land on the text the cursor is on or inside a declaration.
+export function implInsertPosition(document: Document, cursor: Position): Position {
+  const text = document.content
+  const offset = Math.min(Math.max(0, document.textDocument.offsetAt(cursor)), text.length)
+  const line = document.textDocument.positionAt(declarationEnds(text)[offset]).line
+  return Position.create(line, document.getline(line).length)
 }
 
 export function registerEditCommands(ctx: Ctx): void {
@@ -133,8 +195,15 @@ export function registerEditCommands(ctx: Ctx): void {
       window.showWarningMessage('impl generated no stubs.')
       return
     }
-    const range = implInsertRange(active.document, active.position)
-    await active.document.applyEdits([TextEdit.replace(range, `${stubs}\n`)])
+    let position: Position
+    try {
+      position = implInsertPosition(active.document, active.position)
+    } catch {
+      // A buffer too large for the position helpers falls back to the file end.
+      const lastLine = active.document.lineCount - 1
+      position = Position.create(Math.max(0, lastLine), Number.MAX_SAFE_INTEGER)
+    }
+    await active.document.applyEdits([TextEdit.insert(position, `\n\n${stubs}\n`)])
     await active.document.synchronize()
   })
 }
