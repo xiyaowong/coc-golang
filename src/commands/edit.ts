@@ -100,6 +100,29 @@ export function implInsertPosition(document: Document, cursor: Position): Positi
   return Position.create(line, document.getline(line).length)
 }
 
+// A receiver name for the struct the cursor is on, or the nearest one by line
+// distance, as in `o *One `. Empty when the file declares no struct.
+export function receiverPlaceholder(lines: readonly string[], cursorLine: number): string {
+  const structPattern = /^\s*type\s+([A-Za-z_]\w*)(?:\s*\[[^\]]*\])?\s*struct\b/
+  const matches: { name: string, line: number }[] = []
+  lines.forEach((line, index) => {
+    const name = structPattern.exec(line)?.[1]
+    if (name) matches.push({ name, line: index })
+  })
+  if (!matches.length) return ''
+
+  let nearest = matches[0]
+  let distance = Math.abs(nearest.line - cursorLine)
+  for (const match of matches) {
+    const current = Math.abs(match.line - cursorLine)
+    if (current < distance) {
+      nearest = match
+      distance = current
+    }
+  }
+  return `${nearest.name.charAt(0).toLowerCase()} *${nearest.name} `
+}
+
 export function registerEditCommands(ctx: Ctx): void {
   const gotestsArguments = (...args: string[]): string[] =>
     [...ctx.config.get<string[]>('generateTestsFlags', []), ...args]
@@ -174,7 +197,10 @@ export function registerEditCommands(ctx: Ctx): void {
       window.showWarningMessage('Open a Go file first.')
       return
     }
-    implementation ??= await window.requestInput('Receiver and interface (e.g. f *File io.Reader)')
+    implementation ??= await window.requestInput(
+      'Receiver and interface (e.g. f *File io.Reader)',
+      receiverPlaceholder(active.document.textDocument.lines, active.position.line),
+    )
     if (!implementation) return
 
     const args = splitImplInput(implementation)
