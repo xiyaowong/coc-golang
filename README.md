@@ -45,6 +45,7 @@ Open a Go file to activate the extension. If `gopls` is not installed, coc-golan
 - 🧠 **Language intelligence:** completion, hover, signature help, diagnostics, navigation, references, rename, code actions, and document symbols through `gopls`.
 - 🧹 **Formatting and imports:** format Go code and add or organize imports.
 - 🏗️ **Build and checks:** build, run, vet, lint, and scan packages or workspaces for known vulnerabilities.
+- 🔎 **Diagnostics:** errors and warnings from `gopls` and from build, vet, and lint runs, each carrying the analyzer or check code, a link to its documentation, and the range the tool pointed at. A diagnostic that duplicates one `gopls` already reports is dropped in favour of `gopls`.
 - 🧪 **Tests and benchmarks:** run tests at package, workspace, file, or cursor scope; browse and run them from a tree view with pass/fail status; repeat the previous run; collect and highlight coverage; and run benchmarks.
 - 📁 **Project workflows:** manage modules and workspaces, install Go tools, generate code or tests, edit struct tags, and generate interface implementations.
 - 🔄 **Converters:** generate Go types from a JSON Schema or from JSON.
@@ -181,6 +182,5 @@ Not included:
 - The VS Code test explorer's run/debug gutter and status-bar widgets.
 - The Delve debug adapter UI.
 - Survey and telemetry.
-- Rich diagnostic visualization.
 
 Update checks cover `gopls` only. Coverage highlighting is simpler than vscode-go's: covered and uncovered line ranges, with no gutter icons or per-block style settings.

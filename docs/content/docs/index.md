@@ -16,6 +16,9 @@ tasks.
 - **Formatting and imports** — format Go code and add or organize imports.
 - **Build and checks** — build, run, vet, lint, and scan for known
   vulnerabilities.
+- **Diagnostics** — errors and warnings from `gopls` and from build, vet, and
+  lint runs, each carrying the analyzer or check code, a link to its
+  documentation, and the range the tool pointed at.
 - **Tests and benchmarks** — run tests at package, file, or cursor scope;
   browse and run them from a tree view with pass/fail status; repeat the last
   run; collect coverage; run benchmarks.
