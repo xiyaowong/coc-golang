@@ -1,6 +1,7 @@
+import type { Document } from 'coc.nvim'
 import type { Ctx } from '../ctx'
 import { dirname } from 'node:path'
-import { TextEdit, window } from 'coc.nvim'
+import { Position, TextEdit, window } from 'coc.nvim'
 import { activeDirectory, activeFile, activeGoFile, activeState, fileUri, isGoFile, linesToCursor } from '../editor'
 import { toolFailure } from '../go/tools'
 import { functionNameAtCursor, testArgumentsAtCursor } from '../test/utils'
@@ -27,6 +28,15 @@ export function splitImplInput(input: string): [string, string] | undefined {
   const receiver = unquote(input.slice(0, split).trim())
   const iface = unquote(input.slice(split + 1).trim())
   return receiver && iface ? [receiver, iface] : undefined
+}
+
+// The stubs are a declaration of their own, so they go on the lines under the
+// cursor rather than into the line the cursor is on. The cursor moves to the
+// end, where an inserted block leaves the typing position.
+export function implInsertPosition(document: Document): Position {
+  return document.lineCount === 0
+    ? Position.create(0, 0)
+    : Position.create(document.lineCount - 1, Number.MAX_SAFE_INTEGER)
 }
 
 export function registerEditCommands(ctx: Ctx): void {
@@ -124,7 +134,7 @@ export function registerEditCommands(ctx: Ctx): void {
       window.showWarningMessage('impl generated no stubs.')
       return
     }
-    await active.document.applyEdits([TextEdit.insert(active.position, `${stubs}\n`)])
+    await active.document.applyEdits([TextEdit.insert(implInsertPosition(active.document), `${stubs}\n`)])
     await active.document.synchronize()
   })
 }
