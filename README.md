@@ -169,7 +169,11 @@ The build writes the extension bundles to `lib/`.
 
 ### 🤖 AI-assisted
 
-Most of the code is AI-generated. The direction follows [vscode-go](https://github.com/golang/vscode-go), with some features designed by me, and the code was tested manually.
+To be upfront: this project is vibe-coded. Most of the code is AI-generated.
+
+What it is not is AI slop. Every feature goes through repeated rounds of tweaking and is tested by hand before it lands — nothing is merged straight from a model's output. The direction follows [vscode-go](https://github.com/golang/vscode-go), with some features designed by me, and the polish took real effort.
+
+If vibe coding puts you off, this extension is not for you.
 
 ## 📝 Changelog
 
