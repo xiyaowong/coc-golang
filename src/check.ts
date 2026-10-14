@@ -3,7 +3,7 @@ import type { Ctx } from './ctx'
 import { readFileSync } from 'node:fs'
 import { devNull } from 'node:os'
 import { resolve } from 'node:path'
-import { Diagnostic as CocDiagnostic, DiagnosticSeverity, languages, Range, window, workspace } from 'coc.nvim'
+import { Diagnostic as CocDiagnostic, diagnosticManager, DiagnosticSeverity, languages, Range, window, workspace } from 'coc.nvim'
 import { DisposableStore } from './disposable'
 import { fileUri } from './editor'
 import { toolFailure } from './go/tools'
@@ -149,6 +149,36 @@ function lintJsonArguments(tool: string): string[] | undefined {
   return undefined
 }
 
+// Diagnostic sources in the order vscode-go resolves a conflict at one position.
+const sourcePriority = ['go build', 'go vet']
+
+function sourceRank(source: string | undefined): number {
+  const index = source ? sourcePriority.indexOf(source) : -1
+  return index === -1 ? sourcePriority.length + 1 : index + 1
+}
+
+function positionKey(range: CocRange): string {
+  return `${range.start.line}:${range.start.character}`
+}
+
+function reportedAt(
+  collections: Record<string, Diagnostic[]>,
+  skip: string,
+  serverCollection: string | undefined,
+): Map<string, number> {
+  const best = new Map<string, number>()
+  for (const [collection, diagnostics] of Object.entries(collections)) {
+    if (collection === skip) continue
+    for (const diagnostic of diagnostics) {
+      const key = positionKey(diagnostic.range)
+      const rank = collection === serverCollection ? 0 : sourceRank(diagnostic.source)
+      const current = best.get(key)
+      best.set(key, current === undefined ? rank : Math.min(current, rank))
+    }
+  }
+  return best
+}
+
 function linesOf(uri: string, file: string): string[] | undefined {
   const document = workspace.getDocument(uri)
   if (document) return document.getLines()
@@ -248,16 +278,26 @@ export class Checker extends DisposableStore {
     const severity = kind === 'build' ? DiagnosticSeverity.Error : DiagnosticSeverity.Warning
     const diagnostics = new Map<string, Diagnostic[]>()
     const lines = new Map<string, string[] | undefined>()
+    const reported = new Map<string, Map<string, number>>()
+    const serverCollection = this.ctx.languageServer.getClient()?.id
+    const source = tool ?? `go ${kind}`
+    const rank = sourceRank(source)
     for (const problem of problems) {
       const uri = fileUri(problem.file)
       if (!lines.has(problem.file)) lines.set(problem.file, linesOf(uri, problem.file))
+      const range = diagnosticRange(lines.get(problem.file), problem)
+      const key = positionKey(range)
+      if (!reported.has(uri)) reported.set(uri, reportedAt(diagnosticManager.getDiagnostics(uri), name, serverCollection))
+      const existing = reported.get(uri)!
+      if ((existing.get(key) ?? Infinity) < rank) continue
+      existing.set(key, Math.min(existing.get(key) ?? Infinity, rank))
       const list = diagnostics.get(uri) ?? []
       const diagnostic = CocDiagnostic.create(
-        diagnosticRange(lines.get(problem.file), problem),
+        range,
         problem.message,
         problem.severity ?? severity,
         problem.code,
-        tool ?? `go ${kind}`,
+        source,
       )
       if (problem.codeDescription) diagnostic.codeDescription = { href: problem.codeDescription }
       list.push(diagnostic)
