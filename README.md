@@ -152,7 +152,7 @@ Some settings to know:
 - **Formatting:** `go.formatTool` supports `gofmt`, `goimports`, `goformat`, `gofumpt`, and `custom`. With `go.useLanguageServer: false`, the default formatter uses `goimports`.
 - **Checks:** build and vet on save run when `go.useLanguageServer` is `false`. Lint on save runs when `go.lintTool` is configured. Available lint tools are `staticcheck`, `golint`, `golangci-lint`, `golangci-lint-v2`, and `revive`; diagnostics are reported by coc.nvim.
 - **Tests:** `go.testFlags` and `go.testTags` fall back to `go.buildFlags` and `go.buildTags`. `go.testTimeout` supplies the test timeout, and `go.testEnvFile` is loaded before `go.testEnvVars`.
-- **Coverage:** `go.test.coverage` toggles coverage for the current package: it runs `go test -coverprofile`, then highlights covered code (`CocCoverageCovered`) and uncovered code (`CocCoverageUncovered`) in the loaded Go buffers. Running it again, or saving an edited Go file, clears the highlights. `go.apply.coverprofile` highlights from an existing profile: it offers the profiles of previous runs, or takes a path of your own. `go.show.coverprofile` opens a profile — one of those runs, or a path of your own — in a buffer. `go.coverMode` sets `-covermode`. `go.coverShowCounts` appends each covered block's execution count as virtual text; it is on by default, unlike vscode-go's.
+- **Coverage:** `go.test.coverage` toggles coverage for the current package: it runs `go test -coverprofile`, then highlights covered code (`CocCoverageCovered`) and uncovered code (`CocCoverageUncovered`) in the loaded Go buffers. Running it again, or saving an edited Go file, clears the highlights. `go.apply.coverprofile` highlights from an existing profile: it offers the profiles of previous runs, or takes a path of your own. `go.show.coverprofile` opens a profile — one of those runs, or a path of your own — in a buffer. `go.coverMode` sets `-covermode`, and `go.coverShowCounts` appends each covered block's execution count as virtual text.
 - **Language server:** set `go.useLanguageServer` to `false` to disable `gopls` and use Go commands and formatters directly.
 
 ## 🚧 Development
@@ -177,10 +177,12 @@ See [CHANGELOG.md](CHANGELOG.md).
 
 ## 🎯 Scope
 
+coc-golang takes [vscode-go](https://github.com/golang/vscode-go) as a reference for setting names and types, but it is its own extension and does not track it feature for feature. Coverage highlighting is one such difference: coc-golang marks covered and uncovered line ranges, with no gutter icons or per-block style settings.
+
 Not included:
 
 - The VS Code test explorer's run/debug gutter and status-bar widgets.
 - The Delve debug adapter UI.
 - Survey and telemetry.
 
-Update checks cover `gopls` only. Coverage highlighting is simpler than vscode-go's: covered and uncovered line ranges, with no gutter icons or per-block style settings.
+Update checks cover `gopls` only.

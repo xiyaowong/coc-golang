@@ -95,7 +95,7 @@ example:
 }
 ```
 
-Setting names and types follow
+Setting names, types, and defaults follow
 [vscode-go](https://github.com/golang/vscode-go). See the
 [settings reference](./reference/settings) and
 [gopls settings](./reference/gopls-settings) for the full list.
