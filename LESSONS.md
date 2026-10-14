@@ -14,6 +14,7 @@ Mistakes made in past sessions on this repo, kept short so they get read. Re-rea
 ## Verifying
 
 - Never write tests, even throwaway probes, without asking first.
+- Probing the tool is not verifying the feature. When a command pipes a tool's output into the editor, check where that output lands in a real buffer: the tool can be right while the edit still corrupts text around it. If the editor half cannot be checked, say so in the PR rather than implying the whole path was verified.
 - Finish with `npm run build` so `lib/` matches the source.
 - Run integration tests through `node test/integration.ts` (or `npm test`), never `npx coc-test` directly: the script sets the `XDG_*` isolation the child needs, and without it nvim fails to initialize with a `coc#util#vim_info` timeout that looks like a real failure but is not.
 - Scope temporary env vars (e.g. `GOTOOLCHAIN`) to the command that needs them. Setting one for a whole shell can break an unrelated tool, and the resulting empty output reads as "the tool found nothing".
