@@ -177,12 +177,10 @@ See [CHANGELOG.md](CHANGELOG.md).
 
 ## 🎯 Scope
 
-coc-golang takes [vscode-go](https://github.com/golang/vscode-go) as a reference for setting names and types, but it is its own extension and does not track it feature for feature. Coverage highlighting is one such difference: coc-golang marks covered and uncovered line ranges, with no gutter icons or per-block style settings.
-
 Not included:
 
 - The VS Code test explorer's run/debug gutter and status-bar widgets.
 - The Delve debug adapter UI.
 - Survey and telemetry.
 
-Update checks cover `gopls` only.
+Update checks cover `gopls` only. Coverage highlighting is simpler than vscode-go's: covered and uncovered line ranges, with no gutter icons or per-block style settings.

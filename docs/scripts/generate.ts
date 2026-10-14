@@ -405,7 +405,7 @@ function build(): Map<string, string> {
   }, null, 2)}\n`)
   files.set(join('..', 'meta.json'), `${JSON.stringify({
     title: 'coc-golang',
-    pages: ['index', 'getting-started', 'test-explorer', 'convert', 'keybindings', 'troubleshooting', 'reference', 'changelog'],
+    pages: ['index', 'getting-started', 'test-explorer', 'convert', 'troubleshooting', 'reference', 'changelog'],
   }, null, 2)}\n`)
   files.set(join('..', 'changelog.md'), renderChangelogPage())
   return files
