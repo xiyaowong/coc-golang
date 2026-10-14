@@ -10,33 +10,33 @@ description: Install coc-golang and run your first Go command.
 - Node.js `22.18` or newer.
 - [Go](https://go.dev/dl/).
 
-## Install
-
-Install the extension from Vim or Neovim:
+## 1. Install the extension
 
 ```vim
 :CocInstall coc-golang
 ```
 
-Open a Go file to activate it. The first time you open a Go file, `gopls` is
-started; if it is not installed yet, coc-golang offers to install it. You can
-also install or update it at any time:
+## 2. Open a Go file
+
+Opening a Go file activates the extension and starts `gopls`. If `gopls` is not
+installed, coc-golang offers to install it. Install or update it at any time:
 
 ```vim
 :CocCommand go.gopls.install
 ```
 
-## Run a command
+## 3. Run a command
 
-All features are commands. Run one with `:CocCommand`:
+Every feature is a command, run with `:CocCommand`. Start with the tests of the
+current package:
 
 ```vim
 :CocCommand go.test.package
 ```
 
 A command either runs in a coc.nvim terminal named **Go** (for things like
-`go run`, `go test`, and `go get`), or prints to the **Go** output channel.
-Use `:CocCommand go.test.showOutput` to bring the Go terminal to the front.
+`go run`, `go test`, and `go get`), or prints to the **Go** output channel. Use
+`:CocCommand go.test.showOutput` to bring the Go terminal to the front.
 
 ## Common commands to try
 
@@ -54,21 +54,32 @@ See the [command reference](./reference/commands) for all of them.
 
 ## Show test coverage
 
-`:CocCommand go.test.coverage` runs the tests of the current package with
-coverage and highlights the result in your open Go buffers: covered code with
-`CocCoverageCovered`, uncovered code with `CocCoverageUncovered`. Run the
-command again, or save an edited Go file, to clear the highlights. Set
-`go.coverMode` to control `-covermode`.
+Run the tests of the current package with coverage:
 
-Turn on `go.coverShowCounts` to see how many times each covered block ran, as
-virtual text at the end of the block's first line. The counts come from the
-profile, so set `go.coverMode` to `count` or `atomic` to see real numbers;
-`set` mode only reports whether a block ran at all, which shows as `--1--`.
-Multiple blocks that start on one line are shown together, as `--3-- --1--`.
+```vim
+:CocCommand go.test.coverage
+```
 
-Each run's profile is remembered, so `:CocCommand go.apply.coverprofile` can
-show coverage without rerunning the tests. `:CocCommand go.show.coverprofile`
-opens a profile — one of those runs, or a path of your own — in a buffer.
+Covered code is highlighted with `CocCoverageCovered` and uncovered code with
+`CocCoverageUncovered`. Each covered block is also labelled with its execution
+count, as `--374--`, or `--3-- --1--` when several blocks start on one line.
+
+`go.coverMode` decides what those counts mean. `count` and `atomic` report real
+numbers. The default leaves the choice to `go test`, which uses `set` for
+package tests — that only records whether a block ran, so every count reads
+`--1--`. Set `go.coverShowCounts` to `false` to hide the labels.
+
+Running the command again, or saving an edited Go file, clears the highlights.
+
+### Reuse or inspect a profile
+
+coc-golang keeps the profile of each run, so you can go back to one without
+rerunning the tests.
+
+- `go.apply.coverprofile` — highlight again from a recorded profile, or from a
+  path of your own.
+- `go.show.coverprofile` — open a recorded profile, or a path of your own, in a
+  buffer.
 
 ## Configure the extension
 
@@ -84,7 +95,7 @@ example:
 }
 ```
 
-Setting names, types, and defaults follow
+Setting names and types follow
 [vscode-go](https://github.com/golang/vscode-go). See the
 [settings reference](./reference/settings) and
 [gopls settings](./reference/gopls-settings) for the full list.

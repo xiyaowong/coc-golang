@@ -860,7 +860,7 @@
         },
         "go.coverShowCounts": {
           "type": "boolean",
-          "default": false,
+          "default": true,
           "description": "When generating code coverage, should counts be shown as --374--."
         },
         "go.generateTestsFlags": {

@@ -21,7 +21,7 @@ tasks.
   documentation, and the range the tool pointed at.
 - **Tests and benchmarks** — run tests at package, file, or cursor scope;
   browse and run them from a tree view with pass/fail status; repeat the last
-  run; collect coverage; run benchmarks.
+  run; collect coverage and show each block's execution count; run benchmarks.
 - **Project workflows** — manage modules and workspaces, install Go tools,
   generate tests, edit struct tags, and generate interface implementations.
 

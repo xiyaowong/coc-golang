@@ -168,7 +168,7 @@ export class CoverageManager extends DisposableStore {
       }
     }
     await this.ensureGroups()
-    const showCounts = this.ctx.config.get('coverShowCounts', false)
+    const showCounts = this.ctx.config.get('coverShowCounts', true)
     if (showCounts && !this.countsId) {
       this.countsId = await workspace.nvim.createNamespace(CoverageManager.countsNamespace)
     }
