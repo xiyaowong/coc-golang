@@ -14,9 +14,11 @@ Mistakes made in past sessions on this repo, kept short so they get read. Re-rea
 ## Verifying
 
 - Never write tests, even throwaway probes, without asking first.
+- Probing the tool is not verifying the feature. When a command pipes a tool's output into the editor, check where that output lands in a real buffer: the tool can be right while the edit still corrupts text around it. If the editor half cannot be checked, say so in the PR rather than implying the whole path was verified.
 - Finish with `npm run build` so `lib/` matches the source.
 - Run integration tests through `node test/integration.ts` (or `npm test`), never `npx coc-test` directly: the script sets the `XDG_*` isolation the child needs, and without it nvim fails to initialize with a `coc#util#vim_info` timeout that looks like a real failure but is not.
 - Scope temporary env vars (e.g. `GOTOOLCHAIN`) to the command that needs them. Setting one for a whole shell can break an unrelated tool, and the resulting empty output reads as "the tool found nothing".
+- `npm run lint:fix` runs the `e18e/prefer-array-fill` autofix, which rewrites `Array.from({ length: n }, () => x)` into `Array.from({ length: n }).fill(x)` — a form `tsc` rejects with `unknown[]`. Writing the callback form leaves a diff that fails CI's `npm run lint`, and running the autofix leaves one that fails typecheck. Use an explicit loop with a typed array instead. Mirrored on an earlier commit: HEAD held the autofixed `.fill` line while the working tree held the fix, because the two were written into the same file between commands. Verify the committed blob (`git show HEAD:<file>`) and keep the worktree clean before pushing.
 
 ## Git
 

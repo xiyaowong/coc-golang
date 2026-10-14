@@ -14,6 +14,17 @@ export async function activeFile(): Promise<string | undefined> {
   }
 }
 
+export async function activeState(): Promise<{ document: coc.Document, file: string, position: coc.Position } | undefined> {
+  const { position } = await coc.workspace.getCurrentState()
+  const document = await coc.workspace.document
+  if (!document) return undefined
+  try {
+    return { document, file: fileURLToPath(document.uri), position }
+  } catch {
+    return undefined
+  }
+}
+
 export async function activeDirectory(): Promise<string> {
   const file = await activeFile()
   return file ? dirname(file) : coc.workspace.cwd
