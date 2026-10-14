@@ -58,7 +58,7 @@ This page lists the 65 `go.*` settings. See [gopls settings](./gopls-settings) f
 | `go.testEnvFile` | `string` | `null` |
 | `go.testFlags` | `array | null` | `null` |
 | `go.coverMode` | `string` | `"default"` |
-| `go.coverShowCounts` | `boolean` | `false` |
+| `go.coverShowCounts` | `boolean` | `true` |
 | `go.generateTestsFlags` | `string[]` | `[]` |
 | `go.inlayHints.assignVariableTypes` | `boolean` | `false` |
 | `go.inlayHints.compositeLiteralFields` | `boolean` | `false` |
@@ -438,7 +438,7 @@ When generating code coverage, the value for -covermode.
 
 ## `go.coverShowCounts`
 
-**Type:** `boolean` · **Default:** `false`
+**Type:** `boolean` · **Default:** `true`
 
 When generating code coverage, should counts be shown as --374--.
 

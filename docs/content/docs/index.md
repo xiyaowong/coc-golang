@@ -21,7 +21,7 @@ tasks.
   documentation, and the range the tool pointed at.
 - **Tests and benchmarks** — run tests at package, file, or cursor scope;
   browse and run them from a tree view with pass/fail status; repeat the last
-  run; collect coverage; run benchmarks.
+  run; collect coverage and show each block's execution count; run benchmarks.
 - **Project workflows** — manage modules and workspaces, install Go tools,
   generate tests, edit struct tags, and generate interface implementations.
 
@@ -31,7 +31,6 @@ tasks.
   first command.
 - [Test explorer](./test-explorer) — browse and run tests from a tree view.
 - [Converters](./convert) — generate Go types from JSON or a JSON Schema.
-- [Keybindings and recipes](./keybindings) — handy mappings for common actions.
 - [Troubleshooting](./troubleshooting) — fix common issues.
 - [Reference](./reference/commands) — every command, setting, and tool.
 

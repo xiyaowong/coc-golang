@@ -46,7 +46,7 @@ Open a Go file to activate the extension. If `gopls` is not installed, coc-golan
 - 🧹 **Formatting and imports:** format Go code and add or organize imports.
 - 🏗️ **Build and checks:** build, run, vet, lint, and scan packages or workspaces for known vulnerabilities.
 - 🔎 **Diagnostics:** errors and warnings from `gopls` and from build, vet, and lint runs, each carrying the analyzer or check code, a link to its documentation, and the range the tool pointed at.
-- 🧪 **Tests and benchmarks:** run tests at package, workspace, file, or cursor scope; browse and run them from a tree view with pass/fail status; repeat the previous run; collect and highlight coverage; and run benchmarks.
+- 🧪 **Tests and benchmarks:** run tests at package, workspace, file, or cursor scope; browse and run them from a tree view with pass/fail status; repeat the previous run; collect coverage and show each block's execution count; and run benchmarks.
 - 📁 **Project workflows:** manage modules and workspaces, install Go tools, generate code or tests, edit struct tags, and generate interface implementations.
 - 🔄 **Converters:** generate Go types from a JSON Schema or from JSON.
 - 🌱 **Go environment:** inspect Go settings and configure environments for `gopls`, Go commands, and installed tools.
