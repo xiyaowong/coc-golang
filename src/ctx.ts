@@ -2,7 +2,7 @@ import type { Disposable, ExtensionContext } from 'coc.nvim'
 import type { CheckScope } from './check'
 import { dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { workspace } from 'coc.nvim'
+import { listManager, workspace } from 'coc.nvim'
 import { Checker } from './check'
 import { registerBuildCommands } from './commands/build'
 import { registerCoverageCommands } from './commands/coverage'
@@ -24,6 +24,7 @@ import { TerminalManager } from './go/terminal'
 import { ToolManager } from './go/tools'
 import { Formatter } from './lsp/format'
 import { checkGoplsUpdate, LanguageServer, registerLspCommands } from './lsp/language-server'
+import { PkgSearch, registerPkgCommands } from './pkg'
 import { StatusBar } from './status'
 import { registerTestExplorerCommands, TestExplorer } from './test-explorer'
 import { TestRunner } from './test/runner'
@@ -77,6 +78,7 @@ export class Ctx {
   readonly tests: TestRunner
   readonly explorer: TestExplorer
   readonly converter: Converter
+  readonly pkgSearch: PkgSearch
   readonly commands: CommandManager
 
   private readonly watchers = new DisposableStore()
@@ -95,7 +97,9 @@ export class Ctx {
     this.tests = new TestRunner(this)
     this.explorer = new TestExplorer(this)
     this.converter = new Converter(this)
+    this.pkgSearch = new PkgSearch(this)
     this.commands = new CommandManager()
+    this.watch(listManager.registerList(this.pkgSearch))
 
     registerTestCommands(this)
     registerTestExplorerCommands(this)
@@ -106,6 +110,7 @@ export class Ctx {
     registerConvertCommands(this)
     registerEnvironmentCommands(this)
     registerModuleCommands(this)
+    registerPkgCommands(this)
     registerLspCommands(this)
     registerSaveWatcher(this)
   }
@@ -132,6 +137,7 @@ export class Ctx {
     this.explorer.dispose()
     this.coverage.dispose()
     this.tests.dispose()
+    this.pkgSearch.dispose()
     this.checker.dispose()
     this.statusBar.dispose()
     this.formatter.dispose()

@@ -24,12 +24,15 @@ tasks.
   run; collect coverage and show each block's execution count; run benchmarks.
 - **Project workflows** — manage modules and workspaces, install Go tools,
   generate tests, edit struct tags, and generate interface implementations.
+- **Package search** — search pkg.go.dev and `get`, `install`, or `download`
+  what you find.
 
 ## Where to start
 
 - [Getting started](./getting-started) — install the extension and run your
   first command.
 - [Test explorer](./test-explorer) — browse and run tests from a tree view.
+- [Package search](./package-search) — find packages on pkg.go.dev.
 - [Converters](./convert) — generate Go types from JSON or a JSON Schema.
 - [Troubleshooting](./troubleshooting) — fix common issues.
 - [Reference](./reference/commands) — every command, setting, and tool.

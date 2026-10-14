@@ -6,7 +6,7 @@ description: Every go.* command, grouped by area.
 <!-- Generated from package.json (and src/go/tools.ts). Do not edit by hand. -->
 ## Commands
 
-All 84 commands are run with `:CocCommand <id>`.
+All 85 commands are run with `:CocCommand <id>`.
 
 ### Tests & benchmarks
 
@@ -90,6 +90,7 @@ All 84 commands are run with `:CocCommand <id>`.
 | `go.get.package` | Get Go Package |
 | `go.get.upgrade` | Upgrade Go Dependencies |
 | `go.install.package` | Install Go Package |
+| `go.pkg.search` | Search Go Packages Online |
 | `go.browse.packages` | Browse Go Packages |
 
 ### Struct tags & code generation
