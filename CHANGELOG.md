@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.0](https://github.com/xiyaowong/coc-golang/compare/coc-golang-v0.8.0...coc-golang-v0.9.0) (2026-10-14)
+
+
+### Features
+
+* search pkg.go.dev for packages and act on the results ([#94](https://github.com/xiyaowong/coc-golang/issues/94)) ([db32446](https://github.com/xiyaowong/coc-golang/commit/db32446c4eead869442f3501b30016504a22e1b8))
+
 ## [0.8.0](https://github.com/xiyaowong/coc-golang/compare/coc-golang-v0.7.1...coc-golang-v0.8.0) (2026-10-14)
 
 
