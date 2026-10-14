@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs'
 import { window } from 'coc.nvim'
 import { DisposableStore } from '../disposable'
 import { parseEnvFile } from '../go/config-utils'
+import { taskLabels } from '../status'
 
 export interface PreviousTest {
   args: string[]
@@ -63,11 +64,11 @@ export class TestRunner extends DisposableStore {
     onLine?: (line: string) => void,
   ): Promise<TestRunResult> {
     this.previous = { args, cwd }
-    const result = await this.ctx.process.captureGo('test', ['-json', ...this.ctx.config.testFlags(), ...args], {
+    const result = await this.ctx.statusBar.during(taskLabels.test, this.ctx.process.captureGo('test', ['-json', ...this.ctx.config.testFlags(), ...args], {
       cwd,
       environment: this.environment(),
       onLine,
-    })
+    }))
     return { code: result.code, output: result.output }
   }
 

@@ -5,6 +5,7 @@ import { homedir, platform } from 'node:os'
 import { delimiter, isAbsolute, join } from 'node:path'
 import { window, workspace } from 'coc.nvim'
 import { DisposableStore } from '../disposable'
+import { taskLabels } from '../status'
 import { pathKey } from './config-utils'
 
 interface ToolDefinition {
@@ -134,10 +135,10 @@ export class ToolManager extends DisposableStore {
     const module = tools[name].module
     this.ctx.output.header(`${command} install ${module}`)
     try {
-      const result = await this.ctx.process.run(command, ['install', module], {
+      const result = await this.ctx.statusBar.during(taskLabels.install, this.ctx.process.run(command, ['install', module], {
         cwd: workspace.cwd,
         env: this.ctx.environment.variables({ forToolInstall: true }),
-      })
+      }))
       if (result.code !== 0) {
         await window.showNotification({
           kind: 'error',

@@ -7,6 +7,7 @@ import { Diagnostic as CocDiagnostic, diagnosticManager, DiagnosticSeverity, lan
 import { DisposableStore } from './disposable'
 import { fileUri } from './editor'
 import { toolFailure } from './go/tools'
+import { taskLabels } from './status'
 
 export type CheckKind = 'build' | 'vet' | 'lint'
 export type CheckScope = 'file' | 'package' | 'workspace'
@@ -235,6 +236,10 @@ export class Checker extends DisposableStore {
   }
 
   async run(kind: CheckKind, scope: CheckScope, options: CheckOptions): Promise<void> {
+    await this.ctx.statusBar.during(taskLabels[kind], this.check(kind, scope, options))
+  }
+
+  private async check(kind: CheckKind, scope: CheckScope, options: CheckOptions): Promise<void> {
     const { cwd, file } = options
     const config = this.ctx.config
     const target = scope === 'workspace' ? './...' : scope === 'file' && file ? file : '.'

@@ -92,7 +92,7 @@ Flags like -rpc.trace and -logfile to be used while running the language server.
 
 **Type:** `boolean` · **Default:** `true`
 
-Show the gopls status in the status bar.
+Show the Go status in the status bar: the gopls state, and the long-running commands (build, vet, lint, test, tool install, module) while they run.
 
 ## `go.trace.server`
 

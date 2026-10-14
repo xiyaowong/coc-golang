@@ -50,6 +50,7 @@ Open a Go file to activate the extension. If `gopls` is not installed, coc-golan
 - 📁 **Project workflows:** manage modules and workspaces, install Go tools, generate code or tests, edit struct tags, and generate interface implementations.
 - 🔄 **Converters:** generate Go types from a JSON Schema or from JSON.
 - 🌱 **Go environment:** inspect Go settings and configure environments for `gopls`, Go commands, and installed tools.
+- 📊 **Status bar:** the `gopls` state and version, plus the long-running commands — build, vet, lint, tests, tool installs, module operations — while they run. Tasks shorter than a moment never appear, so the bar reports the work you are waiting on rather than every step.
 
 `gopls` handles language features. The commands below run either in a coc.nvim terminal named **Go** (`go run`, `go test`, benchmarks, `go doc`, `go get`, `go install`, `go mod init`) or in the **Go** output channel (everything else).
 
@@ -154,6 +155,7 @@ Some settings to know:
 - **Tests:** `go.testFlags` and `go.testTags` fall back to `go.buildFlags` and `go.buildTags`. `go.testTimeout` supplies the test timeout, and `go.testEnvFile` is loaded before `go.testEnvVars`.
 - **Coverage:** `go.test.coverage` toggles coverage for the current package: it runs `go test -coverprofile`, then highlights covered code (`CocCoverageCovered`) and uncovered code (`CocCoverageUncovered`) in the loaded Go buffers. Running it again, or saving an edited Go file, clears the highlights. `go.apply.coverprofile` highlights from an existing profile: it offers the profiles of previous runs, or takes a path of your own. `go.show.coverprofile` opens a profile — one of those runs, or a path of your own — in a buffer. `go.coverMode` sets `-covermode`, and `go.coverShowCounts` appends each covered block's execution count as virtual text.
 - **Language server:** set `go.useLanguageServer` to `false` to disable `gopls` and use Go commands and formatters directly.
+- **Status bar:** `go.statusBar.enable` (default `true`) shows the Go status in the status bar. When disabled, nothing is shown.
 
 ## 🚧 Development
 
@@ -179,7 +181,7 @@ See [CHANGELOG.md](CHANGELOG.md).
 
 Not included:
 
-- The VS Code test explorer's run/debug gutter and status-bar widgets.
+- The VS Code test explorer's run/debug gutter and its per-test status-bar widgets.
 - The Delve debug adapter UI.
 - Survey and telemetry.
 
